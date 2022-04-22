@@ -84,6 +84,8 @@ describe("Boost", function () {
     signatures.push(sig1, sig2, sig3, sig4);
   });
 
+  // TODO: use boost contract with different signers
+  
   it(`Should allow voter1 to claim ${amountPerAccount} tokens for voter1`, async function () {
     const claimTx = await boostContract.claim(newBoost.id, [voter1.address], [signatures[0]]);
     await claimTx.wait();
