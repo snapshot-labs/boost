@@ -57,6 +57,7 @@ contract Boost {
         bytes[] calldata signatures
     ) public {
         require(recipients.length <= 10, "Too many recipients");
+        require(boosts[id].expires > block.timestamp, "Boost expired");
 
         // check signatures, revert if one is invalid
         for (uint i = 0; i < recipients.length; i++) {
