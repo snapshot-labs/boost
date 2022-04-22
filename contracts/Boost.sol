@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 contract Boost {
-    using ECDSA for bytes32;
-
     struct BoostSettings {
         bytes32 id;
         address token;
