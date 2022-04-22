@@ -42,6 +42,7 @@ contract Boost {
         );
     }
 
+    // token balance of boost owner and allowance given to boost contract
     function ownerBalance(bytes32 id) public view returns (uint256, uint256) {
         IERC20 token = IERC20(boosts[id].token);
         uint256 allowance = token.allowance(boosts[id].owner, address(this));
@@ -49,6 +50,7 @@ contract Boost {
         return (allowance, balance);
     }
 
+    // claim for multiple accounts
     function claim(
         bytes32 id,
         address[] calldata recipients,
@@ -56,6 +58,7 @@ contract Boost {
     ) public {
         require(recipients.length <= 10, "Too many recipients");
 
+        // check signatures, revert if one is invalid
         for (uint i = 0; i < recipients.length; i++) {
             require(
                 !claimed[recipients[i]][id],
@@ -74,6 +77,7 @@ contract Boost {
             );
         }
 
+        // mark as claimed and execute transfers
         for (uint i = 0; i < recipients.length; i++) {
             claimed[recipients[i]][id] = true;
             IERC20 token = IERC20(boosts[id].token);
