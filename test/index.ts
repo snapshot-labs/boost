@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { ethers } from "hardhat";
+import { ethers, network } from "hardhat";
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe("Boost", function () {
   let owner: any;
@@ -8,6 +9,7 @@ describe("Boost", function () {
   let voter2: any;
   let voter3: any;
   let voter4: any;
+  let voter5: any;
   let nonVoter: any;
   let testToken: any;
   let boostContract: any;
@@ -17,8 +19,18 @@ describe("Boost", function () {
   const amountPerAccount = 2;
   const signatures: any[] = [];
 
+  async function canClaim(boostId: string, actor: SignerWithAddress, recipients: SignerWithAddress[], signatures: string[], token: any, expectedBalances: number[]) {
+    await expect(() => boostContract.connect(actor).claim(boostId, recipients.map(r => r.address), signatures))
+      .to.changeTokenBalances(token, [actor, ...recipients], expectedBalances);
+  }
+
+  async function cantClaim(boostId: string, actor: SignerWithAddress, recipients: SignerWithAddress[], signatures: string[], errorMessage: string) {
+    await expect(boostContract.connect(actor).claim(boostId, recipients.map(r => r.address), signatures))
+      .to.be.revertedWith(errorMessage);
+  }
+
   before(async function () {
-    [ owner, guard, voter1, voter2, voter3, voter4, nonVoter ] = await ethers.getSigners();
+    [ owner, guard, voter1, voter2, voter3, voter4, voter5, nonVoter ] = await ethers.getSigners();
 
     // deploy boost
     const Boost = await ethers.getContractFactory("Boost");
@@ -31,16 +43,16 @@ describe("Boost", function () {
     await testToken.deployed();
 
     // allow boost contract to spend test token on behalf of owner
-    await testToken.approve(boostContract.address, 50);
+    await testToken.connect(owner).approve(boostContract.address, 50);
   });
 
   it("Should create a boost as owner", async function () {
     // generate bytes32 id from string
     const id = ethers.utils.id(proposalId);
 
-    const expire = (await ethers.provider.getBlock("latest")).timestamp + 10;
+    const expire = (await ethers.provider.getBlock("latest")).timestamp + 60;
 
-    const createBoostTx = await boostContract.create(
+    const createBoostTx = await boostContract.connect(owner).create(
       id,
       testToken.address,
       amountPerAccount,
@@ -59,65 +71,46 @@ describe("Boost", function () {
     expect(ownerBalance).to.deep.equal([ethers.BigNumber.from(50), ethers.BigNumber.from(100)]);
   });
 
-  it(`Should generate signatures for voter1, voter2, voter3 and voter4 but not for nonVoter`, async function () {
+  it(`Should generate signatures for voter1-5 but not for nonVoter`, async function () {
     // generate signatures from boost id and voter addresses
-    const message1 = ethers.utils.arrayify(ethers.utils.solidityKeccak256(
-      ['bytes32', 'address'],
-      [newBoost.id, voter1.address]
-    ));
-    const message2 = ethers.utils.arrayify(ethers.utils.solidityKeccak256(
-      ['bytes32', 'address'],
-      [newBoost.id, voter2.address]
-    ));
-    const message3 = ethers.utils.arrayify(ethers.utils.solidityKeccak256(
-      ['bytes32', 'address'],
-      [newBoost.id, voter3.address]
-    ));
-    const message4 = ethers.utils.arrayify(ethers.utils.solidityKeccak256(
-      ['bytes32', 'address'],
-      [newBoost.id, voter4.address]
-    ));
-    const sig1 = await guard.signMessage(message1);
-    const sig2 = await guard.signMessage(message2);
-    const sig3 = await guard.signMessage(message3);
-    const sig4 = await guard.signMessage(message4);
-    signatures.push(sig1, sig2, sig3, sig4);
+    for (const voter of [ voter1, voter2, voter3, voter4, voter5 ]) {
+      const message = ethers.utils.arrayify(ethers.utils.solidityKeccak256(
+        ['bytes32', 'address'],
+        [newBoost.id, voter.address]
+      ));
+      const sig = await guard.signMessage(message);
+      signatures.push(sig);
+    }
   });
-
-  // TODO: use boost contract with different signers
   
   it(`Should allow voter1 to claim ${amountPerAccount} tokens for voter1`, async function () {
-    const claimTx = await boostContract.claim(newBoost.id, [voter1.address], [signatures[0]]);
-    await claimTx.wait();
-
-    const voter1Balance = await testToken.balanceOf(voter1.address);
-    expect(voter1Balance).to.equal(ethers.BigNumber.from(amountPerAccount));
+    await canClaim(newBoost.id, voter1, [voter1], [signatures[0]], testToken, [amountPerAccount, amountPerAccount]);
   });
   
   it(`Should not allow voter1 to claim ${amountPerAccount} tokens for voter1 again`, async function () {
-    const claim = boostContract.claim(newBoost.id, [voter1.address], [signatures[0]]);
-    await expect(claim).to.be.revertedWith('Recipient already claimed');
+    await cantClaim(newBoost.id, voter1, [voter1], [signatures[0]], 'Recipient already claimed');
   });
 
   it(`Should allow voter1 to claim ${amountPerAccount} tokens for voter2 and voter3`, async function () {
-    const claimTx = await boostContract.claim(newBoost.id, [voter2.address, voter3.address], [signatures[1], signatures[2]]);
-    await claimTx.wait();
-
-    const voter2Balance = await testToken.balanceOf(voter2.address);
-    const voter3Balance = await testToken.balanceOf(voter3.address);
-    expect(voter2Balance.add(voter3Balance)).to.equal(ethers.BigNumber.from(amountPerAccount * 2));
+    await canClaim(newBoost.id, voter1, [voter2, voter3], [signatures[1], signatures[2]], testToken, [0, amountPerAccount, amountPerAccount]);
   });
 
-  it(`Should not allow nonVoter to claim ${amountPerAccount} tokens for nonVoter`, async function () {
-    const claim = boostContract.claim(newBoost.id, [nonVoter.address], [signatures[0]]);
-    await expect(claim).to.be.revertedWith('Invalid signature');
+  it(`Should not allow nonVoter to claim ${amountPerAccount} tokens for nonVoter with signature of voter5`, async function () {
+    await cantClaim(newBoost.id, nonVoter, [nonVoter], [signatures[4]], 'Invalid signature');
   });
   
   it(`Should allow nonVoter to claim ${amountPerAccount} tokens for voter4`, async function () {
-    const claimTx = await boostContract.claim(newBoost.id, [voter4.address], [signatures[3]]);
-    await claimTx.wait();
+    await canClaim(newBoost.id, nonVoter, [voter4], [signatures[3]], testToken, [0, amountPerAccount, amountPerAccount]);
+  });
 
-    const voter4Balance = await testToken.balanceOf(voter4.address);
-    expect(voter4Balance).to.equal(ethers.BigNumber.from(amountPerAccount));
+  it(`Should not allow voter5 to claim ${amountPerAccount} tokens after boost has expired`, async function () {
+    await network.provider.send("evm_increaseTime", [61]);
+    await network.provider.send("evm_mine");
+    await cantClaim(newBoost.id, voter5, [voter5], [signatures[4]], 'Boost expired');
+  });
+
+  it("Should have an allowance over 42 of owner's test tokens and owner should have a balance of 92", async function () {
+    const ownerBalance = await boostContract.ownerBalance(newBoost.id);
+    expect(ownerBalance).to.deep.equal([ethers.BigNumber.from(42), ethers.BigNumber.from(92)]);
   });
 });
