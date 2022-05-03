@@ -37,7 +37,7 @@ describe("Boost", function () {
         recipients.map((r) => r.address),
         signatures
       )
-    ).to.changeTokenBalances(token, [actor, ...recipients], expectedBalances);
+    ).to.changeTokenBalances(token, recipients, expectedBalances);
   }
 
   // Claims tokens and expects a revert error message
@@ -137,8 +137,7 @@ describe("Boost", function () {
 
   it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1 from boost 1`, async function () {
     await canClaim(boost1.id, voter1, [voter1], await getSigs([voter1], guard, boost1.id), testToken, [
-      AMOUNT_PER_ACC,
-      AMOUNT_PER_ACC,
+      AMOUNT_PER_ACC
     ]);
   });
 
@@ -159,7 +158,7 @@ describe("Boost", function () {
       [voter2, voter3],
       await getSigs([voter2, voter3], guard, boost1.id),
       testToken,
-      [0, AMOUNT_PER_ACC, AMOUNT_PER_ACC]
+      [AMOUNT_PER_ACC, AMOUNT_PER_ACC]
     );
   });
 
@@ -180,7 +179,7 @@ describe("Boost", function () {
       [voter4],
       await getSigs([voter4], guard, boost1.id),
       testToken,
-      [0, AMOUNT_PER_ACC, AMOUNT_PER_ACC]
+      [AMOUNT_PER_ACC, AMOUNT_PER_ACC]
     );
   });
 
@@ -270,8 +269,7 @@ describe("Boost", function () {
 
   it(`Should allow voter1 to claim ${AMOUNT_PER_ACC_HIGH} tokens for voter1 from boost 2`, async function () {
     await canClaim(boost2.id, voter1, [voter1], await getSigs([voter1], guard, boost2.id), testToken, [
-      AMOUNT_PER_ACC_HIGH,
-      AMOUNT_PER_ACC_HIGH,
+      AMOUNT_PER_ACC_HIGH
     ]);
   });
 });
