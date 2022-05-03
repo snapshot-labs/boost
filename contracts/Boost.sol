@@ -19,7 +19,11 @@ contract Boost {
     mapping(address => mapping(bytes32 => bool)) public claimed;
 
     // get boost by id
-    function getBoost(bytes32 id) public view returns (BoostSettings memory boost) {
+    function getBoost(bytes32 id)
+        public
+        view
+        returns (BoostSettings memory boost)
+    {
         boost = boosts[id];
         return boost;
     }
@@ -60,14 +64,16 @@ contract Boost {
         require(boosts[id].expires > block.timestamp, "Boost expired");
 
         // check signatures, revert if one is invalid
-        for (uint i = 0; i < recipients.length; i++) {
-            require(
-                !claimed[recipients[i]][id],
-                "Recipient already claimed"
+        for (uint256 i = 0; i < recipients.length; i++) {
+            require(!claimed[recipients[i]][id], "Recipient already claimed");
+
+            bytes32 messageHash = keccak256(
+                abi.encodePacked(
+                    "\x19Ethereum Signed Message:\n32",
+                    keccak256(abi.encodePacked(id, recipients[i]))
+                )
             );
 
-            bytes32 messageHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(id, recipients[i]))));
-            
             require(
                 SignatureChecker.isValidSignatureNow(
                     boosts[id].guard,
@@ -79,10 +85,14 @@ contract Boost {
         }
 
         // mark as claimed and execute transfers
-        for (uint i = 0; i < recipients.length; i++) {
+        for (uint256 i = 0; i < recipients.length; i++) {
             claimed[recipients[i]][id] = true;
             IERC20 token = IERC20(boosts[id].token);
-            token.transferFrom(boosts[id].owner, recipients[i], boosts[id].amountPerAccount);
+            token.transferFrom(
+                boosts[id].owner,
+                recipients[i],
+                boosts[id].amountPerAccount
+            );
         }
     }
 }

@@ -6,6 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract TestToken is ERC20, Ownable {
     constructor() ERC20("TestToken", "TEST") {
-      _mint(msg.sender, 100);
+        _mint(msg.sender, 100);
     }
 }

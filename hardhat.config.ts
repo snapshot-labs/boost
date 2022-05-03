@@ -28,8 +28,8 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: "https://eth-rinkeby.alchemyapi.io/v2/ugiPEBqMebLQbjro42kalZ1h4StpW_fR",
-        blockNumber: 10543146
-      }
+        blockNumber: 10543146,
+      },
     },
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
