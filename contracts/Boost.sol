@@ -57,7 +57,7 @@ contract Boost {
             amountPerAccount,
             guard,
             expires,
-            msg.sender
+            boostOwner
         );
     }
 
