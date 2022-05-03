@@ -31,16 +31,28 @@ contract Boost {
 
     function create(
         bytes32 id,
-        address token,
+        address tokenAddress,
         uint256 depositAmount,
         uint256 amountPerAccount,
         address guard,
         uint256 expires
     ) public {
         require(boosts[id].id == 0x0, "Boost already exists");
+
+        address boostOwner = msg.sender;
+
+        if (depositAmount > 0) {
+            IERC20 token = IERC20(tokenAddress);
+            token.transferFrom(
+                boostOwner,
+                address(this),
+                depositAmount
+            );
+        }
+
         boosts[id] = BoostSettings(
             id,
-            token,
+            tokenAddress,
             depositAmount,
             amountPerAccount,
             guard,

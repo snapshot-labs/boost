@@ -215,7 +215,7 @@ describe("Boost", function () {
     ).to.be.revertedWith("Boost already exists");
   });
 
-  it("Should not create a boost as owner, with 100 tokens deposit, because of insufficiant allownace", async function () {
+  it("Should not be able to deposit 100 tokens in a new boost, because of insufficiant allownace", async function () {
     // set expire date to 1 minute from now
     const expire = (await ethers.provider.getBlock("latest")).timestamp + 60;
 
