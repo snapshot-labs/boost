@@ -58,16 +58,24 @@ describe("Boost", function () {
   }
 
   // check a boost's owner's token balance and allowance
-  async function expectOwnerBalanceAndAllowance(boostId: string, expectedBalance: number, expectedAllowance: number) {
+  async function expectOwnerBalanceAndAllowance(
+    boostId: string,
+    expectedBalance: number,
+    expectedAllowance: number
+  ) {
     const balance = await boostContract.ownerBalance(boostId);
     const allowance = await boostContract.ownerAllowance(boostId);
-    
+
     expect(balance).to.deep.equal(expectedBalance);
     expect(allowance).to.deep.equal(expectedAllowance);
   }
 
   // generate guard signatures for a boost
-  async function getSigs(voters: SignerWithAddress[], guard: SignerWithAddress, boostId: string) {
+  async function getSigs(
+    voters: SignerWithAddress[],
+    guard: SignerWithAddress,
+    boostId: string
+  ) {
     const sigs: string[] = [];
     for (const voter of voters) {
       const message = ethers.utils.arrayify(
@@ -108,7 +116,14 @@ describe("Boost", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(PROPOSAL_ID_1, testToken.address, 0, AMOUNT_PER_ACC, guard.address, expire)
+        .create(
+          PROPOSAL_ID_1,
+          testToken.address,
+          0,
+          AMOUNT_PER_ACC,
+          guard.address,
+          expire
+        )
     ).to.be.revertedWith("Expire date must be after current block timestamp");
   });
 
@@ -118,14 +133,27 @@ describe("Boost", function () {
 
     const createBoostTx = await boostContract
       .connect(owner)
-      .create(PROPOSAL_ID_1, testToken.address, 0, AMOUNT_PER_ACC, guard.address, expire);
+      .create(
+        PROPOSAL_ID_1,
+        testToken.address,
+        0,
+        AMOUNT_PER_ACC,
+        guard.address,
+        expire
+      );
     await createBoostTx.wait();
 
     boost1 = await boostContract.getBoost(PROPOSAL_ID_1);
     expect(boost1.id).to.equal(PROPOSAL_ID_1, "Boost id is not correct");
-    expect(boost1.token).to.equal(testToken.address, "Boost token is not correct");
+    expect(boost1.token).to.equal(
+      testToken.address,
+      "Boost token is not correct"
+    );
     expect(boost1.depositAmount).to.equal(0, "Boost deposit is not correct");
-    expect(boost1.amountPerAccount).to.equal(AMOUNT_PER_ACC, "Boost amount per account is not correct");
+    expect(boost1.amountPerAccount).to.equal(
+      AMOUNT_PER_ACC,
+      "Boost amount per account is not correct"
+    );
     expect(boost1.guard).to.equal(guard.address, "Boost guard is not correct");
     expect(boost1.expires).to.equal(expire, "Boost expires is not correct");
     expect(boost1.owner).to.equal(owner.address, "Boost owner is not correct");
@@ -136,9 +164,14 @@ describe("Boost", function () {
   });
 
   it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1 from boost 1`, async function () {
-    await canClaim(boost1.id, voter1, [voter1], await getSigs([voter1], guard, boost1.id), testToken, [
-      AMOUNT_PER_ACC
-    ]);
+    await canClaim(
+      boost1.id,
+      voter1,
+      [voter1],
+      await getSigs([voter1], guard, boost1.id),
+      testToken,
+      [AMOUNT_PER_ACC]
+    );
   });
 
   it(`Should not allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1 again from boost 1`, async function () {
@@ -197,7 +230,9 @@ describe("Boost", function () {
     );
 
     // regrant allowance
-    await testToken.connect(owner).approve(boostContract.address, ownerAllowance);
+    await testToken
+      .connect(owner)
+      .approve(boostContract.address, ownerAllowance);
   });
 
   it(`Should not allow voter5 to claim ${AMOUNT_PER_ACC} tokens from boost 1 after boost has expired`, async function () {
@@ -223,7 +258,14 @@ describe("Boost", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(PROPOSAL_ID_1, testToken.address, 0, AMOUNT_PER_ACC, guard.address, expire)
+        .create(
+          PROPOSAL_ID_1,
+          testToken.address,
+          0,
+          AMOUNT_PER_ACC,
+          guard.address,
+          expire
+        )
     ).to.be.revertedWith("Boost already exists");
   });
 
@@ -234,7 +276,14 @@ describe("Boost", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(PROPOSAL_ID_2, testToken.address, 100, AMOUNT_PER_ACC, guard.address, expire)
+        .create(
+          PROPOSAL_ID_2,
+          testToken.address,
+          100,
+          AMOUNT_PER_ACC,
+          guard.address,
+          expire
+        )
     ).to.be.revertedWith("ERC20: insufficient allowance");
   });
 
@@ -244,14 +293,27 @@ describe("Boost", function () {
 
     const createBoostTx = await boostContract
       .connect(owner)
-      .create(PROPOSAL_ID_2, testToken.address, 42, AMOUNT_PER_ACC_HIGH, guard.address, expire);
+      .create(
+        PROPOSAL_ID_2,
+        testToken.address,
+        42,
+        AMOUNT_PER_ACC_HIGH,
+        guard.address,
+        expire
+      );
     await createBoostTx.wait();
 
     boost2 = await boostContract.getBoost(PROPOSAL_ID_2);
     expect(boost2.id).to.equal(PROPOSAL_ID_2, "Boost id is not correct");
-    expect(boost2.token).to.equal(testToken.address, "Boost token is not correct");
+    expect(boost2.token).to.equal(
+      testToken.address,
+      "Boost token is not correct"
+    );
     expect(boost2.depositAmount).to.equal(42, "Boost deposit is not correct");
-    expect(boost2.amountPerAccount).to.equal(AMOUNT_PER_ACC_HIGH, "Boost amount per account is not correct");
+    expect(boost2.amountPerAccount).to.equal(
+      AMOUNT_PER_ACC_HIGH,
+      "Boost amount per account is not correct"
+    );
     expect(boost2.guard).to.equal(guard.address, "Boost guard is not correct");
     expect(boost2.expires).to.equal(expire, "Boost expires is not correct");
     expect(boost2.owner).to.equal(owner.address, "Boost owner is not correct");
@@ -268,8 +330,13 @@ describe("Boost", function () {
   });
 
   it(`Should allow voter1 to claim ${AMOUNT_PER_ACC_HIGH} tokens for voter1 from boost 2`, async function () {
-    await canClaim(boost2.id, voter1, [voter1], await getSigs([voter1], guard, boost2.id), testToken, [
-      AMOUNT_PER_ACC_HIGH
-    ]);
+    await canClaim(
+      boost2.id,
+      voter1,
+      [voter1],
+      await getSigs([voter1], guard, boost2.id),
+      testToken,
+      [AMOUNT_PER_ACC_HIGH]
+    );
   });
 });
