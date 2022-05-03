@@ -261,4 +261,17 @@ describe("Boost", function () {
   it("Should have an allowance over 0 of owner's tokens and owner should have a balance of 50", async function () {
     await expectOwnerBalanceAndAllowance(boost1.id, 50, 0);
   });
+
+  it("Should have a balance of 42 tokens", async function () {
+    const balance = await testToken.balanceOf(boostContract.address);
+
+    expect(balance).to.equal(42, "Boost contract token balance is not correct");
+  });
+
+  it(`Should allow voter1 to claim ${AMOUNT_PER_ACC_HIGH} tokens for voter1 from boost 2`, async function () {
+    await canClaim(boost2.id, voter1, [voter1], await getSigs([voter1], guard, boost2.id), testToken, [
+      AMOUNT_PER_ACC_HIGH,
+      AMOUNT_PER_ACC_HIGH,
+    ]);
+  });
 });
