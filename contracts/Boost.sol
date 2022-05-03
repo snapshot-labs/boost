@@ -9,6 +9,7 @@ contract Boost {
     struct BoostSettings {
         bytes32 id;
         address token;
+        uint256 depositAmount;
         uint256 amountPerAccount;
         address guard;
         uint256 expires;
@@ -31,6 +32,7 @@ contract Boost {
     function create(
         bytes32 id,
         address token,
+        uint256 depositAmount,
         uint256 amountPerAccount,
         address guard,
         uint256 expires
@@ -39,6 +41,7 @@ contract Boost {
         boosts[id] = BoostSettings(
             id,
             token,
+            depositAmount,
             amountPerAccount,
             guard,
             expires,

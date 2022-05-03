@@ -16,7 +16,8 @@ describe("Boost", function () {
   let boostContract: Boost;
   let newBoost: any;
 
-  const PROPOSAL_ID = ethers.utils.id("0x1");
+  const PROPOSAL_ID_1 = ethers.utils.id("0x1");
+  const PROPOSAL_ID_2 = ethers.utils.id("0x2");
   const AMOUNT_PER_ACC = 2;
 
   // Claims tokens and expects balances of provided recipients to change
@@ -59,8 +60,8 @@ describe("Boost", function () {
     const balance = await boostContract.ownerBalance(boostId);
     const allowance = await boostContract.ownerAllowance(boostId);
     
-    expect(balance).to.deep.equal(ethers.BigNumber.from(expectedBalance));
-    expect(allowance).to.deep.equal(ethers.BigNumber.from(expectedAllowance));
+    expect(balance).to.deep.equal(expectedBalance);
+    expect(allowance).to.deep.equal(expectedAllowance);
   }
 
   // generate guard signatures for a boost
@@ -98,22 +99,22 @@ describe("Boost", function () {
     await testToken.connect(owner).approve(boostContract.address, 50);
   });
 
-  it("Should create a new boost as owner", async function () {
+  it("Should create a new allowance-based boost as owner", async function () {
     // set expire date to 1 minute from now
     const expire = (await ethers.provider.getBlock("latest")).timestamp + 60;
 
     const createBoostTx = await boostContract
       .connect(owner)
-      .create(PROPOSAL_ID, testToken.address, AMOUNT_PER_ACC, guard.address, expire);
+      .create(PROPOSAL_ID_1, testToken.address, 0, AMOUNT_PER_ACC, guard.address, expire);
     await createBoostTx.wait();
 
-    newBoost = await boostContract.getBoost(PROPOSAL_ID);
-
-    expect(newBoost.id).to.equal(PROPOSAL_ID, "Boost id is not correct");
+    newBoost = await boostContract.getBoost(PROPOSAL_ID_1);
+    expect(newBoost.id).to.equal(PROPOSAL_ID_1, "Boost id is not correct");
     expect(newBoost.token).to.equal(testToken.address, "Boost token is not correct");
-    expect(newBoost.amountPerAccount).to.equal(ethers.BigNumber.from(AMOUNT_PER_ACC), "Boost amount per account is not correct");
+    expect(newBoost.depositAmount).to.equal(0, "Boost deposit is not correct");
+    expect(newBoost.amountPerAccount).to.equal(AMOUNT_PER_ACC, "Boost amount per account is not correct");
     expect(newBoost.guard).to.equal(guard.address, "Boost guard is not correct");
-    expect(newBoost.expires).to.equal(ethers.BigNumber.from(expire), "Boost expires is not correct");
+    expect(newBoost.expires).to.equal(expire, "Boost expires is not correct");
     expect(newBoost.owner).to.equal(owner.address, "Boost owner is not correct");
   });
 
@@ -210,7 +211,18 @@ describe("Boost", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(PROPOSAL_ID, testToken.address, AMOUNT_PER_ACC, guard.address, expire)
+        .create(PROPOSAL_ID_1, testToken.address, 0, AMOUNT_PER_ACC, guard.address, expire)
     ).to.be.revertedWith("Boost already exists");
+  });
+
+  it("Should not create a boost as owner, with 100 tokens deposit, because of insufficiant allownace", async function () {
+    // set expire date to 1 minute from now
+    const expire = (await ethers.provider.getBlock("latest")).timestamp + 60;
+
+    await expect(
+      boostContract
+        .connect(owner)
+        .create(PROPOSAL_ID_2, testToken.address, 100, AMOUNT_PER_ACC, guard.address, expire)
+    ).to.be.revertedWith("ERC20: insufficient allowance");
   });
 });
