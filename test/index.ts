@@ -183,4 +183,15 @@ describe("Boost", function () {
       ethers.BigNumber.from(92),
     ]);
   });
+
+  it("Should not create a new boost with the same id", async function () {
+    // set expire date to 1 minute from now
+    const expire = (await ethers.provider.getBlock("latest")).timestamp + 60;
+
+    await expect(
+      boostContract
+        .connect(owner)
+        .create(PROPOSAL_ID, testToken.address, AMOUNT_PER_ACC, guard.address, expire)
+    ).to.be.revertedWith("Boost already exists");
+  });
 });
