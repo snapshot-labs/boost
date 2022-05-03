@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost, TestToken } from "../typechain";
 
 describe("Boost", function () {
   let owner: SignerWithAddress;
@@ -12,8 +11,8 @@ describe("Boost", function () {
   let voter4: SignerWithAddress;
   let voter5: SignerWithAddress;
   let nonVoter: SignerWithAddress;
-  let testToken: TestToken;
-  let boostContract: Boost;
+  let testToken: any;
+  let boostContract: any;
   let boost1: any;
   let boost2: any;
 
