@@ -135,14 +135,14 @@ describe("Boost", function () {
     await expectOwnerBalanceAndAllowance(boost1.id, 100, 50);
   });
 
-  it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1`, async function () {
+  it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1 from boost 1`, async function () {
     await canClaim(boost1.id, voter1, [voter1], await getSigs([voter1], guard, boost1.id), testToken, [
       AMOUNT_PER_ACC,
       AMOUNT_PER_ACC,
     ]);
   });
 
-  it(`Should not allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1 again`, async function () {
+  it(`Should not allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1 again from boost 1`, async function () {
     await cantClaim(
       boost1.id,
       voter1,
@@ -152,7 +152,7 @@ describe("Boost", function () {
     );
   });
 
-  it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter2 and voter3`, async function () {
+  it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter2 and voter3 from boost 1`, async function () {
     await canClaim(
       boost1.id,
       voter1,
@@ -163,7 +163,7 @@ describe("Boost", function () {
     );
   });
 
-  it(`Should not allow nonVoter to claim ${AMOUNT_PER_ACC} tokens for nonVoter with signature of voter5`, async function () {
+  it(`Should not allow nonVoter to claim ${AMOUNT_PER_ACC} tokens for nonVoter with signature of voter5 from boost 1`, async function () {
     await cantClaim(
       boost1.id,
       nonVoter,
@@ -173,7 +173,7 @@ describe("Boost", function () {
     );
   });
 
-  it(`Should allow nonVoter to claim ${AMOUNT_PER_ACC} tokens for voter4 with signature of voter 4`, async function () {
+  it(`Should allow nonVoter to claim ${AMOUNT_PER_ACC} tokens for voter4 with signature of voter 4 from boost 1`, async function () {
     await canClaim(
       boost1.id,
       nonVoter,
@@ -184,7 +184,7 @@ describe("Boost", function () {
     );
   });
 
-  it("Should not allow voter5 to claim while owner has revoked allowance", async function () {
+  it("Should not allow voter5 to claim from boost 1 while owner has revoked allowance", async function () {
     // revoke allowance
     const ownerAllowance = await boostContract.ownerAllowance(boost1.id);
     await testToken.connect(owner).approve(boostContract.address, 0);
@@ -201,7 +201,7 @@ describe("Boost", function () {
     await testToken.connect(owner).approve(boostContract.address, ownerAllowance);
   });
 
-  it(`Should not allow voter5 to claim ${AMOUNT_PER_ACC} tokens after boost has expired`, async function () {
+  it(`Should not allow voter5 to claim ${AMOUNT_PER_ACC} tokens from boost 1 after boost has expired`, async function () {
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
     await cantClaim(
@@ -228,7 +228,7 @@ describe("Boost", function () {
     ).to.be.revertedWith("Boost already exists");
   });
 
-  it("Should not be able to deposit 100 tokens in a new boost, because of insufficiant allownace", async function () {
+  it("Should not be able to create a new boost with 100 tokens deposit, because of insufficiant allownace", async function () {
     // set expire date to 1 minute from now
     const expire = (await ethers.provider.getBlock("latest")).timestamp + 60;
 
