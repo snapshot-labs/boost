@@ -46,12 +46,16 @@ contract Boost {
         );
     }
 
-    // token balance of boost owner and allowance given to boost contract
-    function ownerBalance(bytes32 id) public view returns (uint256, uint256) {
+    // token balance of boost owner
+    function ownerBalance(bytes32 id) public view returns (uint256) {
         IERC20 token = IERC20(boosts[id].token);
-        uint256 allowance = token.allowance(boosts[id].owner, address(this));
-        uint256 balance = token.balanceOf(boosts[id].owner);
-        return (allowance, balance);
+        return token.balanceOf(boosts[id].owner);
+    }
+    
+    // token allowance given to boost contract
+    function ownerAllowance(bytes32 id) public view returns (uint256) {
+        IERC20 token = IERC20(boosts[id].token);
+        return token.allowance(boosts[id].owner, address(this));
     }
 
     // claim for multiple accounts

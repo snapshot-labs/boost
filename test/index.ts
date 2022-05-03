@@ -81,7 +81,7 @@ describe("Boost", function () {
   // preparations
   before(async function () {
     // assign test accounts to their named variables
-    [owner, guard, voter1, voter2, voter3, voter4, voter5, voter6, nonVoter] =
+    [owner, guard, voter1, voter2, voter3, voter4, voter5, nonVoter] =
       await ethers.getSigners();
 
     // deploy boost contract
@@ -180,7 +180,7 @@ describe("Boost", function () {
       voter5,
       [voter5],
       await getSigs([voter5], guard, newBoost.id),
-      "Insufficient allowance"
+      "ERC20: insufficient allowance"
     );
 
     // regrant allowance
