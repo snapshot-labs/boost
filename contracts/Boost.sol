@@ -38,6 +38,7 @@ contract Boost {
         uint256 expires
     ) public {
         require(boosts[id].id == 0x0, "Boost already exists");
+        require(expires > block.timestamp, "Expire date must be after current block timestamp");
 
         address boostOwner = msg.sender;
 
