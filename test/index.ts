@@ -1,18 +1,19 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Boost, TestToken } from "../typechain";
 
 describe("Boost", function () {
-  let owner: any;
-  let guard: any;
-  let voter1: any;
-  let voter2: any;
-  let voter3: any;
-  let voter4: any;
-  let voter5: any;
-  let nonVoter: any;
-  let testToken: any;
-  let boostContract: any;
+  let owner: SignerWithAddress;
+  let guard: SignerWithAddress;
+  let voter1: SignerWithAddress;
+  let voter2: SignerWithAddress;
+  let voter3: SignerWithAddress;
+  let voter4: SignerWithAddress;
+  let voter5: SignerWithAddress;
+  let nonVoter: SignerWithAddress;
+  let testToken: TestToken;
+  let boostContract: Boost;
   let newBoost: any;
 
   const PROPOSAL_ID = ethers.utils.id("0x1");
@@ -53,6 +54,15 @@ describe("Boost", function () {
     ).to.be.revertedWith(errorMessage);
   }
 
+  // check a boost's owner's token balance and allowance
+  async function expectOwnerBalanceAndAllowance(boostId: string, expectedBalance: number, expectedAllowance: number) {
+    const balance = await boostContract.ownerBalance(boostId);
+    const allowance = await boostContract.ownerAllowance(boostId);
+    
+    expect(balance).to.deep.equal(ethers.BigNumber.from(expectedBalance));
+    expect(allowance).to.deep.equal(ethers.BigNumber.from(expectedAllowance));
+  }
+
   // generate guard signatures for a boost
   async function getSigs(voters: SignerWithAddress[], guard: SignerWithAddress, boostId: string) {
     const sigs: string[] = [];
@@ -71,7 +81,7 @@ describe("Boost", function () {
   // preparations
   before(async function () {
     // assign test accounts to their named variables
-    [owner, guard, voter1, voter2, voter3, voter4, voter5, nonVoter] =
+    [owner, guard, voter1, voter2, voter3, voter4, voter5, voter6, nonVoter] =
       await ethers.getSigners();
 
     // deploy boost contract
@@ -107,12 +117,8 @@ describe("Boost", function () {
     expect(newBoost.owner).to.equal(owner.address, "Boost owner is not correct");
   });
 
-  it("Should show owner's allowance (50) and balance (100) for the created boost", async function () {
-    const ownerBalance = await boostContract.ownerBalance(newBoost.id);
-    expect(ownerBalance).to.deep.equal([
-      ethers.BigNumber.from(50),
-      ethers.BigNumber.from(100),
-    ]);
+  it("Should have an allowance over 50 of owner's tokens and owner should have a balance of 100", async function () {
+    await expectOwnerBalanceAndAllowance(newBoost.id, 100, 50);
   });
 
   it(`Should allow voter1 to claim ${AMOUNT_PER_ACC} tokens for voter1`, async function () {
@@ -164,6 +170,23 @@ describe("Boost", function () {
     );
   });
 
+  it("Should not allow voter5 to claim while owner has revoked allowance", async function () {
+    // revoke allowance
+    const ownerAllowance = await boostContract.ownerAllowance(newBoost.id);
+    await testToken.connect(owner).approve(boostContract.address, 0);
+
+    await cantClaim(
+      newBoost.id,
+      voter5,
+      [voter5],
+      await getSigs([voter5], guard, newBoost.id),
+      "Insufficient allowance"
+    );
+
+    // regrant allowance
+    await testToken.connect(owner).approve(boostContract.address, ownerAllowance);
+  });
+
   it(`Should not allow voter5 to claim ${AMOUNT_PER_ACC} tokens after boost has expired`, async function () {
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
@@ -176,12 +199,8 @@ describe("Boost", function () {
     );
   });
 
-  it("Should have an allowance over 42 of owner's test tokens and owner should have a balance of 92", async function () {
-    const ownerBalance = await boostContract.ownerBalance(newBoost.id);
-    expect(ownerBalance).to.deep.equal([
-      ethers.BigNumber.from(42),
-      ethers.BigNumber.from(92),
-    ]);
+  it("Should have an allowance over 42 of owner's tokens and owner should have a balance of 92", async function () {
+    await expectOwnerBalanceAndAllowance(newBoost.id, 92, 42);
   });
 
   it("Should not create a new boost with the same id", async function () {
