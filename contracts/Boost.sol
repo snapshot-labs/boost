@@ -9,7 +9,7 @@ contract Boost {
     struct BoostSettings {
         bytes32 id;
         address token;
-        uint256 depositAmount;
+        uint256 balance;
         uint256 amountPerAccount;
         address guard;
         uint256 expires;
@@ -38,18 +38,17 @@ contract Boost {
         uint256 expires
     ) public {
         require(boosts[id].id == 0x0, "Boost already exists");
-        require(expires > block.timestamp, "Expire date must be after current block timestamp");
+        require(depositAmount > 0, "Deposit amount must be > 0");
+        require(expires > block.timestamp, "Expire must be > block timestamp");
 
         address boostOwner = msg.sender;
 
-        if (depositAmount > 0) {
-            IERC20 token = IERC20(tokenAddress);
-            token.transferFrom(
-                boostOwner,
-                address(this),
-                depositAmount
-            );
-        }
+        IERC20 token = IERC20(tokenAddress);
+        token.transferFrom(
+            boostOwner,
+            address(this),
+            depositAmount
+        );
 
         boosts[id] = BoostSettings(
             id,
@@ -62,16 +61,19 @@ contract Boost {
         );
     }
 
-    // token balance of boost owner
-    function ownerBalance(bytes32 id) public view returns (uint256) {
+    function deposit(bytes32 id, uint256 amount) public {
+        require(amount > 0, "Amount must be > 0");
+        require(boosts[id].id != 0x0, "Boost does not exist");
+        require(boosts[id].owner == msg.sender, "Only owner can deposit");
+
         IERC20 token = IERC20(boosts[id].token);
-        return token.balanceOf(boosts[id].owner);
-    }
-    
-    // token allowance given to boost contract
-    function ownerAllowance(bytes32 id) public view returns (uint256) {
-        IERC20 token = IERC20(boosts[id].token);
-        return token.allowance(boosts[id].owner, address(this));
+        token.transferFrom(
+            boosts[id].owner,
+            address(this),
+            amount
+        );
+
+        boosts[id].balance += amount;
     }
 
     // claim for multiple accounts
@@ -80,12 +82,12 @@ contract Boost {
         address[] calldata recipients,
         bytes[] calldata signatures
     ) public {
-        require(recipients.length <= 10, "Too many recipients");
+        require(recipients.length <= 10, "Up to 10 recipients allowed");
         require(boosts[id].expires > block.timestamp, "Boost expired");
 
-        // check signatures, revert if one is invalid
+        // check signatures, revert if one is invalid or already claimed
         for (uint256 i = 0; i < recipients.length; i++) {
-            require(!claimed[recipients[i]][id], "Recipient already claimed");
+            require(!claimed[recipients[i]][id], "Recipient already claimed boost");
 
             bytes32 messageHash = keccak256(
                 abi.encodePacked(
@@ -104,12 +106,14 @@ contract Boost {
             );
         }
 
-        // mark as claimed and execute transfers
+        // mark as claimed, reduce boost balance and execute transfers
         for (uint256 i = 0; i < recipients.length; i++) {
+            require(boosts[id].balance > boosts[id].amountPerAccount, "Not enough balance");
+
             claimed[recipients[i]][id] = true;
+            boosts[id].balance -= boosts[id].amountPerAccount;
             IERC20 token = IERC20(boosts[id].token);
-            token.transferFrom(
-                boosts[id].owner,
+            token.transfer(
                 recipients[i],
                 boosts[id].amountPerAccount
             );
