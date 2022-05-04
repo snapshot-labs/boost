@@ -19,6 +19,7 @@ describe("Boost", function () {
   let inOneMinute: number;
 
   const PROPOSAL_ID_1 = ethers.utils.id("0x1");
+  const PROPOSAL_ID_2 = ethers.utils.id("0x2");
   const TOTAL_OWNER_TOKENS = 100;
   const BOOST_ALLOWANCE = 50;
   const BOOST_DEPOSIT = 25;
@@ -124,7 +125,7 @@ describe("Boost", function () {
         guard1.address,
         inOneMinute
       )
-    ).to.be.revertedWith("Deposit amount must be > 0");
+    ).to.be.revertedWith('BoostDepositRequired()');
   });
 
   it("Should not allow to create a boost with expire <= block timestamp", async function () {
@@ -137,7 +138,7 @@ describe("Boost", function () {
         guard1.address,
         now
       )
-    ).to.be.revertedWith("Expire must be > block timestamp");
+    ).to.be.revertedWith('BoostExpireTooLow()');
   });
 
   it("Should not allow to create a boost > owner1's token allowance", async function () {
@@ -195,7 +196,7 @@ describe("Boost", function () {
           guard1.address,
           inOneMinute
         )
-    ).to.be.revertedWith("Boost already exists");
+    ).to.be.revertedWith('BoostAlreadyExists()');
   });
 
   it(`Should have a balance of ${BOOST_DEPOSIT} tokens`, async function () {
@@ -223,7 +224,13 @@ describe("Boost", function () {
   it(`Should not allow others to deposit`, async function () {
     await expect(
       boostContractAs(owner2).deposit(PROPOSAL_ID_1, BOOST_DEPOSIT)
-    ).to.be.revertedWith("Only owner can deposit");
+    ).to.be.revertedWith("OnlyBoostOwner()");
+  });
+  
+  it(`Should not allow to deposit on boost that does not exist`, async function () {
+    await expect(
+      boostContractAs(owner2).deposit(PROPOSAL_ID_2, BOOST_DEPOSIT)
+    ).to.be.revertedWith("BoostDoesNotExist()");
   });
 
   // claim
@@ -252,7 +259,7 @@ describe("Boost", function () {
       boostId: boost.id,
       recipients: [voter1],
       signatures: await getSigs([voter1], guard1, boost.id),
-      errorMessage: "Recipient already claimed",
+      errorMessage: "RecipientAlreadyClaimed()",
     });
   });
 
@@ -261,7 +268,7 @@ describe("Boost", function () {
       boostId: boost.id,
       recipients: [nonVoter],
       signatures: await getSigs([voter4], guard1, boost.id),
-      errorMessage: "Invalid signature",
+      errorMessage: "InvalidSignature()",
     });
   });
 
@@ -272,7 +279,7 @@ describe("Boost", function () {
       boostId: boost.id,
       recipients: [voter4],
       signatures: await getSigs([voter4], guard1, boost.id),
-      errorMessage: "Boost expired",
+      errorMessage: "BoostExpired()",
     });
   });
 });

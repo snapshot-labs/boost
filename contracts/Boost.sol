@@ -1,9 +1,20 @@
 // SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+
+error BoostAlreadyExists();
+error BoostDoesNotExist();
+error BoostDepositRequired();
+error BoostExpireTooLow();
+error BoostExpired();
+error OnlyBoostOwner();
+error TooManyRecipients(uint256 allowed);
+error RecipientAlreadyClaimed();
+error InvalidSignature();
+error InsufficientBoostBalance();
 
 contract Boost {
     struct BoostSettings {
@@ -18,6 +29,8 @@ contract Boost {
 
     mapping(bytes32 => BoostSettings) public boosts;
     mapping(address => mapping(bytes32 => bool)) public claimed;
+
+    uint256 public constant MAX_CLAIM_RECIPIENTS = 10;
 
     // get boost by id
     function getBoost(bytes32 id)
@@ -37,9 +50,9 @@ contract Boost {
         address guard,
         uint256 expires
     ) public {
-        require(boosts[id].id == 0x0, "Boost already exists");
-        require(depositAmount > 0, "Deposit amount must be > 0");
-        require(expires > block.timestamp, "Expire must be > block timestamp");
+        if (boosts[id].id != 0x0) revert BoostAlreadyExists();
+        if (depositAmount == 0) revert BoostDepositRequired();
+        if (expires <= block.timestamp) revert BoostExpireTooLow();
 
         address boostOwner = msg.sender;
 
@@ -62,9 +75,9 @@ contract Boost {
     }
 
     function deposit(bytes32 id, uint256 amount) public {
-        require(amount > 0, "Amount must be > 0");
-        require(boosts[id].id != 0x0, "Boost does not exist");
-        require(boosts[id].owner == msg.sender, "Only owner can deposit");
+        if (amount == 0) revert BoostDepositRequired();
+        if (boosts[id].id == 0x0) revert BoostDoesNotExist();
+        if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
 
         IERC20 token = IERC20(boosts[id].token);
         token.transferFrom(
@@ -82,12 +95,13 @@ contract Boost {
         address[] calldata recipients,
         bytes[] calldata signatures
     ) public {
-        require(recipients.length <= 10, "Up to 10 recipients allowed");
-        require(boosts[id].expires > block.timestamp, "Boost expired");
+        if (boosts[id].id == 0x0) revert BoostDoesNotExist();
+        if (boosts[id].expires <= block.timestamp) revert BoostExpired();
+        if (recipients.length > MAX_CLAIM_RECIPIENTS) revert TooManyRecipients(MAX_CLAIM_RECIPIENTS);
 
         // check signatures, revert if one is invalid or already claimed
         for (uint256 i = 0; i < recipients.length; i++) {
-            require(!claimed[recipients[i]][id], "Recipient already claimed boost");
+            if (claimed[recipients[i]][id]) revert RecipientAlreadyClaimed();
 
             bytes32 messageHash = keccak256(
                 abi.encodePacked(
@@ -96,19 +110,17 @@ contract Boost {
                 )
             );
 
-            require(
-                SignatureChecker.isValidSignatureNow(
-                    boosts[id].guard,
-                    messageHash,
-                    signatures[i]
-                ),
-                "Invalid signature"
-            );
+            if (!SignatureChecker.isValidSignatureNow(
+                boosts[id].guard,
+                messageHash,
+                signatures[i]
+            )) revert InvalidSignature();
         }
 
         // mark as claimed, reduce boost balance and execute transfers
         for (uint256 i = 0; i < recipients.length; i++) {
-            require(boosts[id].balance > boosts[id].amountPerAccount, "Not enough balance");
+            if (boosts[id].balance < boosts[id].amountPerAccount)
+                revert InsufficientBoostBalance();
 
             claimed[recipients[i]][id] = true;
             boosts[id].balance -= boosts[id].amountPerAccount;
