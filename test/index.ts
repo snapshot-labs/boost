@@ -25,6 +25,7 @@ describe("Boost", function () {
   const BOOST_DEPOSIT = 25;
   const BOOST_TOPUP = 10;
   const AMOUNT_PER_ACC = 2;
+  const BOOST_DEPOSIT_END = BOOST_DEPOSIT + BOOST_TOPUP - (3 * AMOUNT_PER_ACC);
 
   const boostContractAs = (signer: SignerWithAddress) =>
     boostContract.connect(signer);
@@ -63,6 +64,33 @@ describe("Boost", function () {
         params.recipients.map((r) => r.address),
         params.signatures
       )
+    ).to.be.revertedWith(params.errorMessage);
+  }
+  
+  // Claims tokens and expects balances of provided recipients to change
+  async function expectWithdrawalToSucceed(params: {
+    owner: SignerWithAddress;
+    boostId: string;
+    token: any;
+    expectedBalances: number[];
+  }) {
+    await expect(() =>
+      boostContractAs(params.owner).withdraw(params.boostId)
+    ).to.changeTokenBalances(
+      params.token,
+      [boostContract, params.owner],
+      params.expectedBalances
+    );
+  }
+
+  // Claims tokens and expects a revert error message
+  async function expectWithdrawalToRevert(params: {
+    owner: SignerWithAddress;
+    boostId: string;
+    errorMessage: string;
+  }) {
+    await expect(
+      boostContractAs(params.owner).withdraw(params.boostId)
     ).to.be.revertedWith(params.errorMessage);
   }
 
@@ -206,7 +234,7 @@ describe("Boost", function () {
   });
 
   // deposit
-  it(`Should allow owner1 to deposit ${BOOST_TOPUP} tokens for the boost`, async function () {
+  it(`Should allow owner1 to deposit ${BOOST_TOPUP} more tokens for the boost`, async function () {
     await boostContractAs(owner1).deposit(PROPOSAL_ID_1, BOOST_TOPUP);
     boost = await boostContract.getBoost(PROPOSAL_ID_1);
     const balance = await testToken.balanceOf(boostContract.address);
@@ -233,7 +261,7 @@ describe("Boost", function () {
     ).to.be.revertedWith("BoostDoesNotExist()");
   });
 
-  // claim
+  // claim / withdraw
   it(`Should allow to claim ${AMOUNT_PER_ACC} tokens for voter1`, async function () {
     await expectClaimToSucceed({
       boostId: boost.id,
@@ -271,6 +299,23 @@ describe("Boost", function () {
       errorMessage: "InvalidSignature()",
     });
   });
+  
+  it(`Should not allow to claim ${AMOUNT_PER_ACC} tokens for voter4 with signature from guard2`, async function () {
+    await expectClaimToRevert({
+      boostId: boost.id,
+      recipients: [voter4],
+      signatures: await getSigs([voter4], guard2, boost.id),
+      errorMessage: "InvalidSignature()",
+    });
+  });
+
+  it(`Should not allow owner1 to withdraw ${BOOST_DEPOSIT_END} tokens before expire`, async function () {
+    await expectWithdrawalToRevert({
+      owner: owner1,
+      boostId: boost.id,
+      errorMessage: "BoostNotExpired()",
+    });
+  });
 
   it(`Should not allow to claim ${AMOUNT_PER_ACC} tokens for voter4 after boost has expired`, async function () {
     await network.provider.send("evm_increaseTime", [61]);
@@ -280,6 +325,29 @@ describe("Boost", function () {
       recipients: [voter4],
       signatures: await getSigs([voter4], guard1, boost.id),
       errorMessage: "BoostExpired()",
+    });
+  });
+
+  it(`Should have a balance of ${BOOST_DEPOSIT_END} tokens`, async function () {
+    const balance = await testToken.balanceOf(boostContract.address);
+
+    expect(balance).to.equal(BOOST_DEPOSIT_END);
+  });
+  
+  it(`Should not allow owner2 to withdraw ${BOOST_DEPOSIT_END} tokens`, async function () {
+    await expectWithdrawalToRevert({
+      owner: owner2,
+      boostId: boost.id,
+      errorMessage: "OnlyBoostOwner()",
+    });
+  });
+
+  it(`Should allow owner1 to withdraw ${BOOST_DEPOSIT_END} tokens`, async function () {
+    await expectWithdrawalToSucceed({
+      owner: owner1,
+      boostId: boost.id,
+      token: testToken,
+      expectedBalances: [0, TOTAL_OWNER_TOKENS - (BOOST_DEPOSIT - BOOST_DEPOSIT_END)],
     });
   });
 });
