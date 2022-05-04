@@ -347,7 +347,7 @@ describe("Boost", function () {
       owner: owner1,
       boostId: boost.id,
       token: testToken,
-      expectedBalances: [0, TOTAL_OWNER_TOKENS - (BOOST_DEPOSIT - BOOST_DEPOSIT_END)],
+      expectedBalances: [-BOOST_DEPOSIT_END, BOOST_DEPOSIT_END],
     });
   });
 });
