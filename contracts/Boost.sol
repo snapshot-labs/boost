@@ -10,6 +10,7 @@ error BoostDoesNotExist();
 error BoostDepositRequired();
 error BoostExpireTooLow();
 error BoostExpired();
+error BoostNotExpired();
 error OnlyBoostOwner();
 error TooManyRecipients(uint256 allowed);
 error RecipientAlreadyClaimed();
@@ -89,6 +90,18 @@ contract Boost {
         boosts[id].balance += amount;
     }
 
+    function withdraw(bytes32 id) public {
+        if (boosts[id].balance == 0) revert InsufficientBoostBalance();
+        if (boosts[id].expires > block.timestamp) revert BoostNotExpired();
+        if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
+
+        uint256 amount = boosts[id].balance;
+        boosts[id].balance = 0;
+
+        IERC20 token = IERC20(boosts[id].token);
+        token.transfer(boosts[id].owner, amount);
+    }
+
     // claim for multiple accounts
     function claim(
         bytes32 id,
@@ -125,10 +138,7 @@ contract Boost {
             claimed[recipients[i]][id] = true;
             boosts[id].balance -= boosts[id].amountPerAccount;
             IERC20 token = IERC20(boosts[id].token);
-            token.transfer(
-                recipients[i],
-                boosts[id].amountPerAccount
-            );
+            token.transfer(recipients[i], boosts[id].amountPerAccount);
         }
     }
 }
