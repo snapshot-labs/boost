@@ -350,4 +350,12 @@ describe("Boost", function () {
       expectedBalances: [-BOOST_DEPOSIT_END, BOOST_DEPOSIT_END],
     });
   });
+
+  it(`Should not allow owner1 to withdraw ${BOOST_DEPOSIT_END} tokens again`, async function () {
+    await expectWithdrawalToRevert({
+      owner: owner1,
+      boostId: boost.id,
+      errorMessage: "InsufficientBoostBalance()",
+    });
+  });
 });
