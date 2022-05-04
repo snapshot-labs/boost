@@ -31,6 +31,70 @@ describe("Boost", function () {
     boostContract.connect(signer);
 
   // Claims tokens and expects balances of provided recipients to change
+  async function expectCreateToSucceed(params: {
+    boostId: string;
+    owner: SignerWithAddress;
+    token: any;
+    depositAmount: number;
+    amountPerAcc: number;
+    guard: SignerWithAddress;
+    expires: number;
+  }) {
+    const createBoostTx = await boostContractAs(params.owner).create(
+      params.boostId,
+      params.token.address,
+      params.depositAmount,
+      params.amountPerAcc,
+      params.guard.address,
+      params.expires
+    );
+    await createBoostTx.wait();
+    boost = await boostContract.getBoost(params.boostId);
+
+    expect(boost.id).to.equal(params.boostId, "Boost id is not correct");
+    expect(boost.token).to.equal(
+      params.token.address,
+      "Boost token is not correct"
+    );
+    expect(boost.balance).to.equal(
+      params.depositAmount,
+      "Boost current balance is not correct"
+    );
+    expect(boost.amountPerAccount).to.equal(
+      params.amountPerAcc,
+      "Boost amount per account is not correct"
+    );
+    expect(boost.guard).to.equal(params.guard.address, "Boost guard is not correct");
+    expect(boost.expires).to.equal(params.expires, "Boost expires is not correct");
+    expect(boost.owner).to.equal(params.owner.address, "Boost owner is not correct");
+  }
+
+  // Claims tokens and expects a revert error message
+  async function expectCreateToRevert(params: {
+    boostId: string;
+    owner: SignerWithAddress;
+    token: any;
+    depositAmount: number;
+    amountPerAcc: number;
+    guard: SignerWithAddress;
+    expires: number;
+    errorMessage: string;
+  }) {
+    await expect(
+      boostContract
+        .connect(params.owner)
+        .create(
+          params.boostId,
+          params.token.address,
+          params.depositAmount,
+          params.amountPerAcc,
+          params.guard.address,
+          params.expires
+        )
+    ).to.be.revertedWith(params.errorMessage);
+  }
+
+  // Claims tokens and expects balances of provided recipients to change
   async function expectClaimToSucceed(params: {
     boostId: string;
     recipients: SignerWithAddress[];
@@ -157,74 +221,54 @@ describe("Boost", function () {
   });
 
   it("Should not allow to create a boost with expire <= block timestamp", async function () {
-    await expect(
-      boostContractAs(owner1).create(
-        PROPOSAL_ID_1,
-        testToken.address,
-        BOOST_DEPOSIT,
-        AMOUNT_PER_ACC,
-        guard1.address,
-        now
-      )
-    ).to.be.revertedWith('BoostExpireTooLow()');
+    await expectCreateToRevert({
+      boostId: PROPOSAL_ID_1,
+      owner: owner1,
+      token: testToken,
+      depositAmount: BOOST_DEPOSIT,
+      amountPerAcc: AMOUNT_PER_ACC,
+      guard: guard1,
+      expires: now,
+      errorMessage: "BoostExpireTooLow()",
+    });
   });
 
   it("Should not allow to create a boost > owner1's token allowance", async function () {
-    await expect(
-      boostContractAs(owner1).create(
-        PROPOSAL_ID_1,
-        testToken.address,
-        BOOST_ALLOWANCE + 1,
-        AMOUNT_PER_ACC,
-        guard1.address,
-        inOneMinute
-      )
-    ).to.be.revertedWith("ERC20: insufficient allowance");
+    await expectCreateToRevert({
+      boostId: PROPOSAL_ID_1,
+      owner: owner1,
+      token: testToken,
+      depositAmount: BOOST_ALLOWANCE + 1,
+      amountPerAcc: AMOUNT_PER_ACC,
+      guard: guard1,
+      expires: inOneMinute,
+      errorMessage: "ERC20: insufficient allowance"
+    });
   });
 
   it("Should allow to create a new boost as owner1, within allownace", async function () {
-    const createBoostTx = await boostContractAs(owner1).create(
-      PROPOSAL_ID_1,
-      testToken.address,
-      BOOST_DEPOSIT,
-      AMOUNT_PER_ACC,
-      guard1.address,
-      inOneMinute
-    );
-    await createBoostTx.wait();
-    boost = await boostContract.getBoost(PROPOSAL_ID_1);
-
-    expect(boost.id).to.equal(PROPOSAL_ID_1, "Boost id is not correct");
-    expect(boost.token).to.equal(
-      testToken.address,
-      "Boost token is not correct"
-    );
-    expect(boost.balance).to.equal(
-      BOOST_DEPOSIT,
-      "Boost current balance is not correct"
-    );
-    expect(boost.amountPerAccount).to.equal(
-      AMOUNT_PER_ACC,
-      "Boost amount per account is not correct"
-    );
-    expect(boost.guard).to.equal(guard1.address, "Boost guard is not correct");
-    expect(boost.expires).to.equal(inOneMinute, "Boost expires is not correct");
-    expect(boost.owner).to.equal(owner1.address, "Boost owner is not correct");
+    await expectCreateToSucceed({
+      boostId: PROPOSAL_ID_1,
+      owner: owner1,
+      token: testToken,
+      depositAmount: BOOST_DEPOSIT,
+      amountPerAcc: AMOUNT_PER_ACC,
+      guard: guard1,
+      expires: inOneMinute
+    });
   });
 
   it("Should not allow to create a new boost with the same id", async function () {
-    await expect(
-      boostContract
-        .connect(owner1)
-        .create(
-          PROPOSAL_ID_1,
-          testToken.address,
-          BOOST_DEPOSIT,
-          AMOUNT_PER_ACC,
-          guard1.address,
-          inOneMinute
-        )
-    ).to.be.revertedWith('BoostAlreadyExists()');
+    await expectCreateToRevert({
+      boostId: PROPOSAL_ID_1,
+      owner: owner1,
+      token: testToken,
+      depositAmount: BOOST_DEPOSIT,
+      amountPerAcc: AMOUNT_PER_ACC,
+      guard: guard1,
+      expires: inOneMinute,
+      errorMessage: "BoostAlreadyExists()"
+    });
   });
 
   it(`Should have a balance of ${BOOST_DEPOSIT} tokens`, async function () {
