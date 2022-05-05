@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 error BoostAlreadyExists();
 error BoostDoesNotExist();
 error BoostDepositRequired();
+error BoostAmountPerAccountRequired();
+error BoostDepositLessThanAmountPerAccount();
 error BoostExpireTooLow();
 error BoostExpired();
 error BoostNotExpired();
@@ -53,6 +55,8 @@ contract Boost {
     ) public {
         if (boosts[id].id != 0x0) revert BoostAlreadyExists();
         if (depositAmount == 0) revert BoostDepositRequired();
+        if (amountPerAccount == 0) revert BoostAmountPerAccountRequired();
+        if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
         if (expires <= block.timestamp) revert BoostExpireTooLow();
 
         address boostOwner = msg.sender;
