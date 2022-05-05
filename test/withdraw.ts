@@ -1,8 +1,8 @@
 import { expect } from "chai";
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { generateSignatures } from "./helpers";
+import { expireBoost, generateSignatures } from "./helpers";
 
 describe("Withdrawing", function () {
   let owner: SignerWithAddress;
@@ -42,11 +42,6 @@ describe("Withdrawing", function () {
     await boostTx.wait();
   });
 
-  async function expireBoost() {
-    await network.provider.send("evm_increaseTime", [61]);
-    await network.provider.send("evm_mine");
-  }
-
   it(`succeeds`, async function () {
     await expireBoost();
 
@@ -68,6 +63,7 @@ describe("Withdrawing", function () {
       boostContract.connect(guard).withdraw(boostId)
     ).to.be.revertedWith("OnlyBoostOwner()");
   });
+
   it(`reverts if boost balance is 0`, async function () {
     await boostContract
       .connect(claimer)

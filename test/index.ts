@@ -1,8 +1,8 @@
 import { expect } from "chai";
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { generateSignatures } from "./helpers";
+import { expireBoost, generateSignatures } from "./helpers";
 
 describe("Boost", function () {
   let owner1: SignerWithAddress;
@@ -367,7 +367,11 @@ describe("Boost", function () {
     await expectClaimToSucceed({
       boostId: BOOST_1_ID,
       recipients: [voter2, voter3],
-      signatures: await generateSignatures([voter2, voter3], guard1, BOOST_1_ID),
+      signatures: await generateSignatures(
+        [voter2, voter3],
+        guard1,
+        BOOST_1_ID
+      ),
       token: token1,
       expectedBalances: [BOOST_1_AMOUNT_PER_ACC, BOOST_1_AMOUNT_PER_ACC],
     });
@@ -429,8 +433,7 @@ describe("Boost", function () {
   // boost1 and boost2 expire
 
   it(`Should not allow to claim from boost1 for voter4 after expired`, async function () {
-    await network.provider.send("evm_increaseTime", [61]);
-    await network.provider.send("evm_mine");
+    await expireBoost();
     await expectClaimToRevert({
       boostId: BOOST_1_ID,
       recipients: [voter4],
