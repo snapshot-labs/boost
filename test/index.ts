@@ -19,28 +19,30 @@ describe("Boost", function () {
   let in1Minute: number;
   let in2Minutes: number;
   let in3Minutes: number;
-  
+
   const OWNER_1_TOKENS = 30;
   const OWNER_1_BOOST_ALLOWANCE = 30;
   const OWNER_2_TOKENS = 1000;
   const OWNER_2_BOOST_ALLOWANCE = 500;
-  
+
   const BOOST_1_ID = ethers.utils.id("0x1");
   const BOOST_1_DEPOSIT = 20;
   const BOOST_1_TOPUP = 10;
   const BOOST_1_AMOUNT_PER_ACC = 10;
-  const BOOST_1_DEPOSIT_END = BOOST_1_DEPOSIT + BOOST_1_TOPUP - BOOST_1_AMOUNT_PER_ACC * 3;
-  
+  const BOOST_1_DEPOSIT_END =
+    BOOST_1_DEPOSIT + BOOST_1_TOPUP - BOOST_1_AMOUNT_PER_ACC * 3;
+
   const BOOST_2_ID = ethers.utils.id("0x2");
   const BOOST_2_DEPOSIT = 199;
   const BOOST_2_AMOUNT_PER_ACC = 2;
   const BOOST_2_DEPOSIT_END = BOOST_2_DEPOSIT;
-  
+
   const BOOST_3_ID = ethers.utils.id("0x3");
   const BOOST_3_DEPOSIT = 290;
   const BOOST_3_TOPUP = 11;
   const BOOST_3_AMOUNT_PER_ACC = 33;
-  const BOOST_3_DEPOSIT_END = BOOST_3_DEPOSIT + BOOST_3_TOPUP - BOOST_3_AMOUNT_PER_ACC * 2;
+  const BOOST_3_DEPOSIT_END =
+    BOOST_3_DEPOSIT + BOOST_3_TOPUP - BOOST_3_AMOUNT_PER_ACC * 2;
 
   const boostContractAs = (signer: SignerWithAddress) =>
     boostContract.connect(signer);
@@ -64,7 +66,7 @@ describe("Boost", function () {
       params.expires
     );
     await createBoostTx.wait();
-    
+
     const boost = await boostContract.getBoost(params.boostId);
 
     expect(boost.id).to.equal(params.boostId, "Boost id is not correct");
@@ -80,9 +82,18 @@ describe("Boost", function () {
       params.amountPerAcc,
       "Boost amount per account is not correct"
     );
-    expect(boost.guard).to.equal(params.guard.address, "Boost guard is not correct");
-    expect(boost.expires).to.equal(params.expires, "Boost expires is not correct");
-    expect(boost.owner).to.equal(params.owner.address, "Boost owner is not correct");
+    expect(boost.guard).to.equal(
+      params.guard.address,
+      "Boost guard is not correct"
+    );
+    expect(boost.expires).to.equal(
+      params.expires,
+      "Boost expires is not correct"
+    );
+    expect(boost.owner).to.equal(
+      params.owner.address,
+      "Boost owner is not correct"
+    );
   }
 
   // Creates a boost and expects a revert error message
@@ -146,7 +157,7 @@ describe("Boost", function () {
       )
     ).to.be.revertedWith(params.errorMessage);
   }
-  
+
   // Claims tokens and expects balances of provided recipients to change
   async function expectWithdrawalToSucceed(params: {
     owner: SignerWithAddress;
@@ -266,7 +277,7 @@ describe("Boost", function () {
       amountPerAcc: BOOST_1_AMOUNT_PER_ACC,
       guard: guard1,
       expires: in1Minute,
-      errorMessage: "ERC20: insufficient allowance"
+      errorMessage: "ERC20: insufficient allowance",
     });
   });
 
@@ -278,7 +289,7 @@ describe("Boost", function () {
       depositAmount: BOOST_1_DEPOSIT,
       amountPerAcc: BOOST_1_AMOUNT_PER_ACC,
       guard: guard1,
-      expires: in1Minute
+      expires: in1Minute,
     });
   });
 
@@ -291,7 +302,7 @@ describe("Boost", function () {
       amountPerAcc: BOOST_1_AMOUNT_PER_ACC,
       guard: guard1,
       expires: in1Minute,
-      errorMessage: "BoostAlreadyExists()"
+      errorMessage: "BoostAlreadyExists()",
     });
   });
 
@@ -303,7 +314,7 @@ describe("Boost", function () {
       depositAmount: BOOST_2_DEPOSIT,
       amountPerAcc: BOOST_2_AMOUNT_PER_ACC,
       guard: guard1,
-      expires: in2Minutes
+      expires: in2Minutes,
     });
   });
 
@@ -315,11 +326,13 @@ describe("Boost", function () {
       depositAmount: BOOST_3_DEPOSIT,
       amountPerAcc: BOOST_3_AMOUNT_PER_ACC,
       guard: guard2,
-      expires: in3Minutes
+      expires: in3Minutes,
     });
   });
 
-  it(`Should have a contract balance of ${BOOST_1_DEPOSIT + BOOST_2_DEPOSIT} token1 and ${BOOST_3_DEPOSIT} token2`, async function () {
+  it(`Should have a contract balance of ${
+    BOOST_1_DEPOSIT + BOOST_2_DEPOSIT
+  } token1 and ${BOOST_3_DEPOSIT} token2`, async function () {
     const balance1 = await token1.balanceOf(boostContract.address);
     const balance2 = await token2.balanceOf(boostContract.address);
 
@@ -347,7 +360,7 @@ describe("Boost", function () {
       boostContractAs(owner2).deposit(BOOST_1_ID, BOOST_1_DEPOSIT)
     ).to.be.revertedWith("OnlyBoostOwner()");
   });
-  
+
   it(`Should not allow to deposit on boost that does not exist`, async function () {
     await expect(
       boostContractAs(owner2).deposit(BOOST_3_ID, BOOST_3_DEPOSIT)
@@ -404,7 +417,7 @@ describe("Boost", function () {
       errorMessage: "InvalidSignature()",
     });
   });
-  
+
   it(`Should not allow to claim from boost1 for voter4 with guard2 sig for voter4`, async function () {
     await expectClaimToRevert({
       boostId: BOOST_1_ID,
@@ -443,12 +456,14 @@ describe("Boost", function () {
     });
   });
 
-  it(`Should have a contract balance of ${BOOST_1_DEPOSIT_END + BOOST_2_DEPOSIT_END} token1`, async function () {
+  it(`Should have a contract balance of ${
+    BOOST_1_DEPOSIT_END + BOOST_2_DEPOSIT_END
+  } token1`, async function () {
     const balance = await token1.balanceOf(boostContract.address);
 
     expect(balance).to.equal(BOOST_1_DEPOSIT_END + BOOST_2_DEPOSIT_END);
   });
-  
+
   it(`Should not allow owner2 to withdraw token1 from boost1`, async function () {
     await expectWithdrawalToRevert({
       owner: owner2,

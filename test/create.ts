@@ -34,20 +34,30 @@ describe("Creating", function () {
     await token.connect(owner).mintForSelf(depositAmount);
     await token.connect(owner).approve(boostContract.address, depositAmount);
 
-    await expect(() => boostContract.connect(owner).create(
-      ethers.utils.id("0x1"),
-      token.address,
-      depositAmount,
-      10,
-      guard.address,
-      in1Minute
-    )).to.changeTokenBalances(token, [boostContract, owner], [depositAmount, -depositAmount]);
+    await expect(() =>
+      boostContract
+        .connect(owner)
+        .create(
+          ethers.utils.id("0x1"),
+          token.address,
+          depositAmount,
+          10,
+          guard.address,
+          in1Minute
+        )
+    ).to.changeTokenBalances(
+      token,
+      [boostContract, owner],
+      [depositAmount, -depositAmount]
+    );
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {
     const depositAmount = 100;
     await token.connect(owner).mintForSelf(depositAmount);
-    await token.connect(owner).approve(boostContract.address, depositAmount - 1);
+    await token
+      .connect(owner)
+      .approve(boostContract.address, depositAmount - 1);
 
     await expect(
       boostContract
@@ -151,7 +161,7 @@ describe("Creating", function () {
         amountPerAccount,
         guard.address,
         in1Minute
-      )
+      );
     await createFirst.wait();
 
     await expect(

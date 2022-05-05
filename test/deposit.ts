@@ -8,8 +8,8 @@ describe("Depositing", function () {
   let guard: SignerWithAddress;
   let boostContract: Boost;
   let token: TestToken;
-  
-  const boostId = ethers.utils.id("0x1");;
+
+  const boostId = ethers.utils.id("0x1");
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -26,30 +26,37 @@ describe("Depositing", function () {
   });
 
   async function createBoost(amount: number) {
-    const boostTx = await boostContract.connect(owner).create(
-      ethers.utils.id("0x1"),
-      token.address,
-      amount,
-      amount,
-      guard.address,
-      (await ethers.provider.getBlock("latest")).timestamp + 60
-    );
+    const boostTx = await boostContract
+      .connect(owner)
+      .create(
+        ethers.utils.id("0x1"),
+        token.address,
+        amount,
+        amount,
+        guard.address,
+        (await ethers.provider.getBlock("latest")).timestamp + 60
+      );
     await boostTx.wait();
   }
 
-  async function mintAndApprove(account: SignerWithAddress, mintAmount: number, approveAmount?: number) {
+  async function mintAndApprove(
+    account: SignerWithAddress,
+    mintAmount: number,
+    approveAmount?: number
+  ) {
     await token.connect(account).mintForSelf(mintAmount);
-    await token.connect(account).approve(boostContract.address, approveAmount || mintAmount);
+    await token
+      .connect(account)
+      .approve(boostContract.address, approveAmount || mintAmount);
   }
 
   it(`succeeds`, async function () {
     await mintAndApprove(owner, 200);
     await createBoost(100);
 
-    await expect(() => boostContract.connect(owner).deposit(
-      boostId,
-      100
-    )).to.changeTokenBalances(token, [boostContract, owner], [100, -100]);
+    await expect(() =>
+      boostContract.connect(owner).deposit(boostId, 100)
+    ).to.changeTokenBalances(token, [boostContract, owner], [100, -100]);
   });
 
   it(`reverts for other accounts than the boost owner`, async function () {
@@ -57,17 +64,15 @@ describe("Depositing", function () {
     await mintAndApprove(guard, 10);
     await createBoost(100);
 
-    await expect(boostContract.connect(guard).deposit(
-      boostId,
-      10
-    )).to.be.revertedWith("OnlyBoostOwner()");
+    await expect(
+      boostContract.connect(guard).deposit(boostId, 10)
+    ).to.be.revertedWith("OnlyBoostOwner()");
   });
 
   it(`reverts if boost does not exist`, async function () {
-    await expect(boostContract.connect(owner).deposit(
-      ethers.utils.id("0x1"),
-      10
-    )).to.be.revertedWith("BoostDoesNotExist()");
+    await expect(
+      boostContract.connect(owner).deposit(ethers.utils.id("0x1"), 10)
+    ).to.be.revertedWith("BoostDoesNotExist()");
   });
 
   it(`reverts if boost is expired`, async function () {
@@ -77,39 +82,35 @@ describe("Depositing", function () {
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
 
-    await expect(boostContract.connect(owner).deposit(
-      boostId,
-      10
-    )).to.be.revertedWith("BoostExpired()");
+    await expect(
+      boostContract.connect(owner).deposit(boostId, 10)
+    ).to.be.revertedWith("BoostExpired()");
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {
     await mintAndApprove(owner, 100, 50);
     await createBoost(50);
 
-    await expect(boostContract.connect(owner).deposit(
-      boostId,
-      10
-    )).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(
+      boostContract.connect(owner).deposit(boostId, 10)
+    ).to.be.revertedWith("ERC20: insufficient allowance");
   });
 
   it(`reverts if deposit exceeds token balance`, async function () {
     await mintAndApprove(owner, 100, 200);
     await createBoost(100);
 
-    await expect(boostContract.connect(owner).deposit(
-      boostId,
-      10
-    )).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    await expect(
+      boostContract.connect(owner).deposit(boostId, 10)
+    ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
   });
 
   it(`reverts if deposit is 0`, async function () {
     await mintAndApprove(owner, 100);
     await createBoost(50);
 
-    await expect(boostContract.connect(owner).deposit(
-      boostId,
-      0
-    )).to.be.revertedWith("BoostDepositRequired()");
+    await expect(
+      boostContract.connect(owner).deposit(boostId, 0)
+    ).to.be.revertedWith("BoostDepositRequired()");
   });
 });
