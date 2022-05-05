@@ -192,4 +192,46 @@ describe("Creating", function () {
         )
     ).to.be.revertedWith("BoostAlreadyExists()");
   });
+
+  it(`gets a boost that was created`, async function () {
+    const boostId = ethers.utils.id("0x1");
+    const depositAmount = 100;
+    const amountPerAccount = 10;
+    await token.connect(owner).mintForSelf(depositAmount);
+    await token.connect(owner).approve(boostContract.address, depositAmount);
+
+    const createTx = await boostContract
+      .connect(owner)
+      .create(
+        boostId,
+        token.address,
+        depositAmount,
+        amountPerAccount,
+        guard.address,
+        in1Minute
+      );
+    await createTx.wait();
+    
+    const boost = await boostContract.getBoost(boostId);
+
+    expect(boost.id).to.be.equal(boostId);
+    expect(boost.token).to.be.equal(token.address);
+    expect(boost.balance).to.be.equal(depositAmount);
+    expect(boost.amountPerAccount).to.be.equal(amountPerAccount);
+    expect(boost.guard).to.be.equal(guard.address);
+    expect(boost.expires).to.be.equal(in1Minute);
+    expect(boost.owner).to.be.equal(owner.address);
+  });
+
+  it(`doesn't get a boost that was not created`, async function () {
+    const boost = await boostContract.getBoost(ethers.utils.id("0x1"));
+
+    expect(boost.id).to.be.equal("0x0000000000000000000000000000000000000000000000000000000000000000");
+    expect(boost.token).to.be.equal("0x0000000000000000000000000000000000000000");
+    expect(boost.balance).to.be.equal(0);
+    expect(boost.amountPerAccount).to.be.equal(0);
+    expect(boost.guard).to.be.equal("0x0000000000000000000000000000000000000000");
+    expect(boost.expires).to.be.equal(0);
+    expect(boost.owner).to.be.equal("0x0000000000000000000000000000000000000000");
+  });
 });
