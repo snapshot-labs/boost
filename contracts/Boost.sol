@@ -117,8 +117,9 @@ contract Boost {
         if (boosts[id].expires <= block.timestamp) revert BoostExpired();
         if (recipients.length > MAX_CLAIM_RECIPIENTS) revert TooManyRecipients(MAX_CLAIM_RECIPIENTS);
 
-        // check signatures, revert if one is invalid or already claimed
+        // check signatures and boost balance, reduce balance and mark as claimed
         for (uint256 i = 0; i < recipients.length; i++) {
+            if (boosts[id].balance < boosts[id].amountPerAccount) revert InsufficientBoostBalance();
             if (claimed[recipients[i]][id]) revert RecipientAlreadyClaimed();
 
             bytes32 messageHash = keccak256(
@@ -133,15 +134,13 @@ contract Boost {
                 messageHash,
                 signatures[i]
             )) revert InvalidSignature();
-        }
-
-        // mark as claimed, reduce boost balance and execute transfers
-        for (uint256 i = 0; i < recipients.length; i++) {
-            if (boosts[id].balance < boosts[id].amountPerAccount)
-                revert InsufficientBoostBalance();
 
             claimed[recipients[i]][id] = true;
             boosts[id].balance -= boosts[id].amountPerAccount;
+        }
+
+        // execute transfers
+        for (uint256 i = 0; i < recipients.length; i++) {
             IERC20 token = IERC20(boosts[id].token);
             token.transfer(recipients[i], boosts[id].amountPerAccount);
         }
