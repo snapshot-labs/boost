@@ -146,6 +146,21 @@ describe("Creating", function () {
     ).to.be.revertedWith("BoostDepositRequired()");
   });
 
+  it(`reverts if expire is less or equal to block timestamp`, async function () {
+    await expect(
+      boostContract
+        .connect(owner)
+        .create(
+          ethers.utils.id("0x1"),
+          token.address,
+          100,
+          10,
+          guard.address,
+          now
+        )
+    ).to.be.revertedWith("BoostExpireTooLow()");
+  });
+
   it(`reverts if using the same boost id twice`, async function () {
     const depositAmount = 100;
     const amountPerAccount = 10;
