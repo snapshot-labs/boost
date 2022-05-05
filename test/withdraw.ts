@@ -2,7 +2,8 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { expireBoost, generateSignatures } from "./helpers";
+import { generateSignatures } from "../guard";
+import { expireBoost } from "./helpers";
 
 describe("Withdrawing", function () {
   let owner: SignerWithAddress;
