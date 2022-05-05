@@ -71,7 +71,7 @@ describe("Withdrawing", function () {
       .claim(
         boostId,
         [claimer.address],
-        await generateSignatures([claimer], guard, boostId)
+        await generateSignatures([claimer.address], guard, boostId)
       );
 
     await expireBoost();

@@ -1,21 +1,22 @@
 
-import { ethers } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { ethers, Signer } from "ethers";
 
 export async function generateSignatures(
-  voters: SignerWithAddress[],
-  guard: SignerWithAddress,
+  addresses: string[],
+  guard: Signer,
   boostId: string
 ) {
   const sigs: string[] = [];
-  for (const voter of voters) {
+
+  for (const address of addresses) {
     const message = ethers.utils.arrayify(
       ethers.utils.solidityKeccak256(
         ["bytes32", "address"],
-        [boostId, voter.address]
+        [boostId, address]
       )
     );
     sigs.push(await guard.signMessage(message));
   }
+
   return sigs;
 }

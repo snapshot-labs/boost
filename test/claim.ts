@@ -51,7 +51,7 @@ describe("Claiming", function () {
   });
 
   it(`succeeds for single recipient`, async function () {
-    const signatures = await generateSignatures([claimer1], guard, boostId);
+    const signatures = await generateSignatures([claimer1.address], guard, boostId);
     await expect(() =>
       boostContract
         .connect(claimer1)
@@ -61,7 +61,7 @@ describe("Claiming", function () {
 
   it(`succeeds for multiple recipients`, async function () {
     const signatures = await generateSignatures(
-      [claimer1, claimer2],
+      [claimer1.address, claimer2.address],
       guard,
       boostId
     );
@@ -77,7 +77,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature was already used`, async function () {
-    const signatures = await generateSignatures([claimer1], guard, boostId);
+    const signatures = await generateSignatures([claimer1.address], guard, boostId);
 
     await boostContract
       .connect(claimer1)
@@ -91,7 +91,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature is invalid`, async function () {
-    const signatures = await generateSignatures([claimer1], guard, boostId);
+    const signatures = await generateSignatures([claimer1.address], guard, boostId);
 
     await expect(
       boostContract
@@ -101,7 +101,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if boost is expired`, async function () {
-    const signatures = await generateSignatures([claimer1], guard, boostId);
+    const signatures = await generateSignatures([claimer1.address], guard, boostId);
 
     await expireBoost();
 
@@ -114,7 +114,7 @@ describe("Claiming", function () {
 
   it(`reverts if boost does not exist`, async function () {
     const signatures = await generateSignatures(
-      [claimer1],
+      [claimer1.address],
       guard,
       boostIdNotExists
     );
@@ -128,7 +128,7 @@ describe("Claiming", function () {
 
   it(`reverts if total claim amount exceeds boost balance`, async function () {
     const signatures = await generateSignatures(
-      [claimer1, claimer2, claimer3, claimer4],
+      [claimer1.address, claimer2.address, claimer3.address, claimer4.address],
       guard,
       boostId
     );
@@ -151,7 +151,7 @@ describe("Claiming", function () {
 
   it(`reverts if exceeds max recipients`, async function () {
     const maxRecipients = (await boostContract.MAX_CLAIM_RECIPIENTS()).toNumber();
-    const claimers = Array(maxRecipients + 1).fill(claimer1)
+    const claimers = Array(maxRecipients + 1).fill(claimer1.address)
     const signatures = await generateSignatures(claimers, guard, boostId);
 
     await expect(
@@ -159,7 +159,7 @@ describe("Claiming", function () {
         .connect(claimer1)
         .claim(
           boostId,
-          claimers.map((c) => c.address),
+          claimers,
           signatures
         )
     ).to.be.revertedWith(`TooManyRecipients(${maxRecipients})`);
