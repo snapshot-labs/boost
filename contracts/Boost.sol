@@ -82,6 +82,7 @@ contract Boost {
     function deposit(bytes32 id, uint256 amount) public {
         if (amount == 0) revert BoostDepositRequired();
         if (boosts[id].id == 0x0) revert BoostDoesNotExist();
+        if (boosts[id].expires <= block.timestamp) revert BoostExpired();
         if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
 
         IERC20 token = IERC20(boosts[id].token);
