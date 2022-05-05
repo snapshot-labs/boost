@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Boost, TestToken } from "../typechain";
+import { generateSignatures } from "./helpers";
 
 describe("Boost", function () {
   let owner1: SignerWithAddress;
@@ -12,9 +14,9 @@ describe("Boost", function () {
   let voter3: SignerWithAddress;
   let voter4: SignerWithAddress;
   let anyone: SignerWithAddress;
-  let token1: any;
-  let token2: any;
-  let boostContract: any;
+  let token1: TestToken;
+  let token2: TestToken;
+  let boostContract: Boost;
   let now: number;
   let in1Minute: number;
   let in2Minutes: number;
@@ -51,7 +53,7 @@ describe("Boost", function () {
   async function expectCreateToSucceed(params: {
     boostId: string;
     owner: SignerWithAddress;
-    token: any;
+    token: TestToken;
     depositAmount: number;
     amountPerAcc: number;
     guard: SignerWithAddress;
@@ -100,7 +102,7 @@ describe("Boost", function () {
   async function expectCreateToRevert(params: {
     boostId: string;
     owner: SignerWithAddress;
-    token: any;
+    token: TestToken;
     depositAmount: number;
     amountPerAcc: number;
     guard: SignerWithAddress;
@@ -126,7 +128,7 @@ describe("Boost", function () {
     boostId: string;
     recipients: SignerWithAddress[];
     signatures: string[];
-    token: any;
+    token: TestToken;
     expectedBalances: number[];
   }) {
     await expect(() =>
@@ -162,7 +164,7 @@ describe("Boost", function () {
   async function expectWithdrawalToSucceed(params: {
     owner: SignerWithAddress;
     boostId: string;
-    token: any;
+    token: TestToken;
     expectedBalances: number[];
   }) {
     await expect(() =>
@@ -183,25 +185,6 @@ describe("Boost", function () {
     await expect(
       boostContractAs(params.owner).withdraw(params.boostId)
     ).to.be.revertedWith(params.errorMessage);
-  }
-
-  // generate guard signatures for a boost
-  async function getSigs(
-    voters: SignerWithAddress[],
-    guard: SignerWithAddress,
-    boostId: string
-  ) {
-    const sigs: string[] = [];
-    for (const voter of voters) {
-      const message = ethers.utils.arrayify(
-        ethers.utils.solidityKeccak256(
-          ["bytes32", "address"],
-          [boostId, voter.address]
-        )
-      );
-      sigs.push(await guard.signMessage(message));
-    }
-    return sigs;
   }
 
   // preparations
@@ -374,7 +357,7 @@ describe("Boost", function () {
     await expectClaimToSucceed({
       boostId: BOOST_1_ID,
       recipients: [voter1],
-      signatures: await getSigs([voter1], guard1, BOOST_1_ID),
+      signatures: await generateSignatures([voter1], guard1, BOOST_1_ID),
       token: token1,
       expectedBalances: [BOOST_1_AMOUNT_PER_ACC],
     });
@@ -384,7 +367,7 @@ describe("Boost", function () {
     await expectClaimToSucceed({
       boostId: BOOST_1_ID,
       recipients: [voter2, voter3],
-      signatures: await getSigs([voter2, voter3], guard1, BOOST_1_ID),
+      signatures: await generateSignatures([voter2, voter3], guard1, BOOST_1_ID),
       token: token1,
       expectedBalances: [BOOST_1_AMOUNT_PER_ACC, BOOST_1_AMOUNT_PER_ACC],
     });
@@ -394,7 +377,7 @@ describe("Boost", function () {
     await expectClaimToSucceed({
       boostId: BOOST_2_ID,
       recipients: [voter4],
-      signatures: await getSigs([voter4], guard1, BOOST_2_ID),
+      signatures: await generateSignatures([voter4], guard1, BOOST_2_ID),
       token: token1,
       expectedBalances: [BOOST_2_AMOUNT_PER_ACC],
     });
@@ -404,7 +387,7 @@ describe("Boost", function () {
     await expectClaimToRevert({
       boostId: BOOST_1_ID,
       recipients: [voter1],
-      signatures: await getSigs([voter1], guard1, BOOST_1_ID),
+      signatures: await generateSignatures([voter1], guard1, BOOST_1_ID),
       errorMessage: "RecipientAlreadyClaimed()",
     });
   });
@@ -413,7 +396,7 @@ describe("Boost", function () {
     await expectClaimToRevert({
       boostId: BOOST_1_ID,
       recipients: [anyone],
-      signatures: await getSigs([voter4], guard1, BOOST_1_ID),
+      signatures: await generateSignatures([voter4], guard1, BOOST_1_ID),
       errorMessage: "InvalidSignature()",
     });
   });
@@ -422,7 +405,7 @@ describe("Boost", function () {
     await expectClaimToRevert({
       boostId: BOOST_1_ID,
       recipients: [voter4],
-      signatures: await getSigs([voter4], guard2, BOOST_1_ID),
+      signatures: await generateSignatures([voter4], guard2, BOOST_1_ID),
       errorMessage: "InvalidSignature()",
     });
   });
@@ -451,7 +434,7 @@ describe("Boost", function () {
     await expectClaimToRevert({
       boostId: BOOST_1_ID,
       recipients: [voter4],
-      signatures: await getSigs([voter4], guard1, BOOST_1_ID),
+      signatures: await generateSignatures([voter4], guard1, BOOST_1_ID),
       errorMessage: "BoostExpired()",
     });
   });
@@ -485,7 +468,7 @@ describe("Boost", function () {
     await expectClaimToSucceed({
       boostId: BOOST_1_ID,
       recipients: [voter1],
-      signatures: await getSigs([voter1], guard1, BOOST_1_ID),
+      signatures: await generateSignatures([voter1], guard1, BOOST_1_ID),
       token: token1,
       expectedBalances: [BOOST_1_AMOUNT_PER_ACC],
     });

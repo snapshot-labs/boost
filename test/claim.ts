@@ -1,8 +1,3 @@
-import { expect } from "chai";
-import { ethers, network } from "hardhat";
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost, TestToken } from "../typechain";
-
 describe("Claiming", function () {
   it(`succeeds for single recipient`);
   it(`succeeds for multiple recipients`);
