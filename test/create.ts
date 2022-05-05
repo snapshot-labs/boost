@@ -29,7 +29,7 @@ describe("Creating", function () {
     in1Minute = now + 60;
   });
 
-  it(`succeeds`, async function () {
+  it(`succeeds if boost is allowed to transfer tokens`, async function () {
     const depositAmount = 100;
     await token.connect(owner).mintForSelf(depositAmount);
     await token.connect(owner).approve(boostContract.address, depositAmount);

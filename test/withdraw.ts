@@ -42,7 +42,7 @@ describe("Withdrawing", function () {
     await boostTx.wait();
   });
 
-  it(`succeeds`, async function () {
+  it(`succeeds after boost is expired`, async function () {
     await expireBoost();
 
     await expect(() =>

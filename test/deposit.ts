@@ -50,7 +50,7 @@ describe("Depositing", function () {
       .approve(boostContract.address, approveAmount || mintAmount);
   }
 
-  it(`succeeds`, async function () {
+  it(`succeeds for existing boost`, async function () {
     await mintAndApprove(owner, 200);
     await createBoost(100);
 
