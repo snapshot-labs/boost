@@ -61,13 +61,6 @@ contract Boost {
 
         address boostOwner = msg.sender;
 
-        IERC20 token = IERC20(tokenAddress);
-        token.transferFrom(
-            boostOwner,
-            address(this),
-            depositAmount
-        );
-
         boosts[id] = BoostSettings(
             id,
             tokenAddress,
@@ -77,6 +70,13 @@ contract Boost {
             expires,
             boostOwner
         );
+
+        IERC20 token = IERC20(tokenAddress);
+        token.transferFrom(
+            boostOwner,
+            address(this),
+            depositAmount
+        );
     }
 
     function deposit(bytes32 id, uint256 amount) public {
@@ -84,6 +84,8 @@ contract Boost {
         if (boosts[id].id == 0x0) revert BoostDoesNotExist();
         if (boosts[id].expires <= block.timestamp) revert BoostExpired();
         if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
+        
+        boosts[id].balance += amount;
 
         IERC20 token = IERC20(boosts[id].token);
         token.transferFrom(
@@ -91,8 +93,6 @@ contract Boost {
             address(this),
             amount
         );
-
-        boosts[id].balance += amount;
     }
 
     function withdraw(bytes32 id) public {
