@@ -1,4 +1,3 @@
-
 import { ethers, Signer } from "ethers";
 
 export async function generateSignatures(
@@ -10,10 +9,7 @@ export async function generateSignatures(
 
   for (const address of addresses) {
     const message = ethers.utils.arrayify(
-      ethers.utils.solidityKeccak256(
-        ["bytes32", "address"],
-        [boostId, address]
-      )
+      ethers.utils.solidityKeccak256(["bytes32", "address"], [boostId, address])
     );
     sigs.push(await guard.signMessage(message));
   }

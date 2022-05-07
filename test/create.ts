@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
+import { getBoostId } from "./helpers";
 
 describe("Creating", function () {
   let owner: SignerWithAddress;
@@ -10,6 +11,8 @@ describe("Creating", function () {
   let token: TestToken;
   let now: number;
   let in1Minute: number;
+
+  const proposalId = ethers.utils.id("0x1");
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -38,7 +41,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           depositAmount,
           10,
@@ -63,7 +66,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           depositAmount,
           10,
@@ -82,7 +85,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           depositAmount,
           10,
@@ -102,7 +105,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           depositAmount,
           amountPerAccount,
@@ -121,7 +124,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           depositAmount,
           0,
@@ -136,7 +139,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           0,
           10,
@@ -151,7 +154,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           100,
           10,
@@ -161,7 +164,7 @@ describe("Creating", function () {
     ).to.be.revertedWith("BoostExpireTooLow()");
   });
 
-  it(`reverts if using the same boost id twice`, async function () {
+  it(`reverts if creating the same boost twice`, async function () {
     const depositAmount = 100;
     const amountPerAccount = 10;
     await token.connect(owner).mintForSelf(depositAmount);
@@ -170,7 +173,7 @@ describe("Creating", function () {
     const createFirst = await boostContract
       .connect(owner)
       .create(
-        ethers.utils.id("0x1"),
+        proposalId,
         token.address,
         depositAmount,
         amountPerAccount,
@@ -183,18 +186,17 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(
-          ethers.utils.id("0x1"),
+          proposalId,
           token.address,
           depositAmount,
           amountPerAccount,
           guard.address,
-          in1Minute
+          in1Minute + 1 // expire is irrelevant
         )
     ).to.be.revertedWith("BoostAlreadyExists()");
   });
 
   it(`gets a boost that was created`, async function () {
-    const boostId = ethers.utils.id("0x1");
     const depositAmount = 100;
     const amountPerAccount = 10;
     await token.connect(owner).mintForSelf(depositAmount);
@@ -203,7 +205,7 @@ describe("Creating", function () {
     const createTx = await boostContract
       .connect(owner)
       .create(
-        boostId,
+        proposalId,
         token.address,
         depositAmount,
         amountPerAccount,
@@ -211,7 +213,15 @@ describe("Creating", function () {
         in1Minute
       );
     await createTx.wait();
-    
+
+    const boostId = getBoostId(
+      proposalId,
+      token,
+      amountPerAccount,
+      guard,
+      owner
+    );
+
     const boost = await boostContract.getBoost(boostId);
 
     expect(boost.id).to.be.equal(boostId);
@@ -224,14 +234,29 @@ describe("Creating", function () {
   });
 
   it(`doesn't get a boost that was not created`, async function () {
-    const boost = await boostContract.getBoost(ethers.utils.id("0x1"));
+    const boostId = getBoostId(
+      proposalId,
+      token,
+      999,
+      guard,
+      owner
+    );
+    const boost = await boostContract.getBoost(boostId);
 
-    expect(boost.id).to.be.equal("0x0000000000000000000000000000000000000000000000000000000000000000");
-    expect(boost.token).to.be.equal("0x0000000000000000000000000000000000000000");
+    expect(boost.id).to.be.equal(
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    );
+    expect(boost.token).to.be.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
     expect(boost.balance).to.be.equal(0);
     expect(boost.amountPerAccount).to.be.equal(0);
-    expect(boost.guard).to.be.equal("0x0000000000000000000000000000000000000000");
+    expect(boost.guard).to.be.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
     expect(boost.expires).to.be.equal(0);
-    expect(boost.owner).to.be.equal("0x0000000000000000000000000000000000000000");
+    expect(boost.owner).to.be.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
   });
 });

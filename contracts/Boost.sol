@@ -22,11 +22,12 @@ error InsufficientBoostBalance();
 contract Boost {
     struct BoostSettings {
         bytes32 id;
+        bytes32 ref; // external reference, like proposal id
         address token;
         uint256 balance;
         uint256 amountPerAccount;
         address guard;
-        uint256 expires;
+        uint256 expires; // timestamp, maybe better block number?
         address owner;
     }
 
@@ -42,27 +43,31 @@ contract Boost {
         returns (BoostSettings memory boost)
     {
         boost = boosts[id];
-        return boost;
     }
 
     function create(
-        bytes32 id,
+        bytes32 ref,
         address tokenAddress,
         uint256 depositAmount,
         uint256 amountPerAccount,
         address guard,
         uint256 expires
     ) public {
-        if (boosts[id].id != 0x0) revert BoostAlreadyExists();
         if (depositAmount == 0) revert BoostDepositRequired();
         if (amountPerAccount == 0) revert BoostAmountPerAccountRequired();
         if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
         if (expires <= block.timestamp) revert BoostExpireTooLow();
 
+        // the uniqueness of a boost is based on those five fields
+        // vary one of them to create a new boost
+        bytes32 id = keccak256(abi.encodePacked(ref, tokenAddress, amountPerAccount, guard, msg.sender));
+        if (boosts[id].id != 0x0) revert BoostAlreadyExists();
+        
         address boostOwner = msg.sender;
 
         boosts[id] = BoostSettings(
             id,
+            ref,
             tokenAddress,
             depositAmount,
             amountPerAccount,
@@ -83,13 +88,12 @@ contract Boost {
         if (amount == 0) revert BoostDepositRequired();
         if (boosts[id].id == 0x0) revert BoostDoesNotExist();
         if (boosts[id].expires <= block.timestamp) revert BoostExpired();
-        if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
         
         boosts[id].balance += amount;
 
         IERC20 token = IERC20(boosts[id].token);
         token.transferFrom(
-            boosts[id].owner,
+            msg.sender,
             address(this),
             amount
         );

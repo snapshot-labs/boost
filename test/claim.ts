@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
 import { generateSignatures } from "../guard";
-import { expireBoost } from "./helpers";
+import { expireBoost, getBoostId } from "./helpers";
 
 describe("Claiming", function () {
   let owner: SignerWithAddress;
@@ -14,9 +14,9 @@ describe("Claiming", function () {
   let claimer4: SignerWithAddress;
   let boostContract: Boost;
   let token: TestToken;
+  let boostId: string;
 
-  const boostId = ethers.utils.id("0x1");
-  const boostIdNotExists = ethers.utils.id("0x2");
+  const proposalId = ethers.utils.id("0x1");
   const depositAmount = 100;
   const perAccount = 33;
 
@@ -40,7 +40,7 @@ describe("Claiming", function () {
     const boostTx = await boostContract
       .connect(owner)
       .create(
-        boostId,
+        proposalId,
         token.address,
         depositAmount,
         perAccount,
@@ -48,15 +48,24 @@ describe("Claiming", function () {
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
     await boostTx.wait();
+    boostId = getBoostId(proposalId, token, perAccount, guard, owner);
   });
 
   it(`succeeds for single recipient`, async function () {
-    const signatures = await generateSignatures([claimer1.address], guard, boostId);
+    const signatures = await generateSignatures(
+      [claimer1.address],
+      guard,
+      boostId
+    );
     await expect(() =>
       boostContract
         .connect(claimer1)
         .claim(boostId, [claimer1.address], signatures)
-    ).to.changeTokenBalances(token, [boostContract, claimer1], [-perAccount, perAccount]);
+    ).to.changeTokenBalances(
+      token,
+      [boostContract, claimer1],
+      [-perAccount, perAccount]
+    );
   });
 
   it(`succeeds for multiple recipients`, async function () {
@@ -77,7 +86,11 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature was already used`, async function () {
-    const signatures = await generateSignatures([claimer1.address], guard, boostId);
+    const signatures = await generateSignatures(
+      [claimer1.address],
+      guard,
+      boostId
+    );
 
     await boostContract
       .connect(claimer1)
@@ -91,7 +104,11 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature is invalid`, async function () {
-    const signatures = await generateSignatures([claimer1.address], guard, boostId);
+    const signatures = await generateSignatures(
+      [claimer1.address],
+      guard,
+      boostId
+    );
 
     await expect(
       boostContract
@@ -101,7 +118,11 @@ describe("Claiming", function () {
   });
 
   it(`reverts if boost is expired`, async function () {
-    const signatures = await generateSignatures([claimer1.address], guard, boostId);
+    const signatures = await generateSignatures(
+      [claimer1.address],
+      guard,
+      boostId
+    );
 
     await expireBoost();
 
@@ -116,8 +137,10 @@ describe("Claiming", function () {
     const signatures = await generateSignatures(
       [claimer1.address],
       guard,
-      boostIdNotExists
+      boostId
     );
+
+    const boostIdNotExists = ethers.utils.id("0x2");
 
     await expect(
       boostContract
@@ -150,18 +173,14 @@ describe("Claiming", function () {
   });
 
   it(`reverts if exceeds max recipients`, async function () {
-    const maxRecipients = (await boostContract.MAX_CLAIM_RECIPIENTS()).toNumber();
-    const claimers = Array(maxRecipients + 1).fill(claimer1.address)
+    const maxRecipients = (
+      await boostContract.MAX_CLAIM_RECIPIENTS()
+    ).toNumber();
+    const claimers = Array(maxRecipients + 1).fill(claimer1.address);
     const signatures = await generateSignatures(claimers, guard, boostId);
 
     await expect(
-      boostContract
-        .connect(claimer1)
-        .claim(
-          boostId,
-          claimers,
-          signatures
-        )
+      boostContract.connect(claimer1).claim(boostId, claimers, signatures)
     ).to.be.revertedWith(`TooManyRecipients(${maxRecipients})`);
   });
 });

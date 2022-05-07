@@ -2,14 +2,13 @@ import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
+import { getBoostId } from "./helpers";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
   let boostContract: Boost;
   let token: TestToken;
-
-  const boostId = ethers.utils.id("0x1");
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -26,10 +25,11 @@ describe("Depositing", function () {
   });
 
   async function createBoost(amount: number) {
+    const proposalId = ethers.utils.id("0x1");
     const boostTx = await boostContract
       .connect(owner)
       .create(
-        ethers.utils.id("0x1"),
+        proposalId,
         token.address,
         amount,
         amount,
@@ -37,6 +37,14 @@ describe("Depositing", function () {
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
     await boostTx.wait();
+
+    return getBoostId(
+      proposalId,
+      token,
+      amount,
+      guard,
+      owner
+    );
   }
 
   async function mintAndApprove(
@@ -52,21 +60,21 @@ describe("Depositing", function () {
 
   it(`succeeds for existing boost`, async function () {
     await mintAndApprove(owner, 200);
-    await createBoost(100);
+    const boostId = await createBoost(100);
 
     await expect(() =>
       boostContract.connect(owner).deposit(boostId, 100)
     ).to.changeTokenBalances(token, [boostContract, owner], [100, -100]);
   });
 
-  it(`reverts for other accounts than the boost owner`, async function () {
-    await mintAndApprove(owner, 100);
-    await mintAndApprove(guard, 10);
-    await createBoost(100);
+  it(`succeeds from different account`, async function () {
+    await mintAndApprove(owner, 200);
+    await mintAndApprove(guard, 50);
+    const boostId = await createBoost(100);
 
-    await expect(
-      boostContract.connect(guard).deposit(boostId, 10)
-    ).to.be.revertedWith("OnlyBoostOwner()");
+    await expect(() =>
+      boostContract.connect(guard).deposit(boostId, 50)
+    ).to.changeTokenBalances(token, [boostContract, guard], [50, -50]);
   });
 
   it(`reverts if boost does not exist`, async function () {
@@ -77,7 +85,7 @@ describe("Depositing", function () {
 
   it(`reverts if boost is expired`, async function () {
     await mintAndApprove(owner, 100);
-    await createBoost(90);
+    const boostId = await createBoost(90);
 
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
@@ -89,7 +97,7 @@ describe("Depositing", function () {
 
   it(`reverts if deposit exceeds token allowance`, async function () {
     await mintAndApprove(owner, 100, 50);
-    await createBoost(50);
+    const boostId = await createBoost(50);
 
     await expect(
       boostContract.connect(owner).deposit(boostId, 10)
@@ -98,7 +106,7 @@ describe("Depositing", function () {
 
   it(`reverts if deposit exceeds token balance`, async function () {
     await mintAndApprove(owner, 100, 200);
-    await createBoost(100);
+    const boostId = await createBoost(100);
 
     await expect(
       boostContract.connect(owner).deposit(boostId, 10)
@@ -107,7 +115,7 @@ describe("Depositing", function () {
 
   it(`reverts if deposit is 0`, async function () {
     await mintAndApprove(owner, 100);
-    await createBoost(50);
+    const boostId = await createBoost(50);
 
     await expect(
       boostContract.connect(owner).deposit(boostId, 0)

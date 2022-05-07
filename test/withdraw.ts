@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
 import { generateSignatures } from "../guard";
-import { expireBoost } from "./helpers";
+import { expireBoost, getBoostId } from "./helpers";
 
 describe("Withdrawing", function () {
   let owner: SignerWithAddress;
@@ -11,8 +11,7 @@ describe("Withdrawing", function () {
   let claimer: SignerWithAddress;
   let boostContract: Boost;
   let token: TestToken;
-
-  const boostId = ethers.utils.id("0x1");
+  let boostId: string;
 
   beforeEach(async function () {
     [owner, guard, claimer] = await ethers.getSigners();
@@ -30,10 +29,11 @@ describe("Withdrawing", function () {
     await token.connect(owner).mintForSelf(100);
     await token.connect(owner).approve(boostContract.address, 100);
 
+    const proposalId = ethers.utils.id("0x1");
     const boostTx = await boostContract
       .connect(owner)
       .create(
-        boostId,
+        proposalId,
         token.address,
         100,
         100,
@@ -41,6 +41,7 @@ describe("Withdrawing", function () {
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
     await boostTx.wait();
+    boostId = getBoostId(proposalId, token, 100, guard, owner);
   });
 
   it(`succeeds after boost is expired`, async function () {
