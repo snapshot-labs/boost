@@ -27,7 +27,7 @@ contract Boost {
         uint256 balance;
         uint256 amountPerAccount;
         address guard;
-        uint256 expires; // timestamp, maybe better block number?
+        uint256 expires; // timestamp, maybe better block number and start/end?
         address owner;
     }
 
