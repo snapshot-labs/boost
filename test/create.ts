@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { getBoostId } from "./helpers";
 
 describe("Creating", function () {
   let owner: SignerWithAddress;
@@ -52,7 +51,7 @@ describe("Creating", function () {
       token,
       [boostContract, owner],
       [depositAmount, -depositAmount]
-    );
+    )
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {
@@ -164,39 +163,8 @@ describe("Creating", function () {
     ).to.be.revertedWith("BoostExpireTooLow()");
   });
 
-  it(`reverts if creating the same boost twice`, async function () {
-    const depositAmount = 100;
-    const amountPerAccount = 10;
-    await token.connect(owner).mintForSelf(depositAmount);
-    await token.connect(owner).approve(boostContract.address, depositAmount);
-
-    const createFirst = await boostContract
-      .connect(owner)
-      .create(
-        proposalId,
-        token.address,
-        depositAmount,
-        amountPerAccount,
-        guard.address,
-        in1Minute
-      );
-    await createFirst.wait();
-
-    await expect(
-      boostContract
-        .connect(owner)
-        .create(
-          proposalId,
-          token.address,
-          depositAmount,
-          amountPerAccount,
-          guard.address,
-          in1Minute + 1 // expire is irrelevant
-        )
-    ).to.be.revertedWith("BoostAlreadyExists()");
-  });
-
   it(`gets a boost that was created`, async function () {
+    
     const depositAmount = 100;
     const amountPerAccount = 10;
     await token.connect(owner).mintForSelf(depositAmount);
@@ -214,17 +182,10 @@ describe("Creating", function () {
       );
     await createTx.wait();
 
-    const boostId = getBoostId(
-      proposalId,
-      token,
-      amountPerAccount,
-      guard,
-      owner
-    );
 
-    const boost = await boostContract.getBoost(boostId);
+    const boost = await boostContract.getBoost(1);
 
-    expect(boost.id).to.be.equal(boostId);
+    expect(boost.ref).to.be.equal(proposalId);
     expect(boost.token).to.be.equal(token.address);
     expect(boost.balance).to.be.equal(depositAmount);
     expect(boost.amountPerAccount).to.be.equal(amountPerAccount);
@@ -234,16 +195,9 @@ describe("Creating", function () {
   });
 
   it(`doesn't get a boost that was not created`, async function () {
-    const boostId = getBoostId(
-      proposalId,
-      token,
-      999,
-      guard,
-      owner
-    );
-    const boost = await boostContract.getBoost(boostId);
+    const boost = await boostContract.getBoost(99);
 
-    expect(boost.id).to.be.equal(
+    expect(boost.ref).to.be.equal(
       "0x0000000000000000000000000000000000000000000000000000000000000000"
     );
     expect(boost.token).to.be.equal(

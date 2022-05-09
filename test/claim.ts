@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
 import { generateSignatures } from "../guard";
-import { expireBoost, getBoostId } from "./helpers";
+import { expireBoost } from "./helpers";
 
 describe("Claiming", function () {
   let owner: SignerWithAddress;
@@ -14,7 +14,7 @@ describe("Claiming", function () {
   let claimer4: SignerWithAddress;
   let boostContract: Boost;
   let token: TestToken;
-  let boostId: string;
+  let boostId: number;
 
   const proposalId = ethers.utils.id("0x1");
   const depositAmount = 100;
@@ -48,7 +48,7 @@ describe("Claiming", function () {
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
     await boostTx.wait();
-    boostId = getBoostId(proposalId, token, perAccount, guard, owner);
+    boostId = 1;
   });
 
   it(`succeeds for single recipient`, async function () {

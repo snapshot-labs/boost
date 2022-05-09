@@ -21,7 +21,6 @@ error InsufficientBoostBalance();
 
 contract Boost {
     struct BoostSettings {
-        bytes32 id;
         bytes32 ref; // external reference, like proposal id
         address token;
         uint256 balance;
@@ -31,18 +30,31 @@ contract Boost {
         address owner;
     }
 
-    mapping(bytes32 => BoostSettings) public boosts;
-    mapping(address => mapping(bytes32 => bool)) public claimed;
+    event BoostCreated(uint256 id);
+
+    uint256 public nextBoostId = 1;
+    mapping(uint256 => BoostSettings) public boosts;
+    mapping(bytes32 => uint256[]) public boostIdsByRef;
+    mapping(address => mapping(uint256 => bool)) public claimed;
 
     uint256 public constant MAX_CLAIM_RECIPIENTS = 10;
 
     // get boost by id
-    function getBoost(bytes32 id)
+    function getBoost(uint256 id)
         public
         view
         returns (BoostSettings memory boost)
     {
         boost = boosts[id];
+    }
+
+    // get boosts by ref
+    function getBoostIdsByRef(bytes32 ref)
+        public
+        view
+        returns (uint256[] memory ids)
+    {
+        ids = boostIdsByRef[ref];
     }
 
     function create(
@@ -57,16 +69,10 @@ contract Boost {
         if (amountPerAccount == 0) revert BoostAmountPerAccountRequired();
         if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
         if (expires <= block.timestamp) revert BoostExpireTooLow();
-
-        // the uniqueness of a boost is based on those five fields
-        // vary one of them to create a new boost
-        bytes32 id = keccak256(abi.encodePacked(ref, tokenAddress, amountPerAccount, guard, msg.sender));
-        if (boosts[id].id != 0x0) revert BoostAlreadyExists();
         
         address boostOwner = msg.sender;
 
-        boosts[id] = BoostSettings(
-            id,
+        boosts[nextBoostId] = BoostSettings(
             ref,
             tokenAddress,
             depositAmount,
@@ -75,6 +81,9 @@ contract Boost {
             expires,
             boostOwner
         );
+        boostIdsByRef[ref].push(nextBoostId);
+        emit BoostCreated(nextBoostId);
+        nextBoostId++;
 
         IERC20 token = IERC20(tokenAddress);
         token.transferFrom(
@@ -84,9 +93,9 @@ contract Boost {
         );
     }
 
-    function deposit(bytes32 id, uint256 amount) public {
+    function deposit(uint256 id, uint256 amount) public {
         if (amount == 0) revert BoostDepositRequired();
-        if (boosts[id].id == 0x0) revert BoostDoesNotExist();
+        if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
         if (boosts[id].expires <= block.timestamp) revert BoostExpired();
         
         boosts[id].balance += amount;
@@ -99,7 +108,7 @@ contract Boost {
         );
     }
 
-    function withdraw(bytes32 id) public {
+    function withdraw(uint256 id) public {
         if (boosts[id].balance == 0) revert InsufficientBoostBalance();
         if (boosts[id].expires > block.timestamp) revert BoostNotExpired();
         if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
@@ -113,11 +122,11 @@ contract Boost {
 
     // claim for multiple accounts
     function claim(
-        bytes32 id,
+        uint256 id,
         address[] calldata recipients,
         bytes[] calldata signatures
     ) public {
-        if (boosts[id].id == 0x0) revert BoostDoesNotExist();
+        if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
         if (boosts[id].expires <= block.timestamp) revert BoostExpired();
         if (recipients.length > MAX_CLAIM_RECIPIENTS) revert TooManyRecipients(MAX_CLAIM_RECIPIENTS);
 

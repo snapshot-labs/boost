@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { getBoostId } from "./helpers";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
@@ -36,15 +35,8 @@ describe("Depositing", function () {
         guard.address,
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
-    await boostTx.wait();
-
-    return getBoostId(
-      proposalId,
-      token,
-      amount,
-      guard,
-      owner
-    );
+    const result = await boostTx.wait();
+    return result?.events?.[0]?.args?.id;
   }
 
   async function mintAndApprove(
