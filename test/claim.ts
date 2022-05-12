@@ -52,23 +52,23 @@ describe("Claiming", function () {
   });
 
   it(`succeeds for single recipient`, async function () {
-    const [ signature ] = await generateSignatures(
+    const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
     );
 
     await expect(() =>
-      expect(boostContract
-        .connect(claimer1)
-        .claim(boostId, claimer1.address, signature)
-      )
-      .to.emit(boostContract, "BoostClaimed"))
-      .to.changeTokenBalances(
-        token,
-        [boostContract, claimer1],
-        [-perAccount, perAccount]
-      );
+      expect(
+        boostContract
+          .connect(claimer1)
+          .claim(boostId, claimer1.address, signature)
+      ).to.emit(boostContract, "BoostClaimed")
+    ).to.changeTokenBalances(
+      token,
+      [boostContract, claimer1],
+      [-perAccount, perAccount]
+    );
   });
 
   it(`succeeds for multiple recipients`, async function () {
@@ -79,20 +79,20 @@ describe("Claiming", function () {
     );
 
     await expect(() =>
-      expect(boostContract
-        .connect(claimer1)
-        .claimMulti(boostId, [claimer1.address, claimer2.address], signatures)
-      )
-      .to.emit(boostContract, "BoostClaimed"))
-      .to.changeTokenBalances(
-        token,
-        [boostContract, claimer1, claimer2],
-        [-(perAccount * 2), perAccount, perAccount]
-      );
+      expect(
+        boostContract
+          .connect(claimer1)
+          .claimMulti(boostId, [claimer1.address, claimer2.address], signatures)
+      ).to.emit(boostContract, "BoostClaimed")
+    ).to.changeTokenBalances(
+      token,
+      [boostContract, claimer1, claimer2],
+      [-(perAccount * 2), perAccount, perAccount]
+    );
   });
 
   it(`reverts if a signature was already used`, async function () {
-    const [ signature ] = await generateSignatures(
+    const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -110,7 +110,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature is invalid`, async function () {
-    const [ signature ] = await generateSignatures(
+    const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -124,7 +124,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if boost is expired`, async function () {
-    const [ signature ] = await generateSignatures(
+    const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -140,7 +140,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if boost does not exist`, async function () {
-    const [ signature ] = await generateSignatures(
+    const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId

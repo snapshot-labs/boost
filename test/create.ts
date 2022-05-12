@@ -37,23 +37,23 @@ describe("Creating", function () {
     await token.connect(owner).approve(boostContract.address, depositAmount);
 
     await expect(() =>
-      expect(boostContract
-        .connect(owner)
-        .create(
-          proposalId,
-          token.address,
-          depositAmount,
-          10,
-          guard.address,
-          in1Minute
-        )
-      )
-      .to.emit(boostContract, "BoostCreated"))
-      .to.changeTokenBalances(
-        token,
-        [boostContract, owner],
-        [depositAmount, -depositAmount]
-      );
+      expect(
+        boostContract
+          .connect(owner)
+          .create(
+            proposalId,
+            token.address,
+            depositAmount,
+            10,
+            guard.address,
+            in1Minute
+          )
+      ).to.emit(boostContract, "BoostCreated")
+    ).to.changeTokenBalances(
+      token,
+      [boostContract, owner],
+      [depositAmount, -depositAmount]
+    );
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {
@@ -139,14 +139,7 @@ describe("Creating", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(
-          proposalId,
-          token.address,
-          0,
-          10,
-          guard.address,
-          in1Minute
-        )
+        .create(proposalId, token.address, 0, 10, guard.address, in1Minute)
     ).to.be.revertedWith("BoostDepositRequired()");
   });
 
@@ -154,19 +147,11 @@ describe("Creating", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(
-          proposalId,
-          token.address,
-          100,
-          10,
-          guard.address,
-          now
-        )
+        .create(proposalId, token.address, 100, 10, guard.address, now)
     ).to.be.revertedWith("BoostExpireTooLow()");
   });
 
   it(`gets a boost that was created`, async function () {
-    
     const depositAmount = 100;
     const amountPerAccount = 10;
     await token.connect(owner).mintForSelf(depositAmount);
@@ -183,7 +168,6 @@ describe("Creating", function () {
         in1Minute
       );
     await createTx.wait();
-
 
     const boost = await boostContract.getBoost(1);
 

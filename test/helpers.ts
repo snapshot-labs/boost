@@ -1,6 +1,4 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { ethers, network } from "hardhat";
-import { TestToken } from "../typechain";
+import { network } from "hardhat";
 
 export async function expireBoost() {
   await network.provider.send("evm_increaseTime", [61]);

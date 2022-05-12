@@ -55,9 +55,11 @@ describe("Depositing", function () {
     const boostId = await createBoost(100);
 
     await expect(() =>
-      expect(boostContract.connect(owner).deposit(boostId, 100))
-      .to.emit(boostContract, "BoostDeposited"))
-      .to.changeTokenBalances(token, [boostContract, owner], [100, -100]);
+      expect(boostContract.connect(owner).deposit(boostId, 100)).to.emit(
+        boostContract,
+        "BoostDeposited"
+      )
+    ).to.changeTokenBalances(token, [boostContract, owner], [100, -100]);
   });
 
   it(`succeeds from different account`, async function () {
