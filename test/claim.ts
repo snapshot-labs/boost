@@ -57,15 +57,18 @@ describe("Claiming", function () {
       guard,
       boostId
     );
+
     await expect(() =>
-      boostContract
+      expect(boostContract
         .connect(claimer1)
         .claim(boostId, claimer1.address, signature)
-    ).to.changeTokenBalances(
-      token,
-      [boostContract, claimer1],
-      [-perAccount, perAccount]
-    );
+      )
+      .to.emit(boostContract, "BoostClaimed"))
+      .to.changeTokenBalances(
+        token,
+        [boostContract, claimer1],
+        [-perAccount, perAccount]
+      );
   });
 
   it(`succeeds for multiple recipients`, async function () {
@@ -74,15 +77,18 @@ describe("Claiming", function () {
       guard,
       boostId
     );
+
     await expect(() =>
-      boostContract
+      expect(boostContract
         .connect(claimer1)
         .claimMulti(boostId, [claimer1.address, claimer2.address], signatures)
-    ).to.changeTokenBalances(
-      token,
-      [boostContract, claimer1, claimer2],
-      [-(perAccount * 2), perAccount, perAccount]
-    );
+      )
+      .to.emit(boostContract, "BoostClaimed"))
+      .to.changeTokenBalances(
+        token,
+        [boostContract, claimer1, claimer2],
+        [-(perAccount * 2), perAccount, perAccount]
+      );
   });
 
   it(`reverts if a signature was already used`, async function () {

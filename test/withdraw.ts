@@ -47,8 +47,9 @@ describe("Withdrawing", function () {
     await expireBoost();
 
     await expect(() =>
-      boostContract.connect(owner).withdraw(boostId)
-    ).to.changeTokenBalances(token, [boostContract, owner], [-100, 100]);
+      expect(boostContract.connect(owner).withdraw(boostId))
+      .to.emit(boostContract, "BoostWithdrawn"))
+      .to.changeTokenBalances(token, [boostContract, owner], [-100, 100]);
   });
 
   it(`reverts if boost is not expired`, async function () {

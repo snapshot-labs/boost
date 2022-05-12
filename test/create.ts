@@ -37,7 +37,7 @@ describe("Creating", function () {
     await token.connect(owner).approve(boostContract.address, depositAmount);
 
     await expect(() =>
-      boostContract
+      expect(boostContract
         .connect(owner)
         .create(
           proposalId,
@@ -47,11 +47,13 @@ describe("Creating", function () {
           guard.address,
           in1Minute
         )
-    ).to.changeTokenBalances(
-      token,
-      [boostContract, owner],
-      [depositAmount, -depositAmount]
-    )
+      )
+      .to.emit(boostContract, "BoostCreated"))
+      .to.changeTokenBalances(
+        token,
+        [boostContract, owner],
+        [depositAmount, -depositAmount]
+      );
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {

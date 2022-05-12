@@ -32,6 +32,9 @@ contract Boost {
     }
 
     event BoostCreated(uint256 id);
+    event BoostClaimed(uint256 id, address recipient);
+    event BoostDeposited(uint256 id, address sender, uint256 amount);
+    event BoostWithdrawn(uint256 id);
 
     uint256 public nextBoostId = 1;
     mapping(uint256 => BoostSettings) public boosts;
@@ -101,6 +104,8 @@ contract Boost {
         
         boosts[id].balance += amount;
 
+        emit BoostDeposited(id, msg.sender, amount);
+
         IERC20 token = IERC20(boosts[id].token);
         token.transferFrom(
             msg.sender,
@@ -116,6 +121,8 @@ contract Boost {
 
         uint256 amount = boosts[id].balance;
         boosts[id].balance = 0;
+
+        emit BoostWithdrawn(id);
 
         IERC20 token = IERC20(boosts[id].token);
         token.transfer(boosts[id].owner, amount);
@@ -180,5 +187,7 @@ contract Boost {
 
         claimed[recipient][id] = true;
         boosts[id].balance -= boosts[id].amountPerAccount;
+
+        emit BoostClaimed(id, recipient);
     }
 }
