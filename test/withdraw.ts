@@ -9,12 +9,13 @@ describe("Withdrawing", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
   let claimer: SignerWithAddress;
+  let anyone: SignerWithAddress;
   let boostContract: Boost;
   let token: TestToken;
   const boostId = 1;
 
   beforeEach(async function () {
-    [owner, guard, claimer] = await ethers.getSigners();
+    [owner, guard, claimer, anyone] = await ethers.getSigners();
 
     // deploy new boost contract
     const Boost = await ethers.getContractFactory("Boost");
@@ -47,16 +48,16 @@ describe("Withdrawing", function () {
     await expireBoost();
 
     await expect(() =>
-      expect(boostContract.connect(owner).withdraw(boostId)).to.emit(
+      expect(boostContract.connect(owner).withdraw(boostId, anyone.address)).to.emit(
         boostContract,
         "BoostWithdrawn"
       )
-    ).to.changeTokenBalances(token, [boostContract, owner], [-100, 100]);
+    ).to.changeTokenBalances(token, [boostContract, anyone], [-100, 100]);
   });
 
   it(`reverts if boost is not expired`, async function () {
     await expect(
-      boostContract.connect(owner).withdraw(boostId)
+      boostContract.connect(owner).withdraw(boostId, owner.address)
     ).to.be.revertedWith("BoostNotExpired()");
   });
 
@@ -64,7 +65,7 @@ describe("Withdrawing", function () {
     await expireBoost();
 
     await expect(
-      boostContract.connect(guard).withdraw(boostId)
+      boostContract.connect(guard).withdraw(boostId, guard.address)
     ).to.be.revertedWith("OnlyBoostOwner()");
   });
 
@@ -81,7 +82,7 @@ describe("Withdrawing", function () {
     await expireBoost();
 
     await expect(
-      boostContract.connect(owner).withdraw(boostId)
+      boostContract.connect(owner).withdraw(boostId, owner.address)
     ).to.be.revertedWith("InsufficientBoostBalance()");
   });
 });

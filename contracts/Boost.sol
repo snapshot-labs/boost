@@ -98,10 +98,11 @@ contract Boost {
     token.transferFrom(msg.sender, address(this), amount);
   }
 
-  function withdraw(uint256 id) public {
+  function withdraw(uint256 id, address to) public {
     if (boosts[id].balance == 0) revert InsufficientBoostBalance();
     if (boosts[id].expires > block.timestamp) revert BoostNotExpired();
     if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
+    if (to == address(0)) revert InvalidRecipient();
 
     uint256 amount = boosts[id].balance;
     boosts[id].balance = 0;
@@ -109,7 +110,7 @@ contract Boost {
     emit BoostWithdrawn(id);
 
     IERC20 token = IERC20(boosts[id].token);
-    token.transfer(boosts[id].owner, amount);
+    token.transfer(to, amount);
   }
 
   // check if boost can be claimed
