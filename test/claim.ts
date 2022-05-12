@@ -52,7 +52,7 @@ describe("Claiming", function () {
   });
 
   it(`succeeds for single recipient`, async function () {
-    const signatures = await generateSignatures(
+    const [ signature ] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -60,7 +60,7 @@ describe("Claiming", function () {
     await expect(() =>
       boostContract
         .connect(claimer1)
-        .claim(boostId, [claimer1.address], signatures)
+        .claim(boostId, claimer1.address, signature)
     ).to.changeTokenBalances(
       token,
       [boostContract, claimer1],
@@ -77,7 +77,7 @@ describe("Claiming", function () {
     await expect(() =>
       boostContract
         .connect(claimer1)
-        .claim(boostId, [claimer1.address, claimer2.address], signatures)
+        .claimMulti(boostId, [claimer1.address, claimer2.address], signatures)
     ).to.changeTokenBalances(
       token,
       [boostContract, claimer1, claimer2],
@@ -86,7 +86,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature was already used`, async function () {
-    const signatures = await generateSignatures(
+    const [ signature ] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -94,17 +94,17 @@ describe("Claiming", function () {
 
     await boostContract
       .connect(claimer1)
-      .claim(boostId, [claimer1.address], signatures);
+      .claim(boostId, claimer1.address, signature);
 
     await expect(
       boostContract
         .connect(claimer1)
-        .claim(boostId, [claimer1.address], signatures)
+        .claim(boostId, claimer1.address, signature)
     ).to.be.revertedWith("RecipientAlreadyClaimed()");
   });
 
   it(`reverts if a signature is invalid`, async function () {
-    const signatures = await generateSignatures(
+    const [ signature ] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -113,12 +113,12 @@ describe("Claiming", function () {
     await expect(
       boostContract
         .connect(claimer2)
-        .claim(boostId, [claimer2.address], signatures)
+        .claim(boostId, claimer2.address, signature)
     ).to.be.revertedWith("InvalidSignature()");
   });
 
   it(`reverts if boost is expired`, async function () {
-    const signatures = await generateSignatures(
+    const [ signature ] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -129,12 +129,12 @@ describe("Claiming", function () {
     await expect(
       boostContract
         .connect(claimer1)
-        .claim(boostId, [claimer1.address], signatures)
+        .claim(boostId, claimer1.address, signature)
     ).to.be.revertedWith("BoostExpired()");
   });
 
   it(`reverts if boost does not exist`, async function () {
-    const signatures = await generateSignatures(
+    const [ signature ] = await generateSignatures(
       [claimer1.address],
       guard,
       boostId
@@ -145,7 +145,7 @@ describe("Claiming", function () {
     await expect(
       boostContract
         .connect(claimer1)
-        .claim(boostIdNotExists, [claimer1.address], signatures)
+        .claim(boostIdNotExists, claimer1.address, signature)
     ).to.be.revertedWith("BoostDoesNotExist()");
   });
 
@@ -159,7 +159,7 @@ describe("Claiming", function () {
     await expect(
       boostContract
         .connect(claimer1)
-        .claim(
+        .claimMulti(
           boostId,
           [
             claimer1.address,
@@ -180,7 +180,7 @@ describe("Claiming", function () {
     const signatures = await generateSignatures(claimers, guard, boostId);
 
     await expect(
-      boostContract.connect(claimer1).claim(boostId, claimers, signatures)
+      boostContract.connect(claimer1).claimMulti(boostId, claimers, signatures)
     ).to.be.revertedWith(`TooManyRecipients(${maxRecipients})`);
   });
 });

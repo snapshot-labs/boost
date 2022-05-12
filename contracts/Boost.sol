@@ -15,6 +15,7 @@ error BoostExpired();
 error BoostNotExpired();
 error OnlyBoostOwner();
 error TooManyRecipients(uint256 allowed);
+error InvalidRecipient();
 error RecipientAlreadyClaimed();
 error InvalidSignature();
 error InsufficientBoostBalance();
@@ -120,36 +121,35 @@ contract Boost {
         token.transfer(boosts[id].owner, amount);
     }
 
-    // claim for multiple accounts
+    // check if boost can be claimed
+    modifier onlyOpenBoost(uint256 id) {
+        if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
+        if (boosts[id].expires <= block.timestamp) revert BoostExpired();
+        _;
+    }
+
+    // claim for single account
     function claim(
+        uint256 id,
+        address recipient,
+        bytes calldata signature
+    ) public onlyOpenBoost(id) {
+        _claim(id, recipient, signature);
+
+        // execute transfer
+        IERC20 token = IERC20(boosts[id].token);
+        token.transfer(recipient, boosts[id].amountPerAccount);
+    }
+
+    function claimMulti(
         uint256 id,
         address[] calldata recipients,
         bytes[] calldata signatures
-    ) public {
-        if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
-        if (boosts[id].expires <= block.timestamp) revert BoostExpired();
+    ) public onlyOpenBoost(id) {
         if (recipients.length > MAX_CLAIM_RECIPIENTS) revert TooManyRecipients(MAX_CLAIM_RECIPIENTS);
 
-        // check signatures and boost balance, reduce balance and mark as claimed
         for (uint256 i = 0; i < recipients.length; i++) {
-            if (boosts[id].balance < boosts[id].amountPerAccount) revert InsufficientBoostBalance();
-            if (claimed[recipients[i]][id]) revert RecipientAlreadyClaimed();
-
-            bytes32 messageHash = keccak256(
-                abi.encodePacked(
-                    "\x19Ethereum Signed Message:\n32",
-                    keccak256(abi.encodePacked(id, recipients[i]))
-                )
-            );
-
-            if (!SignatureChecker.isValidSignatureNow(
-                boosts[id].guard,
-                messageHash,
-                signatures[i]
-            )) revert InvalidSignature();
-
-            claimed[recipients[i]][id] = true;
-            boosts[id].balance -= boosts[id].amountPerAccount;
+            _claim(id, recipients[i], signatures[i]);
         }
 
         // execute transfers
@@ -157,5 +157,28 @@ contract Boost {
             IERC20 token = IERC20(boosts[id].token);
             token.transfer(recipients[i], boosts[id].amountPerAccount);
         }
+    }
+
+    // check signature and update store
+    function _claim(uint256 id, address recipient, bytes calldata signature) internal {
+        if (boosts[id].balance < boosts[id].amountPerAccount) revert InsufficientBoostBalance();
+        if (claimed[recipient][id]) revert RecipientAlreadyClaimed();
+        if (recipient == address(0)) revert InvalidRecipient();
+
+        bytes32 messageHash = keccak256(
+            abi.encodePacked(
+                "\x19Ethereum Signed Message:\n32",
+                keccak256(abi.encodePacked(id, recipient))
+            )
+        );
+
+        if (!SignatureChecker.isValidSignatureNow(
+            boosts[id].guard,
+            messageHash,
+            signature
+        )) revert InvalidSignature();
+
+        claimed[recipient][id] = true;
+        boosts[id].balance -= boosts[id].amountPerAccount;
     }
 }

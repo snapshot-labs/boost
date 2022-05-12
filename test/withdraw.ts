@@ -66,12 +66,13 @@ describe("Withdrawing", function () {
   });
 
   it(`reverts if boost balance is 0`, async function () {
+    const [ signature ] = await generateSignatures([claimer.address], guard, boostId);
     await boostContract
       .connect(claimer)
       .claim(
         boostId,
-        [claimer.address],
-        await generateSignatures([claimer.address], guard, boostId)
+        claimer.address,
+        signature
       );
 
     await expireBoost();
