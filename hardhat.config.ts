@@ -27,12 +27,12 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://eth-rinkeby.alchemyapi.io/v2/ugiPEBqMebLQbjro42kalZ1h4StpW_fR",
+        url: process.env.RINKEBY_URL || "",
         blockNumber: 10543146,
       },
     },
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
+    rinkeby: {
+      url: process.env.RINKEBY_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
