@@ -48,7 +48,10 @@ describe("Creating", function () {
             guard.address,
             in1Minute
           )
-      ).to.emit(boostContract, "BoostCreated")
+      )
+        .to.emit(boostContract, "BoostCreated")
+        // chaining events doesn't work yet. will be added in waffle v4
+        // .to.emit(boostContract, "BoostDeposited")
     ).to.changeTokenBalances(
       token,
       [boostContract, owner],
@@ -113,7 +116,7 @@ describe("Creating", function () {
           guard.address,
           in1Minute
         )
-    ).to.be.revertedWith("BoostDepositLessThanAmountPerAccount()");
+    ).to.be.revertedWith("BoostDepositLessThanAmountPerAccount");
   });
 
   it(`reverts if amount per account is 0`, async function () {
@@ -132,7 +135,7 @@ describe("Creating", function () {
           guard.address,
           in1Minute
         )
-    ).to.be.revertedWith("BoostAmountPerAccountRequired()");
+    ).to.be.revertedWith("BoostAmountPerAccountRequired");
   });
 
   it(`reverts if deposit amount is 0`, async function () {
@@ -140,7 +143,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(proposalId, token.address, 0, 10, guard.address, in1Minute)
-    ).to.be.revertedWith("BoostDepositRequired()");
+    ).to.be.revertedWith("BoostDepositRequired");
   });
 
   it(`reverts if expire is less or equal to block timestamp`, async function () {
@@ -148,7 +151,7 @@ describe("Creating", function () {
       boostContract
         .connect(owner)
         .create(proposalId, token.address, 100, 10, guard.address, now)
-    ).to.be.revertedWith("BoostExpireTooLow()");
+    ).to.be.revertedWith("BoostExpireTooLow");
   });
 
   it(`gets a boost that was created`, async function () {
@@ -169,7 +172,7 @@ describe("Creating", function () {
       );
     await createTx.wait();
 
-    const boost = await boostContract.getBoost(1);
+    const boost = await boostContract.boosts(1);
 
     expect(boost.ref).to.be.equal(proposalId);
     expect(boost.token).to.be.equal(token.address);
@@ -181,7 +184,7 @@ describe("Creating", function () {
   });
 
   it(`doesn't get a boost that was not created`, async function () {
-    const boost = await boostContract.getBoost(99);
+    const boost = await boostContract.boosts(99);
 
     expect(boost.ref).to.be.equal(
       "0x0000000000000000000000000000000000000000000000000000000000000000"

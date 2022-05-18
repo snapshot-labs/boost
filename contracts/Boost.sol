@@ -38,20 +38,9 @@ contract Boost {
 
   uint256 public nextBoostId = 1;
   mapping(uint256 => BoostSettings) public boosts;
-  mapping(bytes32 => uint256[]) public boostIdsByRef;
   mapping(address => mapping(uint256 => bool)) public claimed;
 
   uint256 public constant MAX_CLAIM_RECIPIENTS = 10;
-
-  // get boost by id
-  function getBoost(uint256 id) public view returns (BoostSettings memory boost) {
-    boost = boosts[id];
-  }
-
-  // get boosts by ref
-  function getBoostIdsByRef(bytes32 ref) public view returns (uint256[] memory ids) {
-    ids = boostIdsByRef[ref];
-  }
 
   function create(
     bytes32 ref,
@@ -66,23 +55,21 @@ contract Boost {
     if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
     if (expires <= block.timestamp) revert BoostExpireTooLow();
 
-    address boostOwner = msg.sender;
-
     boosts[nextBoostId] = BoostSettings(
       ref,
       tokenAddress,
-      depositAmount,
+      0,
       amountPerAccount,
       guard,
       expires,
-      boostOwner
+      msg.sender
     );
-    boostIdsByRef[ref].push(nextBoostId);
-    emit BoostCreated(nextBoostId);
-    nextBoostId++;
 
-    IERC20 token = IERC20(tokenAddress);
-    token.transferFrom(boostOwner, address(this), depositAmount);
+    emit BoostCreated(nextBoostId);
+
+    deposit(nextBoostId, depositAmount);
+    
+    nextBoostId++;
   }
 
   function deposit(uint256 id, uint256 amount) public {
