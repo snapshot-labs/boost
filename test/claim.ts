@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { generateSignatures } from "../guard";
+import { generateClaimSignatures } from "../guard";
 import { expireBoost } from "./helpers";
 
 describe("Claiming", function () {
@@ -52,7 +52,7 @@ describe("Claiming", function () {
   });
 
   it(`succeeds for single recipient`, async function () {
-    const [signature] = await generateSignatures(
+    const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
       boostId,
@@ -73,7 +73,7 @@ describe("Claiming", function () {
   });
 
   it(`succeeds for multiple recipients`, async function () {
-    const signatures = await generateSignatures(
+    const signatures = await generateClaimSignatures(
       [claimer1.address, claimer2.address],
       guard,
       boostId,
@@ -94,7 +94,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature was already used`, async function () {
-    const [signature] = await generateSignatures(
+    const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
       boostId,
@@ -113,7 +113,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if a signature is invalid`, async function () {
-    const [signature] = await generateSignatures(
+    const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
       boostId,
@@ -128,7 +128,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if boost is expired`, async function () {
-    const [signature] = await generateSignatures(
+    const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
       boostId,
@@ -145,7 +145,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if boost does not exist`, async function () {
-    const [signature] = await generateSignatures(
+    const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
       boostId,
@@ -162,7 +162,7 @@ describe("Claiming", function () {
   });
 
   it(`reverts if total claim amount exceeds boost balance`, async function () {
-    const signatures = await generateSignatures(
+    const signatures = await generateClaimSignatures(
       [claimer1.address, claimer2.address, claimer3.address, claimer4.address],
       guard,
       boostId,
@@ -190,7 +190,7 @@ describe("Claiming", function () {
       await boostContract.MAX_CLAIM_RECIPIENTS()
     ).toNumber();
     const claimers = Array(maxRecipients + 1).fill(claimer1.address);
-    const signatures = await generateSignatures(
+    const signatures = await generateClaimSignatures(
       claimers,
       guard,
       boostId,

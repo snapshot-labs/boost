@@ -2,7 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract } from "ethers";
 import { name, version } from "../package.json";
 
-export async function generateSignatures(
+export async function generateClaimSignatures(
   addresses: string[],
   guard: SignerWithAddress,
   boostId: number,

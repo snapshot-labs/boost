@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
-import { generateSignatures } from "../guard";
+import { generateClaimSignatures } from "../guard";
 import { expireBoost } from "./helpers";
 
 describe("Withdrawing", function () {
@@ -70,7 +70,7 @@ describe("Withdrawing", function () {
   });
 
   it(`reverts if boost balance is 0`, async function () {
-    const [signature] = await generateSignatures(
+    const [signature] = await generateClaimSignatures(
       [claimer.address],
       guard,
       boostId,
