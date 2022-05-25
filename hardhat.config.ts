@@ -28,11 +28,16 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url: process.env.RINKEBY_URL || "",
-        blockNumber: 10543146,
+        blockNumber: 10738289,
       },
     },
     rinkeby: {
       url: process.env.RINKEBY_URL || "",
+      accounts:
+        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    },
+    kovan: {
+      url: process.env.KOVAN_URL || "",
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
