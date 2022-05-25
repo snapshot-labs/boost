@@ -1,5 +1,6 @@
 {
-  "name": "hardhat-project",
+  "name": "@snapshot-labs/boost",
+  "version": "0.0.1",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",

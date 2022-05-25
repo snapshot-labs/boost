@@ -55,7 +55,8 @@ describe("Claiming", function () {
     const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     await expect(() =>
@@ -75,7 +76,8 @@ describe("Claiming", function () {
     const signatures = await generateSignatures(
       [claimer1.address, claimer2.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     await expect(() =>
@@ -95,7 +97,8 @@ describe("Claiming", function () {
     const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     await boostContract
@@ -113,7 +116,8 @@ describe("Claiming", function () {
     const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     await expect(
@@ -127,7 +131,8 @@ describe("Claiming", function () {
     const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     await expireBoost();
@@ -143,7 +148,8 @@ describe("Claiming", function () {
     const [signature] = await generateSignatures(
       [claimer1.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     const boostIdNotExists = ethers.utils.id("0x2");
@@ -159,7 +165,8 @@ describe("Claiming", function () {
     const signatures = await generateSignatures(
       [claimer1.address, claimer2.address, claimer3.address, claimer4.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
 
     await expect(
@@ -183,7 +190,12 @@ describe("Claiming", function () {
       await boostContract.MAX_CLAIM_RECIPIENTS()
     ).toNumber();
     const claimers = Array(maxRecipients + 1).fill(claimer1.address);
-    const signatures = await generateSignatures(claimers, guard, boostId);
+    const signatures = await generateSignatures(
+      claimers,
+      guard,
+      boostId,
+      boostContract
+    );
 
     await expect(
       boostContract.connect(claimer1).claimMulti(boostId, claimers, signatures)

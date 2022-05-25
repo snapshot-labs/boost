@@ -73,7 +73,8 @@ describe("Withdrawing", function () {
     const [signature] = await generateSignatures(
       [claimer.address],
       guard,
-      boostId
+      boostId,
+      boostContract
     );
     await boostContract
       .connect(claimer)
