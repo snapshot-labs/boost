@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
 error BoostAlreadyExists();
 error BoostDoesNotExist();
@@ -20,7 +21,13 @@ error RecipientAlreadyClaimed();
 error InvalidSignature();
 error InsufficientBoostBalance();
 
-contract Boost {
+contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
+  struct Claim {
+    uint256 boostId;
+    address recipient;
+  }
+  bytes32 public immutable claimStructHash = keccak256("Claim(uint256 boostId,address recipient)");
+
   struct BoostSettings {
     bytes32 ref; // external reference, like proposal id
     address token;
@@ -148,14 +155,11 @@ contract Boost {
     if (claimed[recipient][id]) revert RecipientAlreadyClaimed();
     if (recipient == address(0)) revert InvalidRecipient();
 
-    bytes32 messageHash = keccak256(
-      abi.encodePacked(
-        "\x19Ethereum Signed Message:\n32",
-        keccak256(abi.encodePacked(id, recipient))
-      )
+    bytes32 digest = _hashTypedDataV4(
+      keccak256(abi.encode(claimStructHash, id, recipient))
     );
 
-    if (!SignatureChecker.isValidSignatureNow(boosts[id].guard, messageHash, signature))
+    if (!SignatureChecker.isValidSignatureNow(boosts[id].guard, digest, signature))
       revert InvalidSignature();
 
     claimed[recipient][id] = true;
