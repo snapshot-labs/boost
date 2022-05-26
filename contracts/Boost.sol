@@ -56,7 +56,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     uint256 amountPerAccount,
     address guard,
     uint256 expires
-  ) public {
+  ) external {
     if (depositAmount == 0) revert BoostDepositRequired();
     if (amountPerAccount == 0) revert BoostAmountPerAccountRequired();
     if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
@@ -92,7 +92,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     token.transferFrom(msg.sender, address(this), amount);
   }
 
-  function withdraw(uint256 id, address to) public {
+  function withdraw(uint256 id, address to) external {
     if (boosts[id].balance == 0) revert InsufficientBoostBalance();
     if (boosts[id].expires > block.timestamp) revert BoostNotExpired();
     if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
@@ -119,7 +119,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     uint256 id,
     address recipient,
     bytes calldata signature
-  ) public onlyOpenBoost(id) {
+  ) external onlyOpenBoost(id) {
     _claim(id, recipient, signature);
 
     // execute transfer
@@ -131,7 +131,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     uint256 id,
     address[] calldata recipients,
     bytes[] calldata signatures
-  ) public onlyOpenBoost(id) {
+  ) external onlyOpenBoost(id) {
     if (recipients.length > MAX_CLAIM_RECIPIENTS) revert TooManyRecipients(MAX_CLAIM_RECIPIENTS);
 
     for (uint256 i = 0; i < recipients.length; i++) {
