@@ -184,21 +184,4 @@ describe("Claiming", function () {
         )
     ).to.be.revertedWith("InsufficientBoostBalance()");
   });
-
-  it(`reverts if exceeds max recipients`, async function () {
-    const maxRecipients = (
-      await boostContract.MAX_CLAIM_RECIPIENTS()
-    ).toNumber();
-    const claimers = Array(maxRecipients + 1).fill(claimer1.address);
-    const signatures = await generateClaimSignatures(
-      claimers,
-      guard,
-      boostId,
-      boostContract
-    );
-
-    await expect(
-      boostContract.connect(claimer1).claimMulti(boostId, claimers, signatures)
-    ).to.be.revertedWith(`TooManyRecipients(${maxRecipients})`);
-  });
 });

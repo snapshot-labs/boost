@@ -47,8 +47,6 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
   mapping(uint256 => BoostSettings) public boosts;
   mapping(address => mapping(uint256 => bool)) public claimed;
 
-  uint256 public constant MAX_CLAIM_RECIPIENTS = 10;
-
   function create(
     bytes32 ref,
     address tokenAddress,
@@ -121,31 +119,20 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     bytes calldata signature
   ) external onlyOpenBoost(id) {
     _claim(id, recipient, signature);
-
-    // execute transfer
-    IERC20 token = IERC20(boosts[id].token);
-    token.transfer(recipient, boosts[id].amountPerAccount);
   }
 
+  // claim for multiple accounts
   function claimMulti(
     uint256 id,
     address[] calldata recipients,
     bytes[] calldata signatures
   ) external onlyOpenBoost(id) {
-    if (recipients.length > MAX_CLAIM_RECIPIENTS) revert TooManyRecipients(MAX_CLAIM_RECIPIENTS);
-
     for (uint256 i = 0; i < recipients.length; i++) {
       _claim(id, recipients[i], signatures[i]);
     }
-
-    // execute transfers
-    for (uint256 i = 0; i < recipients.length; i++) {
-      IERC20 token = IERC20(boosts[id].token);
-      token.transfer(recipients[i], boosts[id].amountPerAccount);
-    }
   }
 
-  // check signature and update store
+  // check signature, update store, transfer tokens
   function _claim(
     uint256 id,
     address recipient,
@@ -166,5 +153,8 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     boosts[id].balance -= boosts[id].amountPerAccount;
 
     emit BoostClaimed(id, recipient);
+
+    IERC20 token = IERC20(boosts[id].token);
+    token.transfer(recipient, boosts[id].amountPerAccount);
   }
 }
