@@ -38,7 +38,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     address owner;
   }
 
-  event BoostCreated(uint256 id);
+  event BoostCreated(uint256 id, BoostSettings boost);
   event BoostClaimed(uint256 id, address recipient);
   event BoostDeposited(uint256 id, address sender, uint256 amount);
   event BoostWithdrawn(uint256 id);
@@ -60,21 +60,22 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
     if (expires <= block.timestamp) revert BoostExpireTooLow();
 
-    boosts[nextBoostId] = BoostSettings(
+    uint256 newId = nextBoostId;
+    nextBoostId++;
+    boosts[newId] = BoostSettings(
       ref,
       tokenAddress,
-      0,
+      depositAmount,
       amountPerAccount,
       guard,
       expires,
       msg.sender
     );
 
-    emit BoostCreated(nextBoostId);
-
-    deposit(nextBoostId, depositAmount);
+    IERC20 token = IERC20(tokenAddress);
+    token.transferFrom(msg.sender, address(this), depositAmount);
     
-    nextBoostId++;
+    emit BoostCreated(nextBoostId, boosts[newId]);
   }
 
   function deposit(uint256 id, uint256 amount) public {
