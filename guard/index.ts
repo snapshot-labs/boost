@@ -2,17 +2,19 @@ import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { name, version } from "../package.json";
 
 export async function generateClaimSignatures(
-  addresses: string[],
+  recipients: string[],
   guard: TypedDataSigner,
   chainId: number,
   boostId: number,
-  boostContractAddress: string
+  verifyingContract: string
 ) {
+  const sigs: string[] = [];
+
   const EIP712Domain = {
     name,
     version,
-    chainId: chainId,
-    verifyingContract: boostContractAddress
+    chainId,
+    verifyingContract
   };
 
   const EIP712Types = {
@@ -22,16 +24,14 @@ export async function generateClaimSignatures(
     ]
   };
 
-  const sigs: string[] = [];
-
-  for (const address of addresses) {
-    const claim = {
-      boostId,
-      recipient: address
-    };
-
-    const sig = await guard._signTypedData(EIP712Domain, EIP712Types, claim);
-    sigs.push(sig);
+  for (const recipient of recipients) {
+    sigs.push(
+      await guard._signTypedData(
+        EIP712Domain,
+        EIP712Types,
+        { boostId, recipient }
+      )
+    );
   }
 
   return sigs;
