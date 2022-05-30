@@ -1,10 +1,10 @@
-import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Contract } from "ethers";
+import { JsonRpcSigner } from "@ethersproject/providers";
+import { Contract } from "@ethersproject/contracts";
 import { name, version } from "../package.json";
 
 export async function generateClaimSignatures(
   addresses: string[],
-  guard: SignerWithAddress,
+  guard: JsonRpcSigner,
   boostId: number,
   boostContract: Contract
 ) {
