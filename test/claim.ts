@@ -55,8 +55,9 @@ describe("Claiming", function () {
     const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     await expect(() =>
@@ -76,8 +77,9 @@ describe("Claiming", function () {
     const signatures = await generateClaimSignatures(
       [claimer1.address, claimer2.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     await expect(() =>
@@ -97,8 +99,9 @@ describe("Claiming", function () {
     const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     await boostContract
@@ -116,8 +119,9 @@ describe("Claiming", function () {
     const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     await expect(
@@ -131,8 +135,9 @@ describe("Claiming", function () {
     const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     await expireBoost();
@@ -148,8 +153,9 @@ describe("Claiming", function () {
     const [signature] = await generateClaimSignatures(
       [claimer1.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     const boostIdNotExists = ethers.utils.id("0x2");
@@ -165,8 +171,9 @@ describe("Claiming", function () {
     const signatures = await generateClaimSignatures(
       [claimer1.address, claimer2.address, claimer3.address, claimer4.address],
       guard,
+      await guard.getChainId(),
       boostId,
-      boostContract
+      boostContract.address
     );
 
     await expect(

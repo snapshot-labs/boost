@@ -75,7 +75,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     IERC20 token = IERC20(tokenAddress);
     token.transferFrom(msg.sender, address(this), depositAmount);
     
-    emit BoostCreated(nextBoostId, boosts[newId]);
+    emit BoostCreated(newId, boosts[newId]);
   }
 
   function deposit(uint256 id, uint256 amount) public {

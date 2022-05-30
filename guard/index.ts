@@ -1,23 +1,18 @@
-import { JsonRpcSigner } from "@ethersproject/providers";
-import { Contract } from "@ethersproject/contracts";
+import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { name, version } from "../package.json";
 
 export async function generateClaimSignatures(
   addresses: string[],
-  guard: JsonRpcSigner,
+  guard: TypedDataSigner,
+  chainId: number,
   boostId: number,
-  boostContract: Contract
+  boostContractAddress: string
 ) {
-  const network = await guard.provider?.getNetwork();
-  if (!network) {
-    throw new Error("Cannot derive chain id from guard's provider");
-  }
-
   const EIP712Domain = {
     name,
     version,
-    chainId: network.chainId,
-    verifyingContract: boostContract.address
+    chainId: chainId,
+    verifyingContract: boostContractAddress
   };
 
   const EIP712Types = {

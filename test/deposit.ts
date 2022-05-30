@@ -2,6 +2,7 @@ import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost, TestToken } from "../typechain";
+import { BigNumber } from "ethers";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
@@ -36,7 +37,7 @@ describe("Depositing", function () {
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
     const result = await boostTx.wait();
-    return result?.events?.[0]?.args?.id;
+    return result.events?.find(e => e.event === "BoostCreated")?.args?.id;
   }
 
   async function mintAndApprove(
@@ -84,9 +85,9 @@ describe("Depositing", function () {
 
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
-
+    const amount = BigNumber.from(10);
     await expect(
-      boostContract.connect(owner).deposit(boostId, 10)
+      boostContract.connect(owner).deposit(boostId, amount)
     ).to.be.revertedWith("BoostExpired()");
   });
 
