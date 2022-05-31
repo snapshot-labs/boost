@@ -21,7 +21,7 @@ error RecipientAlreadyClaimed();
 error InvalidSignature();
 error InsufficientBoostBalance();
 
-contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
+contract Boost is EIP712("boost", "0.1.0") {
   struct Claim {
     uint256 boostId;
     address recipient;
