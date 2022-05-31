@@ -26,6 +26,8 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     uint256 boostId;
     address recipient;
   }
+  
+  /// @dev Used for hashing EIP712 claim messages
   bytes32 public immutable claimStructHash = keccak256("Claim(uint256 boostId,address recipient)");
 
   struct BoostSettings {
@@ -47,6 +49,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
   mapping(uint256 => BoostSettings) public boosts;
   mapping(address => mapping(uint256 => bool)) public claimed;
 
+  /// @notice Create a new boost and transfer tokens to it
   function create(
     bytes32 ref,
     address tokenAddress,
@@ -78,6 +81,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     emit BoostCreated(newId, boosts[newId]);
   }
 
+  /// @notice Top up an existing boost
   function deposit(uint256 id, uint256 amount) public {
     if (amount == 0) revert BoostDepositRequired();
     if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
@@ -91,6 +95,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     token.transferFrom(msg.sender, address(this), amount);
   }
 
+  /// @notice Withdraw remaining tokens from an expired boost
   function withdraw(uint256 id, address to) external {
     if (boosts[id].balance == 0) revert InsufficientBoostBalance();
     if (boosts[id].expires > block.timestamp) revert BoostNotExpired();
@@ -106,14 +111,14 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     token.transfer(to, amount);
   }
 
-  // check if boost can be claimed
+  /// @dev check if boost can be claimed
   modifier onlyOpenBoost(uint256 id) {
     if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
     if (boosts[id].expires <= block.timestamp) revert BoostExpired();
     _;
   }
 
-  // claim for single account
+  /// @notice Claim for single account
   function claim(
     uint256 id,
     address recipient,
@@ -122,7 +127,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     _claim(id, recipient, signature);
   }
 
-  // claim for multiple accounts
+  /// @notice Claim for multiple accounts
   function claimMulti(
     uint256 id,
     address[] calldata recipients,
@@ -133,7 +138,7 @@ contract Boost is EIP712("@snapshot-labs/boost", "0.0.1") {
     }
   }
 
-  // check signature, update store, transfer tokens
+  // @dev Perform a single claim (verify sig, update state, transfer tokens)
   function _claim(
     uint256 id,
     address recipient,
