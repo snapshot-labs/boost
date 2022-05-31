@@ -1,6 +1,6 @@
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { BigNumber } from "ethers";
-import { version } from "../package.json";
+import { version } from "./package.json";
 import { Claim } from "./types";
 
 export async function generateClaimSignatures(

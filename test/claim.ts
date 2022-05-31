@@ -2,10 +2,10 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost } from "../typechain";
-import { generateClaimSignatures } from "../guard";
+import { generateClaimSignatures } from "@snapshot-labs/boost";
+import { snapshotVotesStrategy } from "@snapshot-labs/boost/strategies/snapshot-votes";
 import { expireBoost, deployContracts } from "./helpers";
 import { BigNumber, Contract } from "ethers";
-import { snapshotVotesStrategy } from "../guard/strategies/snapshot-votes";
 
 describe("Claiming", function () {
   let owner: SignerWithAddress;

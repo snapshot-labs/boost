@@ -1,0 +1,23 @@
+{
+  "name": "@snapshot-labs/boost",
+  "version": "0.1.0",
+  "description": "A set of tools and strategies to issue signatures for boost claims.",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/snapshot-labs/boost.git"
+  },
+  "author": "mktcode",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/snapshot-labs/boost/issues"
+  },
+  "homepage": "https://github.com/snapshot-labs/boost#readme",
+  "dependencies": {
+    "@ethersproject/abstract-signer": "^5.6.2",
+    "ethers": "^5.6.8"
+  }
+}
