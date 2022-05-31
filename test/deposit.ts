@@ -1,14 +1,15 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost, TestToken } from "../typechain";
-import { BigNumber } from "ethers";
+import { Boost } from "../typechain";
+import { BigNumber, Contract } from "ethers";
+import TestTokenArtifact from "./TestTokenArtifact.json";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
   let boostContract: Boost;
-  let token: TestToken;
+  let token: Contract;
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -19,7 +20,7 @@ describe("Depositing", function () {
     await boostContract.deployed();
 
     // deploy new token contract
-    const TestToken = await ethers.getContractFactory("TestToken");
+    const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact)
     token = await TestToken.deploy("Test Token", "TST");
     await token.deployed();
   });

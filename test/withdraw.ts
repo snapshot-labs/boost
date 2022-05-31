@@ -1,9 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost, TestToken } from "../typechain";
+import { Boost } from "../typechain";
 import { generateClaimSignatures } from "../guard";
 import { expireBoost } from "./helpers";
+import TestTokenArtifact from "./TestTokenArtifact.json";
+import { Contract } from "ethers";
 
 describe("Withdrawing", function () {
   let owner: SignerWithAddress;
@@ -11,7 +13,7 @@ describe("Withdrawing", function () {
   let claimer: SignerWithAddress;
   let anyone: SignerWithAddress;
   let boostContract: Boost;
-  let token: TestToken;
+  let token: Contract;
   const boostId = 1;
 
   beforeEach(async function () {
@@ -23,7 +25,7 @@ describe("Withdrawing", function () {
     await boostContract.deployed();
 
     // deploy new token contract
-    const TestToken = await ethers.getContractFactory("TestToken");
+    const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact)
     token = await TestToken.deploy("Test Token", "TST");
     await token.deployed();
 

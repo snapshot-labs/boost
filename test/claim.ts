@@ -1,9 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost, TestToken } from "../typechain";
+import { Boost } from "../typechain";
 import { generateClaimSignatures } from "../guard";
 import { expireBoost } from "./helpers";
+import TestTokenArtifact from "./TestTokenArtifact.json";
+import { Contract } from "ethers";
 
 describe("Claiming", function () {
   let owner: SignerWithAddress;
@@ -13,7 +15,7 @@ describe("Claiming", function () {
   let claimer3: SignerWithAddress;
   let claimer4: SignerWithAddress;
   let boostContract: Boost;
-  let token: TestToken;
+  let token: Contract;
   let boostId: number;
 
   const proposalId = ethers.utils.id("0x1");
@@ -30,7 +32,7 @@ describe("Claiming", function () {
     await boostContract.deployed();
 
     // deploy new token contract
-    const TestToken = await ethers.getContractFactory("TestToken");
+    const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact)
     token = await TestToken.deploy("Test Token", "TST");
     await token.deployed();
 
