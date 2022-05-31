@@ -3,9 +3,9 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost } from "../typechain";
 import { generateClaimSignatures } from "../guard";
-import { expireBoost } from "./helpers";
-import TestTokenArtifact from "./TestTokenArtifact.json";
-import { Contract } from "ethers";
+import { expireBoost, deployContracts } from "./helpers";
+import { BigNumber, Contract } from "ethers";
+import { snapshotVotesStrategy, } from "../guard/strategies/snapshot-votes";
 
 describe("Withdrawing", function () {
   let owner: SignerWithAddress;
@@ -13,33 +13,25 @@ describe("Withdrawing", function () {
   let claimer: SignerWithAddress;
   let anyone: SignerWithAddress;
   let boostContract: Boost;
-  let token: Contract;
-  const boostId = 1;
+  let tokenContract: Contract;
+  const boostId = BigNumber.from(1);
+  const depositAmount = 1;
 
   beforeEach(async function () {
     [owner, guard, claimer, anyone] = await ethers.getSigners();
 
-    // deploy new boost contract
-    const Boost = await ethers.getContractFactory("Boost");
-    boostContract = await Boost.deploy();
-    await boostContract.deployed();
+    ({ boostContract, tokenContract } = await deployContracts());
 
-    // deploy new token contract
-    const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact)
-    token = await TestToken.deploy("Test Token", "TST");
-    await token.deployed();
-
-    await token.connect(owner).mintForSelf(100);
-    await token.connect(owner).approve(boostContract.address, 100);
+    await tokenContract.connect(owner).mintForSelf(100);
+    await tokenContract.connect(owner).approve(boostContract.address, 100);
 
     const proposalId = ethers.utils.id("0x1");
     const boostTx = await boostContract
       .connect(owner)
       .create(
         proposalId,
-        token.address,
-        100,
-        100,
+        tokenContract.address,
+        depositAmount,
         guard.address,
         (await ethers.provider.getBlock("latest")).timestamp + 60
       );
@@ -54,7 +46,7 @@ describe("Withdrawing", function () {
         boostContract,
         "BoostWithdrawn"
       )
-    ).to.changeTokenBalances(token, [boostContract, anyone], [-100, 100]);
+    ).to.changeTokenBalances(tokenContract, [boostContract, anyone], [-depositAmount, depositAmount]);
   });
 
   it(`reverts if boost is not expired`, async function () {
@@ -72,16 +64,18 @@ describe("Withdrawing", function () {
   });
 
   it(`reverts if boost balance is 0`, async function () {
+    const chainId = await guard.getChainId();
+    const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, [claimer.address]);
     const [signature] = await generateClaimSignatures(
-      [claimer.address],
+      [claim],
       guard,
-      await guard.getChainId(),
+      chainId,
       boostId,
       boostContract.address
     );
     await boostContract
       .connect(claimer)
-      .claim(boostId, claimer.address, signature);
+      .claim(boostId, claim.recipient, claim.amount, signature);
 
     await expireBoost();
 

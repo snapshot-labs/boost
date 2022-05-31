@@ -9,8 +9,6 @@ import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 error BoostAlreadyExists();
 error BoostDoesNotExist();
 error BoostDepositRequired();
-error BoostAmountPerAccountRequired();
-error BoostDepositLessThanAmountPerAccount();
 error BoostExpireTooLow();
 error BoostExpired();
 error BoostNotExpired();
@@ -25,16 +23,16 @@ contract Boost is EIP712("boost", "0.1.0") {
   struct Claim {
     uint256 boostId;
     address recipient;
+    uint256 amount;
   }
   
   /// @dev Used for hashing EIP712 claim messages
-  bytes32 public immutable claimStructHash = keccak256("Claim(uint256 boostId,address recipient)");
+  bytes32 public immutable claimStructHash = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
   struct BoostSettings {
     bytes32 ref; // external reference, like proposal id
     address token;
     uint256 balance;
-    uint256 amountPerAccount;
     address guard;
     uint256 expires; // timestamp, maybe better block number and start/end?
     address owner;
@@ -54,13 +52,10 @@ contract Boost is EIP712("boost", "0.1.0") {
     bytes32 ref,
     address tokenAddress,
     uint256 depositAmount,
-    uint256 amountPerAccount,
     address guard,
     uint256 expires
   ) external {
     if (depositAmount == 0) revert BoostDepositRequired();
-    if (amountPerAccount == 0) revert BoostAmountPerAccountRequired();
-    if (depositAmount < amountPerAccount) revert BoostDepositLessThanAmountPerAccount();
     if (expires <= block.timestamp) revert BoostExpireTooLow();
 
     uint256 newId = nextBoostId;
@@ -69,7 +64,6 @@ contract Boost is EIP712("boost", "0.1.0") {
       ref,
       tokenAddress,
       depositAmount,
-      amountPerAccount,
       guard,
       expires,
       msg.sender
@@ -122,19 +116,21 @@ contract Boost is EIP712("boost", "0.1.0") {
   function claim(
     uint256 id,
     address recipient,
+    uint256 amount,
     bytes calldata signature
   ) external onlyOpenBoost(id) {
-    _claim(id, recipient, signature);
+    _claim(id, recipient, amount, signature);
   }
 
   /// @notice Claim for multiple accounts
   function claimMulti(
     uint256 id,
     address[] calldata recipients,
+    uint256[] calldata amounts,
     bytes[] calldata signatures
   ) external onlyOpenBoost(id) {
     for (uint256 i = 0; i < recipients.length; i++) {
-      _claim(id, recipients[i], signatures[i]);
+      _claim(id, recipients[i], amounts[i], signatures[i]);
     }
   }
 
@@ -142,25 +138,26 @@ contract Boost is EIP712("boost", "0.1.0") {
   function _claim(
     uint256 id,
     address recipient,
+    uint256 amount,
     bytes calldata signature
   ) internal {
-    if (boosts[id].balance < boosts[id].amountPerAccount) revert InsufficientBoostBalance();
+    if (boosts[id].balance < amount) revert InsufficientBoostBalance();
     if (claimed[recipient][id]) revert RecipientAlreadyClaimed();
     if (recipient == address(0)) revert InvalidRecipient();
 
     bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(claimStructHash, id, recipient))
+      keccak256(abi.encode(claimStructHash, id, recipient, amount))
     );
 
     if (!SignatureChecker.isValidSignatureNow(boosts[id].guard, digest, signature))
       revert InvalidSignature();
 
     claimed[recipient][id] = true;
-    boosts[id].balance -= boosts[id].amountPerAccount;
+    boosts[id].balance -= amount;
 
     emit BoostClaimed(id, recipient);
 
     IERC20 token = IERC20(boosts[id].token);
-    token.transfer(recipient, boosts[id].amountPerAccount);
+    token.transfer(recipient, amount);
   }
 }

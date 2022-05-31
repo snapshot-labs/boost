@@ -3,26 +3,18 @@ import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Boost } from "../typechain";
 import { BigNumber, Contract } from "ethers";
-import TestTokenArtifact from "./TestTokenArtifact.json";
+import { deployContracts } from "./helpers";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
   let boostContract: Boost;
-  let token: Contract;
+  let tokenContract: Contract;
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
 
-    // deploy new boost contract
-    const Boost = await ethers.getContractFactory("Boost");
-    boostContract = await Boost.deploy();
-    await boostContract.deployed();
-
-    // deploy new token contract
-    const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact)
-    token = await TestToken.deploy("Test Token", "TST");
-    await token.deployed();
+    ({ boostContract, tokenContract } = await deployContracts());
   });
 
   async function createBoost(amount: number) {
@@ -31,8 +23,7 @@ describe("Depositing", function () {
       .connect(owner)
       .create(
         proposalId,
-        token.address,
-        amount,
+        tokenContract.address,
         amount,
         guard.address,
         (await ethers.provider.getBlock("latest")).timestamp + 60
@@ -46,8 +37,8 @@ describe("Depositing", function () {
     mintAmount: number,
     approveAmount?: number
   ) {
-    await token.connect(account).mintForSelf(mintAmount);
-    await token
+    await tokenContract.connect(account).mintForSelf(mintAmount);
+    await tokenContract
       .connect(account)
       .approve(boostContract.address, approveAmount || mintAmount);
   }
@@ -61,7 +52,7 @@ describe("Depositing", function () {
         boostContract,
         "BoostDeposited"
       )
-    ).to.changeTokenBalances(token, [boostContract, owner], [100, -100]);
+    ).to.changeTokenBalances(tokenContract, [boostContract, owner], [100, -100]);
   });
 
   it(`succeeds from different account`, async function () {
@@ -71,7 +62,7 @@ describe("Depositing", function () {
 
     await expect(() =>
       boostContract.connect(guard).deposit(boostId, 50)
-    ).to.changeTokenBalances(token, [boostContract, guard], [50, -50]);
+    ).to.changeTokenBalances(tokenContract, [boostContract, guard], [50, -50]);
   });
 
   it(`reverts if boost does not exist`, async function () {

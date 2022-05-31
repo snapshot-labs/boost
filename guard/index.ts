@@ -1,17 +1,19 @@
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
-import { name, version } from "../package.json";
+import { BigNumber } from "ethers";
+import { version } from "../package.json";
+import { Claim } from "./types";
 
 export async function generateClaimSignatures(
-  recipients: string[],
+  claims: Claim[],
   guard: TypedDataSigner,
   chainId: number,
-  boostId: number,
+  boostId: BigNumber,
   verifyingContract: string
 ) {
   const sigs: string[] = [];
 
   const EIP712Domain = {
-    name,
+    name: "boost",
     version,
     chainId,
     verifyingContract
@@ -20,16 +22,17 @@ export async function generateClaimSignatures(
   const EIP712Types = {
     Claim: [
       { name: 'boostId', type: 'uint256' },
-      { name: 'recipient', type: 'address' }
+      { name: 'recipient', type: 'address' },
+      { name: 'amount', type: 'uint256' }
     ]
   };
 
-  for (const recipient of recipients) {
+  for (const claim of claims) {
     sigs.push(
       await guard._signTypedData(
         EIP712Domain,
         EIP712Types,
-        { boostId, recipient }
+        { boostId, recipient: claim.recipient, amount: claim.amount }
       )
     );
   }
