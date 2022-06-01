@@ -1,6 +1,7 @@
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { BigNumber } from "ethers";
 import { createClient, TypedDocumentNode } from 'urql';
+import { fetch } from 'cross-fetch';
 import { Claim } from "./types";
 
 export async function generateClaimSignatures(
@@ -46,6 +47,7 @@ export async function querySubgraph(query: string | TypedDocumentNode, chainId: 
 
   const client = createClient({
     url: apiUrls[chainId],
+    fetch
   })
 
   return await client.query(query).toPromise()
