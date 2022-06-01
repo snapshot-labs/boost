@@ -1,5 +1,6 @@
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { BigNumber } from "ethers";
+import { createClient, TypedDocumentNode } from 'urql';
 import { version } from "./package.json";
 import { Claim } from "./types";
 
@@ -38,4 +39,15 @@ export async function generateClaimSignatures(
   }
 
   return sigs;
+}
+
+export async function querySubgraph(query: string | TypedDocumentNode, chainId: number, apiKey: string) {
+  const apiUrls: string[] = [];
+  apiUrls[4] = `https://api.studio.thegraph.com/query/12054/boost/v0.0.9?${apiKey}`;
+
+  const client = createClient({
+    url: apiUrls[chainId],
+  })
+
+  return await client.query(query).toPromise()
 }
