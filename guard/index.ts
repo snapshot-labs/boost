@@ -1,7 +1,6 @@
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { BigNumber } from "ethers";
 import { createClient, TypedDocumentNode } from 'urql';
-import { version } from "./package.json";
 import { Claim } from "./types";
 
 export async function generateClaimSignatures(
@@ -15,7 +14,7 @@ export async function generateClaimSignatures(
 
   const EIP712Domain = {
     name: "boost",
-    version,
+    version: "0.1.0",
     chainId,
     verifyingContract
   };
