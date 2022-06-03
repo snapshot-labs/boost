@@ -38,7 +38,8 @@ describe("Creating", function () {
             token: tokenContract.address,
             balance: depositAmount,
             guard: guard.address,
-            expires: in1Minute,
+            start: now,
+            end: in1Minute,
             owner: owner.address,
           })
       )
@@ -65,7 +66,8 @@ describe("Creating", function () {
           token: tokenContract.address,
           balance: depositAmount,
           guard: guard.address,
-          expires: in1Minute,
+          start: now,
+          end: in1Minute,
           owner: owner.address
         })
     ).to.be.revertedWith("ERC20: insufficient allowance");
@@ -83,7 +85,8 @@ describe("Creating", function () {
           token: tokenContract.address,
           balance: depositAmount,
           guard: guard.address,
-          expires: in1Minute,
+          start: now,
+          end: in1Minute,
           owner: owner.address
         })
     ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
@@ -97,7 +100,8 @@ describe("Creating", function () {
           token: tokenContract.address,
           balance: 0,
           guard: guard.address,
-          expires: in1Minute,
+          start: now,
+          end: in1Minute,
           owner: owner.address
         })
     ).to.be.revertedWith("BoostDepositRequired");
@@ -111,10 +115,11 @@ describe("Creating", function () {
           token: tokenContract.address,
           balance: 100,
           guard: guard.address,
-          expires: now,
+          start: now,
+          end: now,
           owner: owner.address
         })
-    ).to.be.revertedWith("BoostExpireTooLow");
+    ).to.be.revertedWith("BoostEndDateInPast");
   });
 
   it(`gets a boost that was created`, async function () {
@@ -128,7 +133,8 @@ describe("Creating", function () {
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
-        expires: in1Minute,
+        start: now,
+        end: in1Minute,
         owner: owner.address
       });
     await createTx.wait();
@@ -139,24 +145,14 @@ describe("Creating", function () {
     expect(boost.token).to.be.equal(tokenContract.address);
     expect(boost.balance).to.be.equal(depositAmount);
     expect(boost.guard).to.be.equal(guard.address);
-    expect(boost.expires).to.be.equal(in1Minute);
+    expect(boost.start).to.be.equal(now);
+    expect(boost.end).to.be.equal(in1Minute);
     expect(boost.owner).to.be.equal(owner.address);
   });
 
   it(`doesn't get a boost that was not created`, async function () {
     const boost = await boostContract.boosts(99);
 
-    expect(boost.ref).to.be.equal(
-      "0x0000000000000000000000000000000000000000000000000000000000000000"
-    );
-    expect(boost.token).to.be.equal(
-      "0x0000000000000000000000000000000000000000"
-    );
-    expect(boost.balance).to.be.equal(0);
-    expect(boost.guard).to.be.equal(
-      "0x0000000000000000000000000000000000000000"
-    );
-    expect(boost.expires).to.be.equal(0);
     expect(boost.owner).to.be.equal(
       "0x0000000000000000000000000000000000000000"
     );

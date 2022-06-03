@@ -4,7 +4,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BoostManager } from "../typechain";
 import { generateClaimSignatures } from "@snapshot-labs/boost";
 import { snapshotVotesStrategy } from "@snapshot-labs/boost/strategies/snapshot-votes";
-import { expireBoost, deployContracts } from "./helpers";
+import { advanceClock, deployContracts } from "./helpers";
 import { BigNumber, Contract } from "ethers";
 
 describe("Withdrawing", function () {
@@ -14,6 +14,8 @@ describe("Withdrawing", function () {
   let anyone: SignerWithAddress;
   let boostContract: BoostManager;
   let tokenContract: Contract;
+  let now: number;
+  let in1Minute: number;
   const boostId = BigNumber.from(1);
   const depositAmount = 1;
 
@@ -21,6 +23,9 @@ describe("Withdrawing", function () {
     [owner, guard, claimer, anyone] = await ethers.getSigners();
 
     ({ boostContract, tokenContract } = await deployContracts(owner));
+
+    now = (await ethers.provider.getBlock("latest")).timestamp;
+    in1Minute = now + 60;
 
     await tokenContract.mintForSelf(100);
     await tokenContract.approve(boostContract.address, 100);
@@ -32,14 +37,15 @@ describe("Withdrawing", function () {
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
-        expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
+        start: now,
+        end: in1Minute,
         owner: owner.address
       });
     await boostTx.wait();
   });
 
   it(`succeeds after boost is expired`, async function () {
-    await expireBoost();
+    await advanceClock(61);
 
     await expect(() =>
       expect(boostContract.connect(owner).withdraw(boostId, anyone.address)).to.emit(
@@ -52,11 +58,11 @@ describe("Withdrawing", function () {
   it(`reverts if boost is not expired`, async function () {
     await expect(
       boostContract.connect(owner).withdraw(boostId, owner.address)
-    ).to.be.revertedWith("BoostNotExpired()");
+    ).to.be.revertedWith(`BoostNotEnded(${in1Minute})`);
   });
 
   it(`reverts for other accounts than the boost owner`, async function () {
-    await expireBoost();
+    await advanceClock(61);
 
     await expect(
       boostContract.connect(guard).withdraw(boostId, guard.address)
@@ -77,7 +83,7 @@ describe("Withdrawing", function () {
       .connect(claimer)
       .claim(boostId, claim.recipient, claim.amount, signature);
 
-    await expireBoost();
+    await advanceClock(61);
 
     await expect(
       boostContract.connect(owner).withdraw(boostId, owner.address)

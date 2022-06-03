@@ -24,7 +24,8 @@ describe("Depositing", function () {
       token: tokenContract.address,
       balance: amount,
       guard: guard.address,
-      expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
+      start: (await ethers.provider.getBlock("latest")).timestamp,
+      end: (await ethers.provider.getBlock("latest")).timestamp + 60,
       owner: owner.address,
     });
     const result = await boostTx.wait();
@@ -79,7 +80,7 @@ describe("Depositing", function () {
     const amount = BigNumber.from(10);
     await expect(
       boostContract.connect(owner).deposit(boostId, amount)
-    ).to.be.revertedWith("BoostExpired()");
+    ).to.be.revertedWith("BoostEnded()");
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {

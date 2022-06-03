@@ -9,9 +9,11 @@ import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 error BoostAlreadyExists();
 error BoostDoesNotExist();
 error BoostDepositRequired();
-error BoostExpireTooLow();
-error BoostExpired();
-error BoostNotExpired();
+error BoostEndDateInPast();
+error BoostEndDateBeforeStart();
+error BoostEnded();
+error BoostNotEnded(uint256 end);
+error BoostNotStarted(uint256 start);
 error OnlyBoostOwner();
 error TooManyRecipients(uint256 allowed);
 error InvalidRecipient();
@@ -34,7 +36,8 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     address token;
     uint256 balance;
     address guard;
-    uint256 expires; // timestamp, maybe better block number and start/end?
+    uint256 start; // timestamp, maybe better block number and start/end?
+    uint256 end;
     address owner;
   }
 
@@ -50,7 +53,8 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   /// @notice Create a new boost and transfer tokens to it
   function create(Boost calldata boost) external {
     if (boost.balance == 0) revert BoostDepositRequired();
-    if (boost.expires <= block.timestamp) revert BoostExpireTooLow();
+    if (boost.end <= block.timestamp) revert BoostEndDateInPast();
+    if (boost.start >= boost.end) revert BoostEndDateBeforeStart();
 
     uint256 newId = nextBoostId;
     nextBoostId++;
@@ -66,7 +70,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   function deposit(uint256 id, uint256 amount) public {
     if (amount == 0) revert BoostDepositRequired();
     if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
-    if (boosts[id].expires <= block.timestamp) revert BoostExpired();
+    if (boosts[id].end <= block.timestamp) revert BoostEnded();
 
     boosts[id].balance += amount;
 
@@ -79,7 +83,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   /// @notice Withdraw remaining tokens from an expired boost
   function withdraw(uint256 id, address to) external {
     if (boosts[id].balance == 0) revert InsufficientBoostBalance();
-    if (boosts[id].expires > block.timestamp) revert BoostNotExpired();
+    if (boosts[id].end > block.timestamp) revert BoostNotEnded(boosts[id].end);
     if (boosts[id].owner != msg.sender) revert OnlyBoostOwner();
     if (to == address(0)) revert InvalidRecipient();
 
@@ -95,7 +99,8 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   /// @dev check if boost can be claimed
   modifier onlyOpenBoost(uint256 id) {
     if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
-    if (boosts[id].expires <= block.timestamp) revert BoostExpired();
+    if (boosts[id].start > block.timestamp) revert BoostNotStarted(boosts[id].start);
+    if (boosts[id].end <= block.timestamp) revert BoostEnded();
     _;
   }
 

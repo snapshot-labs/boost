@@ -2,8 +2,8 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ethers, network } from "hardhat";
 import TestTokenArtifact from "./TestTokenArtifact.json";
 
-export async function expireBoost() {
-  await network.provider.send("evm_increaseTime", [61]);
+export async function advanceClock(seconds: number) {
+  await network.provider.send("evm_increaseTime", [seconds]);
   await network.provider.send("evm_mine");
 }
 
