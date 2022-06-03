@@ -81,7 +81,7 @@ describe("Withdrawing", function () {
     );
     await boostContract
       .connect(claimer)
-      .claim(boostId, claim.recipient, claim.amount, signature);
+      .claimBySignature(claim, signature);
 
     await advanceClock(61);
 

@@ -64,43 +64,12 @@ describe("Claiming", function () {
 
     await expect(() =>
       expect(
-        boostContract
-          .claim(boostId, claim.recipient, claim.amount, signature)
+        boostContract.claimBySignature(claim, signature)
       ).to.emit(boostContract, "BoostClaimed")
     ).to.changeTokenBalances(
       tokenContract,
       [boostContract, claimer1],
       [-perAccount, perAccount]
-    );
-  });
-
-  it(`succeeds for multiple recipients`, async function () {
-    await advanceClock(61);
-    const chainId = await guard.getChainId();
-    const recipients = [claimer1.address, claimer2.address];
-    const claims = await snapshotVotesStrategy.generateClaims(boostId, chainId, recipients);
-    const signatures = await generateClaimSignatures(
-      claims,
-      guard,
-      chainId,
-      boostId,
-      boostContract.address
-    );
-
-    await expect(() =>
-      expect(
-        boostContract
-          .claimMulti(
-            boostId,
-            claims.map(c => c.recipient),
-            claims.map(c => c.amount),
-            signatures
-          )
-      ).to.emit(boostContract, "BoostClaimed")
-    ).to.changeTokenBalances(
-      tokenContract,
-      [boostContract, claimer1, claimer2],
-      [-(perAccount * 2), perAccount, perAccount]
     );
   });
 
@@ -118,11 +87,11 @@ describe("Claiming", function () {
     );
 
     await boostContract
-      .claim(boostId, claim.recipient, claim.amount, signature);
+      .claimBySignature(claim, signature);
 
     await expect(
       boostContract
-        .claim(boostId, claim.recipient, claim.amount, signature)
+        .claimBySignature(claim, signature)
     ).to.be.revertedWith("RecipientAlreadyClaimed()");
   });
 
@@ -133,8 +102,7 @@ describe("Claiming", function () {
     const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, recipients);
 
     await expect(
-      boostContract
-        .claim(boostId, claim.recipient, claim.amount, "0x00")
+      boostContract.claimBySignature(claim, "0x00")
     ).to.be.revertedWith("InvalidSignature()");
   });
 
@@ -152,8 +120,7 @@ describe("Claiming", function () {
     );
 
     await expect(
-      boostContract
-        .claim(boostId, claim.recipient, claim.amount, signature)
+      boostContract.claimBySignature(claim, signature)
     ).to.be.revertedWith("BoostEnded()");
   });
 
@@ -170,8 +137,7 @@ describe("Claiming", function () {
     );
 
     await expect(
-      boostContract
-        .claim(boostId, claim.recipient, claim.amount, signature)
+      boostContract.claimBySignature(claim, signature)
     ).to.be.revertedWith(`BoostNotStarted(${in1Minute})`);
   });
 
@@ -179,7 +145,7 @@ describe("Claiming", function () {
     await advanceClock(61);
     const chainId = await guard.getChainId();
     const recipients = [claimer1.address];
-    const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, recipients);
+    const [claim] = await snapshotVotesStrategy.generateClaims(BigNumber.from(99), chainId, recipients);
     const [signature] = await generateClaimSignatures(
       [claim],
       guard,
@@ -188,11 +154,9 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    const boostIdNotExists = ethers.utils.id("0x2");
-
     await expect(
       boostContract
-        .claim(boostIdNotExists, claim.recipient, claim.amount, signature)
+        .claimBySignature(claim, signature)
     ).to.be.revertedWith("BoostDoesNotExist()");
   });
 
@@ -209,14 +173,12 @@ describe("Claiming", function () {
       boostContract.address
     );
 
+    await boostContract.claimBySignature(claims[0], signatures[0]);
+    await boostContract.claimBySignature(claims[1], signatures[1]);
+    await boostContract.claimBySignature(claims[2], signatures[2]);
+
     await expect(
-      boostContract
-        .claimMulti(
-          boostId,
-          claims.map(c => c.recipient),
-          claims.map(c => c.amount),
-          signatures
-        )
+      boostContract.claimBySignature(claims[3], signatures[3])
     ).to.be.revertedWith("InsufficientBoostBalance()");
   });
 });

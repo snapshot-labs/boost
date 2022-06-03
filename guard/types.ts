@@ -11,6 +11,7 @@ export interface Boost {
 }
 
 export interface Claim {
+  boostId: BigNumber;
   recipient: string;
   amount: BigNumber;
 }

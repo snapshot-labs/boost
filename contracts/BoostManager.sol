@@ -96,60 +96,35 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     token.transfer(to, amount);
   }
 
-  /// @dev check if boost can be claimed
-  modifier onlyOpenBoost(uint256 id) {
-    if (boosts[id].owner == address(0)) revert BoostDoesNotExist();
-    if (boosts[id].start > block.timestamp) revert BoostNotStarted(boosts[id].start);
-    if (boosts[id].end <= block.timestamp) revert BoostEnded();
+  modifier onlyClaimableBoost(Claim calldata claim) {
+    if (boosts[claim.boostId].owner == address(0)) revert BoostDoesNotExist();
+    if (boosts[claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[claim.boostId].start);
+    if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
+    if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
+    if (claimed[claim.recipient][claim.boostId]) revert RecipientAlreadyClaimed();
+    if (claim.recipient == address(0)) revert InvalidRecipient();
     _;
   }
 
-  /// @notice Claim for single account
-  function claim(
-    uint256 id,
-    address recipient,
-    uint256 amount,
+  /// @notice Claim using a guard signature
+  function claimBySignature(
+    Claim calldata claim,
     bytes calldata signature
-  ) external onlyOpenBoost(id) {
-    _claim(id, recipient, amount, signature);
-  }
-
-  /// @notice Claim for multiple accounts
-  function claimMulti(
-    uint256 id,
-    address[] calldata recipients,
-    uint256[] calldata amounts,
-    bytes[] calldata signatures
-  ) external onlyOpenBoost(id) {
-    for (uint256 i = 0; i < recipients.length; i++) {
-      _claim(id, recipients[i], amounts[i], signatures[i]);
-    }
-  }
-
-  // @dev Perform a single claim (verify sig, update state, transfer tokens)
-  function _claim(
-    uint256 id,
-    address recipient,
-    uint256 amount,
-    bytes calldata signature
-  ) internal {
-    if (boosts[id].balance < amount) revert InsufficientBoostBalance();
-    if (claimed[recipient][id]) revert RecipientAlreadyClaimed();
-    if (recipient == address(0)) revert InvalidRecipient();
-
+  ) external onlyClaimableBoost(claim) {
+    
     bytes32 digest = _hashTypedDataV4(
-      keccak256(abi.encode(claimStructHash, id, recipient, amount))
+      keccak256(abi.encode(claimStructHash, claim.boostId, claim.recipient, claim.amount))
     );
 
-    if (!SignatureChecker.isValidSignatureNow(boosts[id].guard, digest, signature))
+    if (!SignatureChecker.isValidSignatureNow(boosts[claim.boostId].guard, digest, signature))
       revert InvalidSignature();
 
-    claimed[recipient][id] = true;
-    boosts[id].balance -= amount;
+    claimed[claim.recipient][claim.boostId] = true;
+    boosts[claim.boostId].balance -= claim.amount;
 
-    emit BoostClaimed(id, recipient);
+    emit BoostClaimed(claim.boostId, claim.recipient);
 
-    IERC20 token = IERC20(boosts[id].token);
-    token.transfer(recipient, amount);
+    IERC20 token = IERC20(boosts[claim.boostId].token);
+    token.transfer(claim.recipient, claim.amount);
   }
 }
