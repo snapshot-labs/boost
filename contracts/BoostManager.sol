@@ -14,6 +14,7 @@ error BoostNotEnded(uint256 end);
 error BoostNotStarted(uint256 start);
 error OnlyBoostOwner();
 error InvalidRecipient();
+error InvalidGuard();
 error RecipientAlreadyClaimed();
 error InvalidSignature();
 error InsufficientBoostBalance();
@@ -53,6 +54,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     if (boost.balance == 0) revert BoostDepositRequired();
     if (boost.end <= block.timestamp) revert BoostEndDateInPast();
     if (boost.start >= boost.end) revert BoostEndDateBeforeStart();
+    if (boost.guard == address(0)) revert InvalidGuard();
 
     uint256 newId = nextBoostId;
     nextBoostId++;
