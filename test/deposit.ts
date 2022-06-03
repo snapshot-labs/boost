@@ -14,21 +14,19 @@ describe("Depositing", function () {
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
 
-    ({ boostContract, tokenContract } = await deployContracts());
+    ({ boostContract, tokenContract } = await deployContracts(owner));
   });
 
   async function createBoost(amount: number) {
     const proposalId = ethers.utils.id("0x1");
-    const boostTx = await boostContract
-      .connect(owner)
-      .create({
-        ref: proposalId,
-        token: tokenContract.address,
-        balance: amount,
-        guard: guard.address,
-        expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
-        owner: owner.address,
-      });
+    const boostTx = await boostContract.create({
+      ref: proposalId,
+      token: tokenContract.address,
+      balance: amount,
+      guard: guard.address,
+      expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
+      owner: owner.address,
+    });
     const result = await boostTx.wait();
     return result.events?.find(e => e.event === "BoostCreated")?.args?.id;
   }

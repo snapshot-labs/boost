@@ -26,23 +26,23 @@ describe("Claiming", function () {
     [owner, guard, claimer1, claimer2, claimer3, claimer4] =
       await ethers.getSigners();
 
-    ({ boostContract, tokenContract } = await deployContracts());
+    ({ boostContract, tokenContract } = await deployContracts(owner));
 
-    await tokenContract.connect(owner).mintForSelf(depositAmount);
-    await tokenContract.connect(owner).approve(boostContract.address, depositAmount);
+    await tokenContract.mintForSelf(depositAmount);
+    await tokenContract.approve(boostContract.address, depositAmount);
 
-    const boostTx = await boostContract
-      .connect(owner)
-      .create({
-        ref: proposalId,
-        token: tokenContract.address,
-        balance: depositAmount,
-        guard: guard.address,
-        expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
-        owner: owner.address,
-      });
+    const boostTx = await boostContract.create({
+      ref: proposalId,
+      token: tokenContract.address,
+      balance: depositAmount,
+      guard: guard.address,
+      expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
+      owner: owner.address,
+    });
     await boostTx.wait();
     boostId = BigNumber.from(1);
+
+    boostContract = boostContract.connect(claimer1);
   });
 
   it(`succeeds for single recipient`, async function () {
@@ -59,7 +59,6 @@ describe("Claiming", function () {
     await expect(() =>
       expect(
         boostContract
-          .connect(claimer1)
           .claim(boostId, claim.recipient, claim.amount, signature)
       ).to.emit(boostContract, "BoostClaimed")
     ).to.changeTokenBalances(
@@ -84,7 +83,6 @@ describe("Claiming", function () {
     await expect(() =>
       expect(
         boostContract
-          .connect(claimer1)
           .claimMulti(
             boostId,
             claims.map(c => c.recipient),
@@ -112,12 +110,10 @@ describe("Claiming", function () {
     );
 
     await boostContract
-      .connect(claimer1)
       .claim(boostId, claim.recipient, claim.amount, signature);
 
     await expect(
       boostContract
-        .connect(claimer1)
         .claim(boostId, claim.recipient, claim.amount, signature)
     ).to.be.revertedWith("RecipientAlreadyClaimed()");
   });
@@ -129,7 +125,6 @@ describe("Claiming", function () {
 
     await expect(
       boostContract
-        .connect(claimer2)
         .claim(boostId, claim.recipient, claim.amount, "0x00")
     ).to.be.revertedWith("InvalidSignature()");
   });
@@ -150,7 +145,6 @@ describe("Claiming", function () {
 
     await expect(
       boostContract
-        .connect(claimer1)
         .claim(boostId, claim.recipient, claim.amount, signature)
     ).to.be.revertedWith("BoostExpired()");
   });
@@ -171,7 +165,6 @@ describe("Claiming", function () {
 
     await expect(
       boostContract
-        .connect(claimer1)
         .claim(boostIdNotExists, claim.recipient, claim.amount, signature)
     ).to.be.revertedWith("BoostDoesNotExist()");
   });
@@ -190,7 +183,6 @@ describe("Claiming", function () {
 
     await expect(
       boostContract
-        .connect(claimer1)
         .claimMulti(
           boostId,
           claims.map(c => c.recipient),

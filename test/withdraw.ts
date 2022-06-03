@@ -20,14 +20,13 @@ describe("Withdrawing", function () {
   beforeEach(async function () {
     [owner, guard, claimer, anyone] = await ethers.getSigners();
 
-    ({ boostContract, tokenContract } = await deployContracts());
+    ({ boostContract, tokenContract } = await deployContracts(owner));
 
-    await tokenContract.connect(owner).mintForSelf(100);
-    await tokenContract.connect(owner).approve(boostContract.address, 100);
+    await tokenContract.mintForSelf(100);
+    await tokenContract.approve(boostContract.address, 100);
 
     const proposalId = ethers.utils.id("0x1");
     const boostTx = await boostContract
-      .connect(owner)
       .create({
         ref: proposalId,
         token: tokenContract.address,
