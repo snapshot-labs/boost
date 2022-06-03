@@ -19,7 +19,7 @@ error RecipientAlreadyClaimed();
 error InvalidSignature();
 error InsufficientBoostBalance();
 
-contract Boost is EIP712("boost", "0.1.0") {
+contract BoostManager is EIP712("boost", "0.1.0") {
   struct Claim {
     uint256 boostId;
     address recipient;
@@ -29,7 +29,7 @@ contract Boost is EIP712("boost", "0.1.0") {
   /// @dev Used for hashing EIP712 claim messages
   bytes32 public immutable claimStructHash = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
-  struct BoostSettings {
+  struct Boost {
     bytes32 ref; // external reference, like proposal id
     address token;
     uint256 balance;
@@ -38,39 +38,26 @@ contract Boost is EIP712("boost", "0.1.0") {
     address owner;
   }
 
-  event BoostCreated(uint256 id, BoostSettings boost);
+  event BoostCreated(uint256 id, Boost boost);
   event BoostClaimed(uint256 id, address recipient);
   event BoostDeposited(uint256 id, address sender, uint256 amount);
   event BoostWithdrawn(uint256 id);
 
   uint256 public nextBoostId = 1;
-  mapping(uint256 => BoostSettings) public boosts;
+  mapping(uint256 => Boost) public boosts;
   mapping(address => mapping(uint256 => bool)) public claimed;
 
   /// @notice Create a new boost and transfer tokens to it
-  function create(
-    bytes32 ref,
-    address tokenAddress,
-    uint256 depositAmount,
-    address guard,
-    uint256 expires
-  ) external {
-    if (depositAmount == 0) revert BoostDepositRequired();
-    if (expires <= block.timestamp) revert BoostExpireTooLow();
+  function create(Boost calldata boost) external {
+    if (boost.balance == 0) revert BoostDepositRequired();
+    if (boost.expires <= block.timestamp) revert BoostExpireTooLow();
 
     uint256 newId = nextBoostId;
     nextBoostId++;
-    boosts[newId] = BoostSettings(
-      ref,
-      tokenAddress,
-      depositAmount,
-      guard,
-      expires,
-      msg.sender
-    );
+    boosts[newId] = boost;
 
-    IERC20 token = IERC20(tokenAddress);
-    token.transferFrom(msg.sender, address(this), depositAmount);
+    IERC20 token = IERC20(boost.token);
+    token.transferFrom(msg.sender, address(this), boost.balance);
     
     emit BoostCreated(newId, boosts[newId]);
   }

@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost } from "../typechain";
+import { BoostManager } from "../typechain";
 import { Contract } from "ethers";
 import { deployContracts } from "./helpers";
 
 describe("Creating", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
-  let boostContract: Boost;
+  let boostContract: BoostManager;
   let tokenContract: Contract;
   let now: number;
   let in1Minute: number;
@@ -34,13 +34,14 @@ describe("Creating", function () {
       expect(
         boostContract
           .connect(owner)
-          .create(
-            proposalId,
-            tokenContract.address,
-            depositAmount,
-            guard.address,
-            in1Minute
-          )
+          .create({
+            ref: proposalId,
+            token: tokenContract.address,
+            balance: depositAmount,
+            guard: guard.address,
+            expires: in1Minute,
+            owner: owner.address,
+          })
       )
         .to.emit(boostContract, "BoostCreated")
         // chaining events doesn't work yet. will be added in waffle v4
@@ -62,13 +63,14 @@ describe("Creating", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(
-          proposalId,
-          tokenContract.address,
-          depositAmount,
-          guard.address,
-          in1Minute
-        )
+        .create({
+          ref: proposalId,
+          token: tokenContract.address,
+          balance: depositAmount,
+          guard: guard.address,
+          expires: in1Minute,
+          owner: owner.address
+        })
     ).to.be.revertedWith("ERC20: insufficient allowance");
   });
 
@@ -80,13 +82,14 @@ describe("Creating", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(
-          proposalId,
-          tokenContract.address,
-          depositAmount,
-          guard.address,
-          in1Minute
-        )
+        .create({
+          ref: proposalId,
+          token: tokenContract.address,
+          balance: depositAmount,
+          guard: guard.address,
+          expires: in1Minute,
+          owner: owner.address
+        })
     ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
   });
 
@@ -94,7 +97,14 @@ describe("Creating", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(proposalId, tokenContract.address, 0, guard.address, in1Minute)
+        .create({
+          ref: proposalId,
+          token: tokenContract.address,
+          balance: 0,
+          guard: guard.address,
+          expires: in1Minute,
+          owner: owner.address
+        })
     ).to.be.revertedWith("BoostDepositRequired");
   });
 
@@ -102,7 +112,14 @@ describe("Creating", function () {
     await expect(
       boostContract
         .connect(owner)
-        .create(proposalId, tokenContract.address, 100, guard.address, now)
+        .create({
+          ref: proposalId,
+          token: tokenContract.address,
+          balance: 100,
+          guard: guard.address,
+          expires: now,
+          owner: owner.address
+        })
     ).to.be.revertedWith("BoostExpireTooLow");
   });
 
@@ -113,13 +130,14 @@ describe("Creating", function () {
 
     const createTx = await boostContract
       .connect(owner)
-      .create(
-        proposalId,
-        tokenContract.address,
-        depositAmount,
-        guard.address,
-        in1Minute
-      );
+      .create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: depositAmount,
+        guard: guard.address,
+        expires: in1Minute,
+        owner: owner.address
+      });
     await createTx.wait();
 
     const boost = await boostContract.boosts(1);

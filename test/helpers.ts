@@ -7,7 +7,7 @@ export async function expireBoost() {
 }
 
 export async function deployContracts() {
-  const Boost = await ethers.getContractFactory("Boost");
+  const Boost = await ethers.getContractFactory("BoostManager");
   const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact);
 
   const boostContract = await Boost.deploy();

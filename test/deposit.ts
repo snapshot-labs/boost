@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost } from "../typechain";
+import { BoostManager } from "../typechain";
 import { BigNumber, Contract } from "ethers";
 import { deployContracts } from "./helpers";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
-  let boostContract: Boost;
+  let boostContract: BoostManager;
   let tokenContract: Contract;
 
   beforeEach(async function () {
@@ -21,13 +21,14 @@ describe("Depositing", function () {
     const proposalId = ethers.utils.id("0x1");
     const boostTx = await boostContract
       .connect(owner)
-      .create(
-        proposalId,
-        tokenContract.address,
-        amount,
-        guard.address,
-        (await ethers.provider.getBlock("latest")).timestamp + 60
-      );
+      .create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: amount,
+        guard: guard.address,
+        expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
+        owner: owner.address,
+      });
     const result = await boostTx.wait();
     return result.events?.find(e => e.event === "BoostCreated")?.args?.id;
   }

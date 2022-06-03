@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Boost } from "../typechain";
+import { BoostManager } from "../typechain";
 import { generateClaimSignatures } from "@snapshot-labs/boost";
 import { snapshotVotesStrategy } from "@snapshot-labs/boost/strategies/snapshot-votes";
 import { expireBoost, deployContracts } from "./helpers";
@@ -12,7 +12,7 @@ describe("Withdrawing", function () {
   let guard: SignerWithAddress;
   let claimer: SignerWithAddress;
   let anyone: SignerWithAddress;
-  let boostContract: Boost;
+  let boostContract: BoostManager;
   let tokenContract: Contract;
   const boostId = BigNumber.from(1);
   const depositAmount = 1;
@@ -28,13 +28,14 @@ describe("Withdrawing", function () {
     const proposalId = ethers.utils.id("0x1");
     const boostTx = await boostContract
       .connect(owner)
-      .create(
-        proposalId,
-        tokenContract.address,
-        depositAmount,
-        guard.address,
-        (await ethers.provider.getBlock("latest")).timestamp + 60
-      );
+      .create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: depositAmount,
+        guard: guard.address,
+        expires: (await ethers.provider.getBlock("latest")).timestamp + 60,
+        owner: owner.address
+      });
     await boostTx.wait();
   });
 
