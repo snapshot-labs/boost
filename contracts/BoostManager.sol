@@ -41,7 +41,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   }
 
   event BoostCreated(uint256 id, Boost boost);
-  event BoostClaimed(uint256 id, address recipient);
+  event BoostClaimed(Claim claim);
   event BoostDeposited(uint256 id, address sender, uint256 amount);
   event BoostWithdrawn(uint256 id);
 
@@ -122,7 +122,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     claimed[claim.recipient][claim.boostId] = true;
     boosts[claim.boostId].balance -= claim.amount;
 
-    emit BoostClaimed(claim.boostId, claim.recipient);
+    emit BoostClaimed(claim);
 
     IERC20 token = IERC20(boosts[claim.boostId].token);
     token.transfer(claim.recipient, claim.amount);
