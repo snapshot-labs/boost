@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import "./BoostGuard.sol";
 
 error BoostDoesNotExist();
 error BoostDepositRequired();
@@ -17,6 +18,8 @@ error InvalidRecipient();
 error InvalidGuard();
 error RecipientAlreadyClaimed();
 error InvalidSignature();
+error InvalidProof();
+error InvalidClaim();
 error InsufficientBoostBalance();
 
 contract BoostManager is EIP712("boost", "0.1.0") {
@@ -119,6 +122,21 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     if (!SignatureChecker.isValidSignatureNow(boosts[claim.boostId].guard, digest, signature))
       revert InvalidSignature();
 
+    _executeClaim(claim);
+  }
+
+  /// @notice Claim using an external guard contract
+  function claimByContract(Claim calldata claim) external onlyClaimableBoost(claim) {
+    if (
+      !BoostGuard(boosts[claim.boostId].guard).isValid(claim.boostId, claim.recipient, claim.amount)
+    ) {
+      revert InvalidClaim();
+    }
+
+    _executeClaim(claim);
+  }
+
+  function _executeClaim(Claim calldata claim) internal {
     claimed[claim.recipient][claim.boostId] = true;
     boosts[claim.boostId].balance -= claim.amount;
 
