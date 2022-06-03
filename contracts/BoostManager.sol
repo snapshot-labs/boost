@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
-error BoostAlreadyExists();
 error BoostDoesNotExist();
 error BoostDepositRequired();
 error BoostEndDateInPast();
@@ -15,7 +14,6 @@ error BoostEnded();
 error BoostNotEnded(uint256 end);
 error BoostNotStarted(uint256 start);
 error OnlyBoostOwner();
-error TooManyRecipients(uint256 allowed);
 error InvalidRecipient();
 error RecipientAlreadyClaimed();
 error InvalidSignature();
