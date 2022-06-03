@@ -125,6 +125,18 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     _executeClaim(claim);
   }
 
+  /// @notice Claim using a merkle proof
+  function claimByWhitelist(Claim calldata claim, bytes calldata proof)
+    external
+    onlyClaimableBoost(claim)
+  {
+    if (true) {
+      revert InvalidProof();
+    }
+
+    _executeClaim(claim);
+  }
+
   /// @notice Claim using an external guard contract
   function claimByContract(Claim calldata claim) external onlyClaimableBoost(claim) {
     if (
