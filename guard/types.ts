@@ -7,7 +7,7 @@ export interface Boost {
   balance: BigNumber;
   guard: string;
   expires: number;
-  owner: string
+  owner: string;
 }
 
 export interface Claim {
@@ -17,9 +17,5 @@ export interface Claim {
 }
 
 export interface Strategy {
-  generateClaims(
-    boostId: BigNumber,
-    chainId: number,
-    recipients: string[]
-  ): Promise<Claim[]>;
+  generateClaims(boostId: BigNumber, chainId: number, recipients: string[]): Promise<Claim[]>;
 }

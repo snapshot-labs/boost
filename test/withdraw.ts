@@ -31,16 +31,15 @@ describe("Withdrawing", function () {
     await tokenContract.approve(boostContract.address, 100);
 
     const proposalId = ethers.utils.id("0x1");
-    const boostTx = await boostContract
-      .create({
-        ref: proposalId,
-        token: tokenContract.address,
-        balance: depositAmount,
-        guard: guard.address,
-        start: now,
-        end: in1Minute,
-        owner: owner.address
-      });
+    const boostTx = await boostContract.create({
+      ref: proposalId,
+      token: tokenContract.address,
+      balance: depositAmount,
+      guard: guard.address,
+      start: now,
+      end: in1Minute,
+      owner: owner.address,
+    });
     await boostTx.wait();
   });
 
@@ -52,21 +51,25 @@ describe("Withdrawing", function () {
         boostContract,
         "BoostWithdrawn"
       )
-    ).to.changeTokenBalances(tokenContract, [boostContract, anyone], [-depositAmount, depositAmount]);
+    ).to.changeTokenBalances(
+      tokenContract,
+      [boostContract, anyone],
+      [-depositAmount, depositAmount]
+    );
   });
 
   it(`reverts if boost is not expired`, async function () {
-    await expect(
-      boostContract.connect(owner).withdraw(boostId, owner.address)
-    ).to.be.revertedWith(`BoostNotEnded(${in1Minute})`);
+    await expect(boostContract.connect(owner).withdraw(boostId, owner.address)).to.be.revertedWith(
+      `BoostNotEnded(${in1Minute})`
+    );
   });
 
   it(`reverts for other accounts than the boost owner`, async function () {
     await advanceClock(61);
 
-    await expect(
-      boostContract.connect(guard).withdraw(boostId, guard.address)
-    ).to.be.revertedWith("OnlyBoostOwner()");
+    await expect(boostContract.connect(guard).withdraw(boostId, guard.address)).to.be.revertedWith(
+      "OnlyBoostOwner()"
+    );
   });
 
   it(`reverts if boost balance is 0`, async function () {
@@ -79,14 +82,12 @@ describe("Withdrawing", function () {
       boostId,
       boostContract.address
     );
-    await boostContract
-      .connect(claimer)
-      .claimBySignature(claim, signature);
+    await boostContract.connect(claimer).claimBySignature(claim, signature);
 
     await advanceClock(61);
 
-    await expect(
-      boostContract.connect(owner).withdraw(boostId, owner.address)
-    ).to.be.revertedWith("InsufficientBoostBalance()");
+    await expect(boostContract.connect(owner).withdraw(boostId, owner.address)).to.be.revertedWith(
+      "InsufficientBoostBalance()"
+    );
   });
 });

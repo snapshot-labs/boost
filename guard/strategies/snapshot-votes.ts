@@ -8,5 +8,5 @@ export const snapshotVotesStrategy: Strategy = {
       claims.push({ boostId, recipient, amount: BigNumber.from(1) });
     }
     return claims;
-  }
-}
+  },
+};

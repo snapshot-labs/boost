@@ -29,7 +29,7 @@ describe("Depositing", function () {
       owner: owner.address,
     });
     const result = await boostTx.wait();
-    return result.events?.find(e => e.event === "BoostCreated")?.args?.id;
+    return result.events?.find((e) => e.event === "BoostCreated")?.args?.id;
   }
 
   async function mintAndApprove(
@@ -60,9 +60,11 @@ describe("Depositing", function () {
     await mintAndApprove(guard, 50);
     const boostId = await createBoost(100);
 
-    await expect(() =>
-      boostContract.connect(guard).deposit(boostId, 50)
-    ).to.changeTokenBalances(tokenContract, [boostContract, guard], [50, -50]);
+    await expect(() => boostContract.connect(guard).deposit(boostId, 50)).to.changeTokenBalances(
+      tokenContract,
+      [boostContract, guard],
+      [50, -50]
+    );
   });
 
   it(`reverts if boost does not exist`, async function () {
@@ -78,35 +80,35 @@ describe("Depositing", function () {
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
     const amount = BigNumber.from(10);
-    await expect(
-      boostContract.connect(owner).deposit(boostId, amount)
-    ).to.be.revertedWith("BoostEnded()");
+    await expect(boostContract.connect(owner).deposit(boostId, amount)).to.be.revertedWith(
+      "BoostEnded()"
+    );
   });
 
   it(`reverts if deposit exceeds token allowance`, async function () {
     await mintAndApprove(owner, 100, 50);
     const boostId = await createBoost(50);
 
-    await expect(
-      boostContract.connect(owner).deposit(boostId, 10)
-    ).to.be.revertedWith("ERC20: insufficient allowance");
+    await expect(boostContract.connect(owner).deposit(boostId, 10)).to.be.revertedWith(
+      "ERC20: insufficient allowance"
+    );
   });
 
   it(`reverts if deposit exceeds token balance`, async function () {
     await mintAndApprove(owner, 100, 200);
     const boostId = await createBoost(100);
 
-    await expect(
-      boostContract.connect(owner).deposit(boostId, 10)
-    ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    await expect(boostContract.connect(owner).deposit(boostId, 10)).to.be.revertedWith(
+      "ERC20: transfer amount exceeds balance"
+    );
   });
 
   it(`reverts if deposit is 0`, async function () {
     await mintAndApprove(owner, 100);
     const boostId = await createBoost(50);
 
-    await expect(
-      boostContract.connect(owner).deposit(boostId, 0)
-    ).to.be.revertedWith("BoostDepositRequired()");
+    await expect(boostContract.connect(owner).deposit(boostId, 0)).to.be.revertedWith(
+      "BoostDepositRequired()"
+    );
   });
 });

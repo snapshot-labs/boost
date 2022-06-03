@@ -20,5 +20,5 @@ export async function deployContracts(connectedAccount: SignerWithAddress) {
   return {
     boostContract: boostContract.connect(connectedAccount),
     tokenContract: tokenContract.connect(connectedAccount),
-  }
+  };
 }

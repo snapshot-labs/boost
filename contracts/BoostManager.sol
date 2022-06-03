@@ -27,9 +27,10 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     address recipient;
     uint256 amount;
   }
-  
+
   /// @dev Used for hashing EIP712 claim messages
-  bytes32 public immutable claimStructHash = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
+  bytes32 public immutable claimStructHash =
+    keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
   struct Boost {
     bytes32 ref; // external reference, like proposal id
@@ -62,7 +63,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
 
     IERC20 token = IERC20(boost.token);
     token.transferFrom(msg.sender, address(this), boost.balance);
-    
+
     emit BoostCreated(newId, boosts[newId]);
   }
 
@@ -98,7 +99,8 @@ contract BoostManager is EIP712("boost", "0.1.0") {
 
   modifier onlyClaimableBoost(Claim calldata claim) {
     if (boosts[claim.boostId].owner == address(0)) revert BoostDoesNotExist();
-    if (boosts[claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[claim.boostId].start);
+    if (boosts[claim.boostId].start > block.timestamp)
+      revert BoostNotStarted(boosts[claim.boostId].start);
     if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
     if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
     if (claimed[claim.recipient][claim.boostId]) revert RecipientAlreadyClaimed();
@@ -107,11 +109,10 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   }
 
   /// @notice Claim using a guard signature
-  function claimBySignature(
-    Claim calldata claim,
-    bytes calldata signature
-  ) external onlyClaimableBoost(claim) {
-    
+  function claimBySignature(Claim calldata claim, bytes calldata signature)
+    external
+    onlyClaimableBoost(claim)
+  {
     bytes32 digest = _hashTypedDataV4(
       keccak256(abi.encode(claimStructHash, claim.boostId, claim.recipient, claim.amount))
     );

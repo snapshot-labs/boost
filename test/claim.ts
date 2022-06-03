@@ -25,8 +25,7 @@ describe("Claiming", function () {
   const perAccount = 1;
 
   beforeEach(async function () {
-    [owner, guard, claimer1, claimer2, claimer3, claimer4] =
-      await ethers.getSigners();
+    [owner, guard, claimer1, claimer2, claimer3, claimer4] = await ethers.getSigners();
 
     ({ boostContract, tokenContract } = await deployContracts(owner));
 
@@ -53,7 +52,9 @@ describe("Claiming", function () {
   it(`succeeds for single recipient within boost period`, async function () {
     await advanceClock(61);
     const chainId = await guard.getChainId();
-    const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, [claimer1.address]);
+    const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, [
+      claimer1.address,
+    ]);
     const [signature] = await generateClaimSignatures(
       [claim],
       guard,
@@ -63,14 +64,11 @@ describe("Claiming", function () {
     );
 
     await expect(() =>
-      expect(
-        boostContract.claimBySignature(claim, signature)
-      ).to.emit(boostContract, "BoostClaimed")
-    ).to.changeTokenBalances(
-      tokenContract,
-      [boostContract, claimer1],
-      [-perAccount, perAccount]
-    );
+      expect(boostContract.claimBySignature(claim, signature)).to.emit(
+        boostContract,
+        "BoostClaimed"
+      )
+    ).to.changeTokenBalances(tokenContract, [boostContract, claimer1], [-perAccount, perAccount]);
   });
 
   it(`reverts if a signature was already used`, async function () {
@@ -86,13 +84,11 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await boostContract
-      .claimBySignature(claim, signature);
+    await boostContract.claimBySignature(claim, signature);
 
-    await expect(
-      boostContract
-        .claimBySignature(claim, signature)
-    ).to.be.revertedWith("RecipientAlreadyClaimed()");
+    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+      "RecipientAlreadyClaimed()"
+    );
   });
 
   it(`reverts if a signature is invalid`, async function () {
@@ -101,9 +97,9 @@ describe("Claiming", function () {
     const recipients = [claimer1.address];
     const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, recipients);
 
-    await expect(
-      boostContract.claimBySignature(claim, "0x00")
-    ).to.be.revertedWith("InvalidSignature()");
+    await expect(boostContract.claimBySignature(claim, "0x00")).to.be.revertedWith(
+      "InvalidSignature()"
+    );
   });
 
   it(`reverts if boost has ended`, async function () {
@@ -119,9 +115,9 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await expect(
-      boostContract.claimBySignature(claim, signature)
-    ).to.be.revertedWith("BoostEnded()");
+    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+      "BoostEnded()"
+    );
   });
 
   it(`reverts if boost has not started yet`, async function () {
@@ -136,16 +132,20 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await expect(
-      boostContract.claimBySignature(claim, signature)
-    ).to.be.revertedWith(`BoostNotStarted(${in1Minute})`);
+    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+      `BoostNotStarted(${in1Minute})`
+    );
   });
 
   it(`reverts if boost does not exist`, async function () {
     await advanceClock(61);
     const chainId = await guard.getChainId();
     const recipients = [claimer1.address];
-    const [claim] = await snapshotVotesStrategy.generateClaims(BigNumber.from(99), chainId, recipients);
+    const [claim] = await snapshotVotesStrategy.generateClaims(
+      BigNumber.from(99),
+      chainId,
+      recipients
+    );
     const [signature] = await generateClaimSignatures(
       [claim],
       guard,
@@ -154,10 +154,9 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await expect(
-      boostContract
-        .claimBySignature(claim, signature)
-    ).to.be.revertedWith("BoostDoesNotExist()");
+    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+      "BoostDoesNotExist()"
+    );
   });
 
   it(`reverts if total claim amount exceeds boost balance`, async function () {
@@ -177,8 +176,8 @@ describe("Claiming", function () {
     await boostContract.claimBySignature(claims[1], signatures[1]);
     await boostContract.claimBySignature(claims[2], signatures[2]);
 
-    await expect(
-      boostContract.claimBySignature(claims[3], signatures[3])
-    ).to.be.revertedWith("InsufficientBoostBalance()");
+    await expect(boostContract.claimBySignature(claims[3], signatures[3])).to.be.revertedWith(
+      "InsufficientBoostBalance()"
+    );
   });
 });

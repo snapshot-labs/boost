@@ -6,6 +6,6 @@
       "name": "Run hardhat tests",
       "request": "launch",
       "type": "node-terminal"
-    },
+    }
   ]
 }

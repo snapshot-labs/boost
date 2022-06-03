@@ -30,10 +30,10 @@ describe("Creating", function () {
     await tokenContract.mintForSelf(depositAmount);
     await tokenContract.approve(boostContract.address, depositAmount);
 
-    await expect(() =>
-      expect(
-        boostContract
-          .create({
+    await expect(
+      () =>
+        expect(
+          boostContract.create({
             ref: proposalId,
             token: tokenContract.address,
             balance: depositAmount,
@@ -42,10 +42,9 @@ describe("Creating", function () {
             end: in1Minute,
             owner: owner.address,
           })
-      )
-        .to.emit(boostContract, "BoostCreated")
-        // chaining events doesn't work yet. will be added in waffle v4
-        // .to.emit(boostContract, "BoostDeposited")
+        ).to.emit(boostContract, "BoostCreated")
+      // chaining events doesn't work yet. will be added in waffle v4
+      // .to.emit(boostContract, "BoostDeposited")
     ).to.changeTokenBalances(
       tokenContract,
       [boostContract, owner],
@@ -56,20 +55,18 @@ describe("Creating", function () {
   it(`reverts if deposit exceeds token allowance`, async function () {
     const depositAmount = 100;
     await tokenContract.mintForSelf(depositAmount);
-    await tokenContract
-      .approve(boostContract.address, depositAmount - 1);
+    await tokenContract.approve(boostContract.address, depositAmount - 1);
 
     await expect(
-      boostContract
-        .create({
-          ref: proposalId,
-          token: tokenContract.address,
-          balance: depositAmount,
-          guard: guard.address,
-          start: now,
-          end: in1Minute,
-          owner: owner.address
-        })
+      boostContract.create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: depositAmount,
+        guard: guard.address,
+        start: now,
+        end: in1Minute,
+        owner: owner.address,
+      })
     ).to.be.revertedWith("ERC20: insufficient allowance");
   });
 
@@ -79,46 +76,43 @@ describe("Creating", function () {
     await tokenContract.approve(boostContract.address, depositAmount);
 
     await expect(
-      boostContract
-        .create({
-          ref: proposalId,
-          token: tokenContract.address,
-          balance: depositAmount,
-          guard: guard.address,
-          start: now,
-          end: in1Minute,
-          owner: owner.address
-        })
+      boostContract.create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: depositAmount,
+        guard: guard.address,
+        start: now,
+        end: in1Minute,
+        owner: owner.address,
+      })
     ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
   });
 
   it(`reverts if deposit amount is 0`, async function () {
     await expect(
-      boostContract
-        .create({
-          ref: proposalId,
-          token: tokenContract.address,
-          balance: 0,
-          guard: guard.address,
-          start: now,
-          end: in1Minute,
-          owner: owner.address
-        })
+      boostContract.create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: 0,
+        guard: guard.address,
+        start: now,
+        end: in1Minute,
+        owner: owner.address,
+      })
     ).to.be.revertedWith("BoostDepositRequired");
   });
 
   it(`reverts if expire is less or equal to block timestamp`, async function () {
     await expect(
-      boostContract
-        .create({
-          ref: proposalId,
-          token: tokenContract.address,
-          balance: 100,
-          guard: guard.address,
-          start: now,
-          end: now,
-          owner: owner.address
-        })
+      boostContract.create({
+        ref: proposalId,
+        token: tokenContract.address,
+        balance: 100,
+        guard: guard.address,
+        start: now,
+        end: now,
+        owner: owner.address,
+      })
     ).to.be.revertedWith("BoostEndDateInPast");
   });
 
@@ -127,16 +121,15 @@ describe("Creating", function () {
     await tokenContract.mintForSelf(depositAmount);
     await tokenContract.approve(boostContract.address, depositAmount);
 
-    const createTx = await boostContract
-      .create({
-        ref: proposalId,
-        token: tokenContract.address,
-        balance: depositAmount,
-        guard: guard.address,
-        start: now,
-        end: in1Minute,
-        owner: owner.address
-      });
+    const createTx = await boostContract.create({
+      ref: proposalId,
+      token: tokenContract.address,
+      balance: depositAmount,
+      guard: guard.address,
+      start: now,
+      end: in1Minute,
+      owner: owner.address,
+    });
     await createTx.wait();
 
     const boost = await boostContract.boosts(1);
@@ -153,8 +146,6 @@ describe("Creating", function () {
   it(`doesn't get a boost that was not created`, async function () {
     const boost = await boostContract.boosts(99);
 
-    expect(boost.owner).to.be.equal(
-      "0x0000000000000000000000000000000000000000"
-    );
+    expect(boost.owner).to.be.equal("0x0000000000000000000000000000000000000000");
   });
 });

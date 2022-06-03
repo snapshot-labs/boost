@@ -1,7 +1,7 @@
 import { TypedDataSigner } from "@ethersproject/abstract-signer";
 import { BigNumber } from "ethers";
-import { createClient, TypedDocumentNode } from 'urql';
-import { fetch } from 'cross-fetch';
+import { createClient, TypedDocumentNode } from "urql";
+import { fetch } from "cross-fetch";
 import { Claim } from "./types";
 
 export async function generateClaimSignatures(
@@ -17,38 +17,42 @@ export async function generateClaimSignatures(
     name: "boost",
     version: "0.1.0",
     chainId,
-    verifyingContract
+    verifyingContract,
   };
 
   const EIP712Types = {
     Claim: [
-      { name: 'boostId', type: 'uint256' },
-      { name: 'recipient', type: 'address' },
-      { name: 'amount', type: 'uint256' }
-    ]
+      { name: "boostId", type: "uint256" },
+      { name: "recipient", type: "address" },
+      { name: "amount", type: "uint256" },
+    ],
   };
 
   for (const claim of claims) {
     sigs.push(
-      await guard._signTypedData(
-        EIP712Domain,
-        EIP712Types,
-        { boostId, recipient: claim.recipient, amount: claim.amount }
-      )
+      await guard._signTypedData(EIP712Domain, EIP712Types, {
+        boostId,
+        recipient: claim.recipient,
+        amount: claim.amount,
+      })
     );
   }
 
   return sigs;
 }
 
-export async function querySubgraph(query: string | TypedDocumentNode, chainId: number, apiKey: string) {
+export async function querySubgraph(
+  query: string | TypedDocumentNode,
+  chainId: number,
+  apiKey: string
+) {
   const apiUrls: string[] = [];
   apiUrls[4] = `https://api.studio.thegraph.com/query/12054/boost/v0.0.9?${apiKey}`;
 
   const client = createClient({
     url: apiUrls[chainId],
-    fetch
-  })
+    fetch,
+  });
 
-  return await client.query(query).toPromise()
+  return await client.query(query).toPromise();
 }
