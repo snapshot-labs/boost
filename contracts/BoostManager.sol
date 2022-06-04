@@ -3,7 +3,9 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import "./BoostAware.sol";
 import "./BoostGuard.sol";
 
 error BoostDoesNotExist();
@@ -14,15 +16,16 @@ error BoostEnded();
 error BoostNotEnded(uint256 end);
 error BoostNotStarted(uint256 start);
 error OnlyBoostOwner();
+error OnlyBoostGuard();
 error InvalidRecipient();
 error InvalidGuard();
 error RecipientAlreadyClaimed();
 error InvalidSignature();
-error InvalidProof();
+error InvalidWhitelistProof();
 error InvalidClaim();
 error InsufficientBoostBalance();
 
-contract BoostManager is EIP712("boost", "0.1.0") {
+contract BoostManager is BoostAware, EIP712("boost", "0.1.0") {
   struct Claim {
     uint256 boostId;
     address recipient;
@@ -33,16 +36,6 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   bytes32 public immutable claimStructHash =
     keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
-  struct Boost {
-    bytes32 ref; // external reference, like proposal id
-    address token;
-    uint256 balance;
-    address guard;
-    uint256 start; // timestamp, maybe better block number and start/end?
-    uint256 end;
-    address owner;
-  }
-
   event BoostCreated(uint256 id, Boost boost);
   event BoostClaimed(Claim claim);
   event BoostDeposited(uint256 id, address sender, uint256 amount);
@@ -51,6 +44,8 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   uint256 public nextBoostId = 1;
   mapping(uint256 => Boost) public boosts;
   mapping(address => mapping(uint256 => bool)) public claimed;
+
+  mapping(uint256 => bytes32) public whitelists; // merkle roots
 
   /// @notice Create a new boost and transfer tokens to it
   function create(Boost calldata boost) external {
@@ -99,12 +94,11 @@ contract BoostManager is EIP712("boost", "0.1.0") {
     token.transfer(to, amount);
   }
 
-  modifier onlyClaimableBoost(Claim calldata claim) {
-    if (boosts[claim.boostId].owner == address(0)) revert BoostDoesNotExist();
+  modifier commonClaimChecks(Claim calldata claim) {
     if (boosts[claim.boostId].start > block.timestamp)
       revert BoostNotStarted(boosts[claim.boostId].start);
-    if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
     if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
+    if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
     if (claimed[claim.recipient][claim.boostId]) revert RecipientAlreadyClaimed();
     if (claim.recipient == address(0)) revert InvalidRecipient();
     _;
@@ -113,7 +107,7 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   /// @notice Claim using a guard signature
   function claimBySignature(Claim calldata claim, bytes calldata signature)
     external
-    onlyClaimableBoost(claim)
+    commonClaimChecks(claim)
   {
     bytes32 digest = _hashTypedDataV4(
       keccak256(abi.encode(claimStructHash, claim.boostId, claim.recipient, claim.amount))
@@ -126,26 +120,36 @@ contract BoostManager is EIP712("boost", "0.1.0") {
   }
 
   /// @notice Claim using a merkle proof
-  function claimByWhitelist(Claim calldata claim, bytes calldata proof)
+  function claimByWhitelistProof(Claim calldata claim, bytes32[] calldata proof)
     external
-    onlyClaimableBoost(claim)
+    commonClaimChecks(claim)
   {
-    if (true) {
-      revert InvalidProof();
+    bytes32 leaf = keccak256(abi.encodePacked(claim.recipient, claim.amount));
+    if (!MerkleProof.verify(proof, whitelists[claim.boostId], leaf)) {
+      revert InvalidWhitelistProof();
     }
 
     _executeClaim(claim);
   }
 
   /// @notice Claim using an external guard contract
-  function claimByContract(Claim calldata claim) external onlyClaimableBoost(claim) {
+  function claimByContract(Claim calldata claim) external commonClaimChecks(claim) {
     if (
-      !BoostGuard(boosts[claim.boostId].guard).isValid(claim.boostId, claim.recipient, claim.amount)
+      claim.amount !=
+      BoostGuard(boosts[claim.boostId].guard).getAmount(boosts[claim.boostId], claim.recipient)
     ) {
       revert InvalidClaim();
     }
 
     _executeClaim(claim);
+  }
+
+  /// @dev function to let guard set merkle root for boost
+  function setWhitelist(uint256 id, bytes32 whitelist) external {
+    if (boosts[id].guard != msg.sender) revert OnlyBoostGuard();
+    if (boosts[id].end < block.timestamp) revert BoostEnded();
+
+    whitelists[id] = whitelist;
   }
 
   function _executeClaim(Claim calldata claim) internal {

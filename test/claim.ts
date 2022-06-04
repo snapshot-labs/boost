@@ -155,7 +155,7 @@ describe("Claiming", function () {
     );
 
     await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
-      "BoostDoesNotExist()"
+      "InsufficientBoostBalance()"
     );
   });
 
