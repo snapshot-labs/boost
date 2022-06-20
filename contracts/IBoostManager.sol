@@ -26,13 +26,10 @@ interface IBoostManager {
   error BoostNotEnded(uint256 end);
   error BoostNotStarted(uint256 start);
   error OnlyBoostOwner();
-  error OnlyBoostGuard();
   error InvalidRecipient();
   error InvalidGuard();
   error RecipientAlreadyClaimed();
   error InvalidSignature();
-  error InvalidWhitelistProof();
-  error InvalidClaim();
   error InsufficientBoostBalance();
 
   event BoostCreated(uint256 boostId, Boost boost);
