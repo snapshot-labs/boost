@@ -13,7 +13,7 @@ describe("Creating", function () {
   let now: number;
   let in1Minute: number;
 
-  const proposalId = ethers.utils.id("0x1");
+  const strategyUri = "abc123";
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -33,8 +33,8 @@ describe("Creating", function () {
     await expect(
       () =>
         expect(
-          boostContract.create({
-            ref: proposalId,
+          boostContract.createBoost({
+            strategyUri,
             token: tokenContract.address,
             balance: depositAmount,
             guard: guard.address,
@@ -44,7 +44,7 @@ describe("Creating", function () {
           })
         ).to.emit(boostContract, "BoostCreated")
       // chaining events doesn't work yet. will be added in waffle v4
-      // .to.emit(boostContract, "BoostDeposited")
+      // .to.emit(boostContract, "TokensDeposited")
     ).to.changeTokenBalances(
       tokenContract,
       [boostContract, owner],
@@ -58,8 +58,8 @@ describe("Creating", function () {
     await tokenContract.approve(boostContract.address, depositAmount - 1);
 
     await expect(
-      boostContract.create({
-        ref: proposalId,
+      boostContract.createBoost({
+        strategyUri,
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
@@ -76,8 +76,8 @@ describe("Creating", function () {
     await tokenContract.approve(boostContract.address, depositAmount);
 
     await expect(
-      boostContract.create({
-        ref: proposalId,
+      boostContract.createBoost({
+        strategyUri,
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
@@ -90,8 +90,8 @@ describe("Creating", function () {
 
   it(`reverts if deposit amount is 0`, async function () {
     await expect(
-      boostContract.create({
-        ref: proposalId,
+      boostContract.createBoost({
+        strategyUri,
         token: tokenContract.address,
         balance: 0,
         guard: guard.address,
@@ -104,8 +104,8 @@ describe("Creating", function () {
 
   it(`reverts if expire is less or equal to block timestamp`, async function () {
     await expect(
-      boostContract.create({
-        ref: proposalId,
+      boostContract.createBoost({
+        strategyUri,
         token: tokenContract.address,
         balance: 100,
         guard: guard.address,
@@ -121,8 +121,8 @@ describe("Creating", function () {
     await tokenContract.mintForSelf(depositAmount);
     await tokenContract.approve(boostContract.address, depositAmount);
 
-    const createTx = await boostContract.create({
-      ref: proposalId,
+    const createTx = await boostContract.createBoost({
+      strategyUri,
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,
@@ -134,7 +134,7 @@ describe("Creating", function () {
 
     const boost = await boostContract.boosts(1);
 
-    expect(boost.ref).to.be.equal(proposalId);
+    expect(boost.strategyUri).to.be.equal(strategyUri);
     expect(boost.token).to.be.equal(tokenContract.address);
     expect(boost.balance).to.be.equal(depositAmount);
     expect(boost.guard).to.be.equal(guard.address);

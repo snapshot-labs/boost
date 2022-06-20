@@ -30,9 +30,8 @@ describe("Withdrawing", function () {
     await tokenContract.mintForSelf(100);
     await tokenContract.approve(boostContract.address, 100);
 
-    const proposalId = ethers.utils.id("0x1");
-    const boostTx = await boostContract.create({
-      ref: proposalId,
+    const boostTx = await boostContract.createBoost({
+      strategyUri: "abc123",
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,
@@ -47,9 +46,9 @@ describe("Withdrawing", function () {
     await advanceClock(61);
 
     await expect(() =>
-      expect(boostContract.connect(owner).withdraw(boostId, anyone.address)).to.emit(
+      expect(boostContract.connect(owner).withdrawRemainingTokens(boostId, anyone.address)).to.emit(
         boostContract,
-        "BoostWithdrawn"
+        "RemainingTokensWithdrawn"
       )
     ).to.changeTokenBalances(
       tokenContract,
@@ -59,7 +58,7 @@ describe("Withdrawing", function () {
   });
 
   it(`reverts if boost is not expired`, async function () {
-    await expect(boostContract.connect(owner).withdraw(boostId, owner.address)).to.be.revertedWith(
+    await expect(boostContract.connect(owner).withdrawRemainingTokens(boostId, owner.address)).to.be.revertedWith(
       `BoostNotEnded(${in1Minute})`
     );
   });
@@ -67,7 +66,7 @@ describe("Withdrawing", function () {
   it(`reverts for other accounts than the boost owner`, async function () {
     await advanceClock(61);
 
-    await expect(boostContract.connect(guard).withdraw(boostId, guard.address)).to.be.revertedWith(
+    await expect(boostContract.connect(guard).withdrawRemainingTokens(boostId, guard.address)).to.be.revertedWith(
       "OnlyBoostOwner()"
     );
   });
@@ -82,11 +81,11 @@ describe("Withdrawing", function () {
       boostId,
       boostContract.address
     );
-    await boostContract.connect(claimer).claimBySignature(claim, signature);
+    await boostContract.connect(claimer).claimTokens(claim, signature);
 
     await advanceClock(61);
 
-    await expect(boostContract.connect(owner).withdraw(boostId, owner.address)).to.be.revertedWith(
+    await expect(boostContract.connect(owner).withdrawRemainingTokens(boostId, owner.address)).to.be.revertedWith(
       "InsufficientBoostBalance()"
     );
   });

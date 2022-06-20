@@ -18,9 +18,8 @@ describe("Depositing", function () {
   });
 
   async function createBoost(amount: number) {
-    const proposalId = ethers.utils.id("0x1");
-    const boostTx = await boostContract.create({
-      ref: proposalId,
+    const boostTx = await boostContract.createBoost({
+      strategyUri: "abc123",
       token: tokenContract.address,
       balance: amount,
       guard: guard.address,
@@ -29,7 +28,7 @@ describe("Depositing", function () {
       owner: owner.address,
     });
     const result = await boostTx.wait();
-    return result.events?.find((e) => e.event === "BoostCreated")?.args?.id;
+    return result.events?.find((e) => e.event === "BoostCreated")?.args?.boostId;
   }
 
   async function mintAndApprove(
@@ -48,9 +47,9 @@ describe("Depositing", function () {
     const boostId = await createBoost(100);
 
     await expect(() =>
-      expect(boostContract.connect(owner).deposit(boostId, 100)).to.emit(
+      expect(boostContract.connect(owner).depositTokens(boostId, 100)).to.emit(
         boostContract,
-        "BoostDeposited"
+        "TokensDeposited"
       )
     ).to.changeTokenBalances(tokenContract, [boostContract, owner], [100, -100]);
   });
@@ -60,7 +59,7 @@ describe("Depositing", function () {
     await mintAndApprove(guard, 50);
     const boostId = await createBoost(100);
 
-    await expect(() => boostContract.connect(guard).deposit(boostId, 50)).to.changeTokenBalances(
+    await expect(() => boostContract.connect(guard).depositTokens(boostId, 50)).to.changeTokenBalances(
       tokenContract,
       [boostContract, guard],
       [50, -50]
@@ -69,7 +68,7 @@ describe("Depositing", function () {
 
   it(`reverts if boost does not exist`, async function () {
     await expect(
-      boostContract.connect(owner).deposit(ethers.utils.id("0x1"), 10)
+      boostContract.connect(owner).depositTokens(99, 10)
     ).to.be.revertedWith("BoostDoesNotExist()");
   });
 
@@ -80,7 +79,7 @@ describe("Depositing", function () {
     await network.provider.send("evm_increaseTime", [61]);
     await network.provider.send("evm_mine");
     const amount = BigNumber.from(10);
-    await expect(boostContract.connect(owner).deposit(boostId, amount)).to.be.revertedWith(
+    await expect(boostContract.connect(owner).depositTokens(boostId, amount)).to.be.revertedWith(
       "BoostEnded()"
     );
   });
@@ -89,7 +88,7 @@ describe("Depositing", function () {
     await mintAndApprove(owner, 100, 50);
     const boostId = await createBoost(50);
 
-    await expect(boostContract.connect(owner).deposit(boostId, 10)).to.be.revertedWith(
+    await expect(boostContract.connect(owner).depositTokens(boostId, 10)).to.be.revertedWith(
       "ERC20: insufficient allowance"
     );
   });
@@ -98,7 +97,7 @@ describe("Depositing", function () {
     await mintAndApprove(owner, 100, 200);
     const boostId = await createBoost(100);
 
-    await expect(boostContract.connect(owner).deposit(boostId, 10)).to.be.revertedWith(
+    await expect(boostContract.connect(owner).depositTokens(boostId, 10)).to.be.revertedWith(
       "ERC20: transfer amount exceeds balance"
     );
   });
@@ -107,7 +106,7 @@ describe("Depositing", function () {
     await mintAndApprove(owner, 100);
     const boostId = await createBoost(50);
 
-    await expect(boostContract.connect(owner).deposit(boostId, 0)).to.be.revertedWith(
+    await expect(boostContract.connect(owner).depositTokens(boostId, 0)).to.be.revertedWith(
       "BoostDepositRequired()"
     );
   });

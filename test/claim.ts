@@ -34,8 +34,8 @@ describe("Claiming", function () {
 
     await tokenContract.mintForSelf(depositAmount);
     await tokenContract.approve(boostContract.address, depositAmount);
-    const boostTx = await boostContract.create({
-      ref: proposalId,
+    const boostTx = await boostContract.createBoost({
+      strategyUri: proposalId,
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,
@@ -64,9 +64,9 @@ describe("Claiming", function () {
     );
 
     await expect(() =>
-      expect(boostContract.claimBySignature(claim, signature)).to.emit(
+      expect(boostContract.claimTokens(claim, signature)).to.emit(
         boostContract,
-        "BoostClaimed"
+        "TokensClaimed"
       )
     ).to.changeTokenBalances(tokenContract, [boostContract, claimer1], [-perAccount, perAccount]);
   });
@@ -84,9 +84,9 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await boostContract.claimBySignature(claim, signature);
+    await boostContract.claimTokens(claim, signature);
 
-    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+    await expect(boostContract.claimTokens(claim, signature)).to.be.revertedWith(
       "RecipientAlreadyClaimed()"
     );
   });
@@ -97,7 +97,7 @@ describe("Claiming", function () {
     const recipients = [claimer1.address];
     const [claim] = await snapshotVotesStrategy.generateClaims(boostId, chainId, recipients);
 
-    await expect(boostContract.claimBySignature(claim, "0x00")).to.be.revertedWith(
+    await expect(boostContract.claimTokens(claim, "0x00")).to.be.revertedWith(
       "InvalidSignature()"
     );
   });
@@ -115,7 +115,7 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+    await expect(boostContract.claimTokens(claim, signature)).to.be.revertedWith(
       "BoostEnded()"
     );
   });
@@ -132,7 +132,7 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+    await expect(boostContract.claimTokens(claim, signature)).to.be.revertedWith(
       `BoostNotStarted(${in1Minute})`
     );
   });
@@ -154,7 +154,7 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await expect(boostContract.claimBySignature(claim, signature)).to.be.revertedWith(
+    await expect(boostContract.claimTokens(claim, signature)).to.be.revertedWith(
       "InsufficientBoostBalance()"
     );
   });
@@ -172,11 +172,11 @@ describe("Claiming", function () {
       boostContract.address
     );
 
-    await boostContract.claimBySignature(claims[0], signatures[0]);
-    await boostContract.claimBySignature(claims[1], signatures[1]);
-    await boostContract.claimBySignature(claims[2], signatures[2]);
+    await boostContract.claimTokens(claims[0], signatures[0]);
+    await boostContract.claimTokens(claims[1], signatures[1]);
+    await boostContract.claimTokens(claims[2], signatures[2]);
 
-    await expect(boostContract.claimBySignature(claims[3], signatures[3])).to.be.revertedWith(
+    await expect(boostContract.claimTokens(claims[3], signatures[3])).to.be.revertedWith(
       "InsufficientBoostBalance()"
     );
   });
