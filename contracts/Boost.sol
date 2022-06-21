@@ -16,7 +16,7 @@ contract Boost is IBoost, EIP712("boost", "0.1.0") {
   mapping(address => mapping(uint256 => bool)) public claimed;
 
   /// @notice Create a new boost and transfer tokens to it
-  function createBoost(Boost calldata boost) override external {
+  function createBoost(Boost calldata boost) external override {
     if (boost.balance == 0) revert BoostDepositRequired();
     if (boost.end <= block.timestamp) revert BoostEndDateInPast();
     if (boost.start >= boost.end) revert BoostEndDateBeforeStart();
@@ -33,7 +33,7 @@ contract Boost is IBoost, EIP712("boost", "0.1.0") {
   }
 
   /// @notice Top up an existing boost
-  function depositTokens(uint256 boostId, uint256 amount) override external {
+  function depositTokens(uint256 boostId, uint256 amount) external override {
     if (amount == 0) revert BoostDepositRequired();
     if (boosts[boostId].owner == address(0)) revert BoostDoesNotExist();
     if (boosts[boostId].end <= block.timestamp) revert BoostEnded();
@@ -47,7 +47,7 @@ contract Boost is IBoost, EIP712("boost", "0.1.0") {
   }
 
   /// @notice Withdraw remaining tokens from an expired boost
-  function withdrawRemainingTokens(uint256 boostId, address to) override external {
+  function withdrawRemainingTokens(uint256 boostId, address to) external override {
     if (boosts[boostId].balance == 0) revert InsufficientBoostBalance();
     if (boosts[boostId].end > block.timestamp) revert BoostNotEnded(boosts[boostId].end);
     if (boosts[boostId].owner != msg.sender) revert OnlyBoostOwner();
@@ -63,8 +63,9 @@ contract Boost is IBoost, EIP712("boost", "0.1.0") {
   }
 
   /// @notice Claim using a guard signature
-  function claimTokens(Claim calldata claim, bytes calldata signature) override external {
-    if (boosts[claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[claim.boostId].start);
+  function claimTokens(Claim calldata claim, bytes calldata signature) external override {
+    if (boosts[claim.boostId].start > block.timestamp)
+      revert BoostNotStarted(boosts[claim.boostId].start);
     if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
     if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
     if (claimed[claim.recipient][claim.boostId]) revert RecipientAlreadyClaimed();

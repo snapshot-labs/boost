@@ -38,7 +38,10 @@ interface IBoost {
   event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
 
   function createBoost(Boost calldata boost) external;
+
   function depositTokens(uint256 boostId, uint256 amount) external;
+
   function withdrawRemainingTokens(uint256 boostId, address to) external;
+
   function claimTokens(Claim calldata claim, bytes calldata signature) external;
 }
