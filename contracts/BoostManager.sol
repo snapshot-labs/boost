@@ -15,8 +15,6 @@ contract BoostManager is IBoostManager, EIP712("boost", "0.1.0") {
   mapping(uint256 => Boost) public boosts;
   mapping(address => mapping(uint256 => bool)) public claimed;
 
-  mapping(uint256 => bytes32) public whitelists; // merkle roots
-
   /// @notice Create a new boost and transfer tokens to it
   function createBoost(Boost calldata boost) override external {
     if (boost.balance == 0) revert BoostDepositRequired();
