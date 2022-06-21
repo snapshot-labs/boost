@@ -5,9 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
-import "./IBoostManager.sol";
+import "./IBoost.sol";
 
-contract BoostManager is IBoostManager, EIP712("boost", "0.1.0") {
+contract Boost is IBoost, EIP712("boost", "0.1.0") {
   bytes32 public immutable eip712ClaimStructHash =
     keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 

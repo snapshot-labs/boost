@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BoostManager } from "../typechain";
+import { Boost } from "../typechain";
 import { generateClaimSignatures } from "@snapshot-labs/boost";
 import { snapshotVotesStrategy } from "@snapshot-labs/boost/strategies/snapshot-votes";
 import { advanceClock, deployContracts } from "./helpers";
@@ -12,7 +12,7 @@ describe("Withdrawing", function () {
   let guard: SignerWithAddress;
   let claimer: SignerWithAddress;
   let anyone: SignerWithAddress;
-  let boostContract: BoostManager;
+  let boostContract: Boost;
   let tokenContract: Contract;
   let now: number;
   let in1Minute: number;

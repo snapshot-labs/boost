@@ -8,7 +8,7 @@ export async function advanceClock(seconds: number) {
 }
 
 export async function deployContracts(connectedAccount: SignerWithAddress) {
-  const Boost = await ethers.getContractFactory("BoostManager");
+  const Boost = await ethers.getContractFactory("Boost");
   const TestToken = await ethers.getContractFactoryFromArtifact(TestTokenArtifact);
 
   const boostContract = await Boost.deploy();

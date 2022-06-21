@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { BoostManager } from "../typechain";
+import { Boost } from "../typechain";
 import { BigNumber, Contract } from "ethers";
 import { deployContracts } from "./helpers";
 
 describe("Depositing", function () {
   let owner: SignerWithAddress;
   let guard: SignerWithAddress;
-  let boostContract: BoostManager;
+  let boostContract: Boost;
   let tokenContract: Contract;
 
   beforeEach(async function () {

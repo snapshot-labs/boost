@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.4;
 
-interface IBoostManager {
+interface IBoost {
   struct Boost {
     string strategyUri;
     address token;
