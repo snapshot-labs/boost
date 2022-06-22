@@ -13,7 +13,8 @@ describe("Creating", function () {
   let now: number;
   let in1Minute: number;
 
-  const strategyUri = "abc123";
+  const strategyURI = "abc123";
+  const ref = ethers.utils.id("0x1");
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -34,7 +35,8 @@ describe("Creating", function () {
       () =>
         expect(
           boostContract.createBoost({
-            strategyUri,
+            strategyURI,
+            ref,
             token: tokenContract.address,
             balance: depositAmount,
             guard: guard.address,
@@ -59,7 +61,8 @@ describe("Creating", function () {
 
     await expect(
       boostContract.createBoost({
-        strategyUri,
+        strategyURI,
+        ref,
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
@@ -77,7 +80,8 @@ describe("Creating", function () {
 
     await expect(
       boostContract.createBoost({
-        strategyUri,
+        strategyURI,
+        ref,
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
@@ -91,7 +95,8 @@ describe("Creating", function () {
   it(`reverts if deposit amount is 0`, async function () {
     await expect(
       boostContract.createBoost({
-        strategyUri,
+        strategyURI,
+        ref,
         token: tokenContract.address,
         balance: 0,
         guard: guard.address,
@@ -105,7 +110,8 @@ describe("Creating", function () {
   it(`reverts if expire is less or equal to block timestamp`, async function () {
     await expect(
       boostContract.createBoost({
-        strategyUri,
+        strategyURI,
+        ref,
         token: tokenContract.address,
         balance: 100,
         guard: guard.address,
@@ -122,7 +128,8 @@ describe("Creating", function () {
     await tokenContract.approve(boostContract.address, depositAmount);
 
     const createTx = await boostContract.createBoost({
-      strategyUri,
+      strategyURI,
+      ref,
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,
@@ -134,7 +141,8 @@ describe("Creating", function () {
 
     const boost = await boostContract.boosts(1);
 
-    expect(boost.strategyUri).to.be.equal(strategyUri);
+    expect(boost.strategyURI).to.be.equal(strategyURI);
+    expect(boost.ref).to.be.equal(ref);
     expect(boost.token).to.be.equal(tokenContract.address);
     expect(boost.balance).to.be.equal(depositAmount);
     expect(boost.guard).to.be.equal(guard.address);

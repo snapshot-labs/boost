@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 interface IBoost {
   struct Boost {
     string strategyURI;
+    bytes32 ref;
     address token;
     uint256 balance;
     address guard;

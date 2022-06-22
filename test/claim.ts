@@ -20,7 +20,6 @@ describe("Claiming", function () {
   let in1Minute: number;
   let in2Minutes: number;
 
-  const proposalId = ethers.utils.id("0x1");
   const depositAmount = 3;
   const perAccount = 1;
 
@@ -35,7 +34,8 @@ describe("Claiming", function () {
     await tokenContract.mintForSelf(depositAmount);
     await tokenContract.approve(boostContract.address, depositAmount);
     const boostTx = await boostContract.createBoost({
-      strategyUri: proposalId,
+      strategyURI: "abc123",
+      ref: ethers.utils.id("0x1"),
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,

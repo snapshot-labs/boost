@@ -31,7 +31,8 @@ describe("Withdrawing", function () {
     await tokenContract.approve(boostContract.address, 100);
 
     const boostTx = await boostContract.createBoost({
-      strategyUri: "abc123",
+      strategyURI: "abc123",
+      ref: ethers.utils.id("0x1"),
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,

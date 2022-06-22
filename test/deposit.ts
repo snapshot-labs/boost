@@ -19,7 +19,8 @@ describe("Depositing", function () {
 
   async function createBoost(amount: number) {
     const boostTx = await boostContract.createBoost({
-      strategyUri: "abc123",
+      strategyURI: "abc123",
+      ref: ethers.utils.id("0x1"),
       token: tokenContract.address,
       balance: amount,
       guard: guard.address,
