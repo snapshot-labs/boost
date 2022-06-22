@@ -3,7 +3,7 @@ pragma solidity ^0.8.4;
 
 interface IBoost {
   struct Boost {
-    string strategyUri;
+    string strategyURI;
     address token;
     uint256 balance;
     address guard;
