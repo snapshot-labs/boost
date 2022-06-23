@@ -14,7 +14,6 @@ describe("Creating", function () {
   let in1Minute: number;
 
   const strategyURI = "abc123";
-  const ref = ethers.utils.id("0x1");
 
   beforeEach(async function () {
     [owner, guard] = await ethers.getSigners();
@@ -36,7 +35,6 @@ describe("Creating", function () {
         expect(
           boostContract.createBoost({
             strategyURI,
-            ref,
             token: tokenContract.address,
             balance: depositAmount,
             guard: guard.address,
@@ -62,7 +60,6 @@ describe("Creating", function () {
     await expect(
       boostContract.createBoost({
         strategyURI,
-        ref,
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
@@ -81,7 +78,6 @@ describe("Creating", function () {
     await expect(
       boostContract.createBoost({
         strategyURI,
-        ref,
         token: tokenContract.address,
         balance: depositAmount,
         guard: guard.address,
@@ -96,7 +92,6 @@ describe("Creating", function () {
     await expect(
       boostContract.createBoost({
         strategyURI,
-        ref,
         token: tokenContract.address,
         balance: 0,
         guard: guard.address,
@@ -111,7 +106,6 @@ describe("Creating", function () {
     await expect(
       boostContract.createBoost({
         strategyURI,
-        ref,
         token: tokenContract.address,
         balance: 100,
         guard: guard.address,
@@ -129,7 +123,6 @@ describe("Creating", function () {
 
     const createTx = await boostContract.createBoost({
       strategyURI,
-      ref,
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,
@@ -142,7 +135,6 @@ describe("Creating", function () {
     const boost = await boostContract.boosts(1);
 
     expect(boost.strategyURI).to.be.equal(strategyURI);
-    expect(boost.ref).to.be.equal(ref);
     expect(boost.token).to.be.equal(tokenContract.address);
     expect(boost.balance).to.be.equal(depositAmount);
     expect(boost.guard).to.be.equal(guard.address);

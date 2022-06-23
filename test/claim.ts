@@ -35,7 +35,6 @@ describe("Claiming", function () {
     await tokenContract.approve(boostContract.address, depositAmount);
     const boostTx = await boostContract.createBoost({
       strategyURI: "abc123",
-      ref: ethers.utils.id("0x1"),
       token: tokenContract.address,
       balance: depositAmount,
       guard: guard.address,
