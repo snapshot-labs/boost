@@ -15,7 +15,7 @@ export async function generateClaimSignatures(
 
   const EIP712Domain = {
     name: "boost",
-    version: "0.1.0",
+    version: "1",
     chainId,
     verifyingContract,
   };
