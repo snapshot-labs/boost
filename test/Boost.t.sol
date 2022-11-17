@@ -10,7 +10,6 @@ import "../src/IBoost.sol";
 import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
 
 abstract contract BoostTest is Test, EIP712("boost", "1") {
-
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
@@ -74,10 +73,11 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     }
 
     function _generateClaimSignature(IBoost.Claim memory claim) internal returns (bytes memory) {
-        bytes32 digest = ECDSA.toTypedDataHash(domainSeparator, keccak256(abi.encode(eip712ClaimStructHash, claim.boostId, claim.recipient, claim.amount))
+        bytes32 digest = ECDSA.toTypedDataHash(
+            domainSeparator,
+            keccak256(abi.encode(eip712ClaimStructHash, claim.boostId, claim.recipient, claim.amount))
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(guardKey, digest);
         return abi.encodePacked(r, s, v);
     }
-
 }
