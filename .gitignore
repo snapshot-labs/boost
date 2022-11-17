@@ -21,3 +21,6 @@ yarn-error.log*
 !/broadcast
 /broadcast/*
 /broadcast/*/31337/
+
+.env
+.yarn

@@ -30,8 +30,10 @@ contract BoostTest is Test {
     Boost public boost;
     MockERC20 public token;
 
-    address public constant owner = address(0x1234);
-    address public constant guard = address(0x5678);
+    uint256 public constant ownerKey = 1234;
+    uint256 public constant guardKey = 5678;
+    address public owner = vm.addr(ownerKey);
+    address public guard = vm.addr(guardKey);
 
     uint256 public constant depositAmount = 100;
     string public constant strategyURI = "abc123";

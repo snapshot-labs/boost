@@ -14,10 +14,6 @@ contract Boost is IBoost, EIP712("boost", "1") {
     mapping(uint256 => BoostConfig) public boosts;
     mapping(address => mapping(uint256 => bool)) public claimed;
 
-    function getBoostConfig(uint256 index) public view returns (BoostConfig memory) {
-        return boosts[index];
-    }
-
     /// @notice Create a new boost and transfer tokens to it
     function createBoost(BoostConfig calldata boost) external override {
         if (boost.balance == 0) revert BoostDepositRequired();
