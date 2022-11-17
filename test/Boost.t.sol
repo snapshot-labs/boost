@@ -2,12 +2,8 @@
 pragma solidity ^0.8.14;
 
 import "forge-std/Test.sol";
-import "forge-std/console2.sol";
-import "../src/Boost.sol";
 import "./mocks/MockERC20.sol";
-import "../src/IBoost.sol";
-
-import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
+import "../src/Boost.sol";
 
 abstract contract BoostTest is Test, EIP712("boost", "1") {
     bytes32 public immutable eip712ClaimStructHash =
@@ -45,6 +41,11 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     uint256 public constant depositAmount = 100;
     string public constant strategyURI = "abc123";
 
+    function setUp() public {
+        boost = new Boost();
+        token = new MockERC20("Test Token", "TEST");
+    }
+
     function _createBoost(uint256 amount) internal returns (uint256) {
         IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
             strategyURI: strategyURI,
@@ -65,11 +66,6 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
         token.mint(user, mintAmount);
         vm.prank(user);
         token.approve(address(boost), approveAmount);
-    }
-
-    function setUp() public {
-        boost = new Boost();
-        token = new MockERC20("Test Token", "TEST");
     }
 
     function _generateClaimSignature(IBoost.Claim memory claim) internal returns (bytes memory) {
