@@ -34,6 +34,7 @@ interface IBoost {
 
     event BoostCreated(uint256 boostId, BoostConfig boost);
     event TokensClaimed(Claim claim);
+    event MultipleTokensClaimed(uint256 boostId, address[] recipients);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
 
