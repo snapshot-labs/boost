@@ -1,9 +1,26 @@
-node_modules
-.env
-coverage
-coverage.json
-typechain
+# directories
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+**/cache
+**/node_modules
+**/out
 
-#Hardhat files
-cache
-artifacts
+# files
+*.env
+*.log
+.DS_Store
+.pnp.*
+yarn-debug.log*
+yarn-error.log*
+
+# broadcasts
+!/broadcast
+/broadcast/*
+/broadcast/*/31337/
+
+.env
+.yarn
