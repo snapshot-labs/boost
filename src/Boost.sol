@@ -69,7 +69,18 @@ contract Boost is IBoost, EIP712("boost", "1") {
     }
 
     /// @notice Claim using a guard signature
-    function claimTokens(Claim calldata claim, bytes calldata signature) external override {
+    function claim(Claim calldata claim, bytes calldata signature) external override {
+        _claim(claim, signature);
+    }
+
+    /// @notice Claim multiple using an array of guard signatures
+    function claimMultiple(Claim[] calldata claims, bytes[] calldata signatures) external override {
+        for (uint i = 0; i < signatures.length; i++) {
+            _claim(claims[i], signatures[i]);
+        }
+    }
+
+    function _claim(Claim memory claim, bytes memory signature) internal {
         if (boosts[claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[claim.boostId].start);
         if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
         if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
@@ -90,63 +101,5 @@ contract Boost is IBoost, EIP712("boost", "1") {
         token.transfer(claim.recipient, claim.amount);
 
         emit TokensClaimed(claim);
-    }
-
-    /// Claim multiple for the same boost
-    function claimMultiple(
-        uint256 boostId,
-        address[] memory recipients,
-        uint256[] calldata amounts,
-        bytes[] calldata signatures
-    ) external {
-        uint256 claimedAmount;
-        for (uint i = 0; i < signatures.length; i++) {
-            if (boosts[boostId].start > block.timestamp) revert BoostNotStarted(boosts[boostId].start);
-            if (boosts[boostId].balance < amounts[i]) revert InsufficientBoostBalance();
-            if (boosts[boostId].end <= block.timestamp) revert BoostEnded();
-            if (claimed[recipients[i]][boostId]) revert RecipientAlreadyClaimed();
-            if (recipients[i] == address(0)) revert InvalidRecipient();
-            bytes32 digest = _hashTypedDataV4(
-                keccak256(abi.encode(eip712ClaimStructHash, boostId, recipients[i], amounts[i]))
-            );
-
-            if (!SignatureChecker.isValidSignatureNow(boosts[boostId].guard, digest, signatures[i]))
-                revert InvalidSignature();
-
-            claimed[recipients[i]][boostId] = true;
-
-            claimedAmount += amounts[i];
-
-            IERC20 token = IERC20(boosts[boostId].token);
-            token.transfer(recipients[i], amounts[i]);
-        }
-
-        boosts[boostId].balance -= claimedAmount;
-    }
-
-    /// Claim multiple for the same boost
-    function claimMultiple2(
-        uint256 boostId,
-        address[] memory recipients,
-        uint256 amount,
-        bytes[] calldata signatures
-    ) external {
-        BoostConfig storage boost = boosts[boostId];
-        IERC20 token = IERC20(boost.token);
-        if (boost.balance < amount * signatures.length) revert InsufficientBoostBalance();
-        if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
-        if (boost.end <= block.timestamp) revert BoostEnded();
-        for (uint i = 0; i < signatures.length; i++) {
-            if (claimed[recipients[i]][boostId]) revert RecipientAlreadyClaimed();
-            bytes32 digest = _hashTypedDataV4(
-                keccak256(abi.encode(eip712ClaimStructHash, boostId, recipients[i], amount))
-            );
-            if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, signatures[i])) revert InvalidSignature();
-            claimed[recipients[i]][boostId] = true;
-            token.transfer(recipients[i], amount);
-        }
-
-        boost.balance -= amount * signatures.length;
-        emit MultipleTokensClaimed(boostId, recipients);
     }
 }

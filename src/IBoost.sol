@@ -44,5 +44,7 @@ interface IBoost {
 
     function withdrawRemainingTokens(uint256 boostId, address to) external;
 
-    function claimTokens(Claim calldata claim, bytes calldata signature) external;
+    function claim(Claim calldata claim, bytes calldata signature) external;
+
+    function claimMultiple(Claim[] calldata claims, bytes[] calldata signatures) external;
 }

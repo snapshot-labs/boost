@@ -39,7 +39,7 @@ contract BoostWithdrawTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost(depositAmount);
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: depositAmount });
-        boost.claimTokens(claim, _generateClaimSignature(claim));
+        boost.claim(claim, _generateClaimSignature(claim));
         vm.prank(owner);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
         boost.withdrawRemainingTokens(boostId, owner);
