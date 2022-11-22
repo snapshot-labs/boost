@@ -21,7 +21,7 @@ contract BoostClaimTest is BoostTest {
         assertEq(token.balanceOf(claimer), 1);
     }
 
-    function testClaimMultipleSeparate() public {
+    function testClaimMultipleSeparately() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost(depositAmount);
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
@@ -34,6 +34,35 @@ contract BoostClaimTest is BoostTest {
         boost.claim(claim3, _generateClaimSignature(claim3));
         boost.claim(claim4, _generateClaimSignature(claim4));
         boost.claim(claim5, _generateClaimSignature(claim5));
+        assertEq(token.balanceOf(address(boost)), depositAmount - 5);
+        assertEq(token.balanceOf(claimer), 1);
+        assertEq(token.balanceOf(claimer2), 1);
+        assertEq(token.balanceOf(claimer3), 1);
+        assertEq(token.balanceOf(claimer4), 1);
+        assertEq(token.balanceOf(claimer5), 1);
+    }
+
+    function testClaimMultiple() public {
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost(depositAmount);
+        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.Claim memory claim2 = IBoost.Claim({ boostId: boostId, recipient: claimer2, amount: 1 });
+        IBoost.Claim memory claim3 = IBoost.Claim({ boostId: boostId, recipient: claimer3, amount: 1 });
+        IBoost.Claim memory claim4 = IBoost.Claim({ boostId: boostId, recipient: claimer4, amount: 1 });
+        IBoost.Claim memory claim5 = IBoost.Claim({ boostId: boostId, recipient: claimer5, amount: 1 });
+        IBoost.Claim[] memory claims = new IBoost.Claim[](5);
+        claims[0] = claim;
+        claims[1] = claim2;
+        claims[2] = claim3;
+        claims[3] = claim4;
+        claims[4] = claim5;
+        bytes[] memory signatures = new bytes[](5);
+        signatures[0] = _generateClaimSignature(claim);
+        signatures[1] = _generateClaimSignature(claim2);
+        signatures[2] = _generateClaimSignature(claim3);
+        signatures[3] = _generateClaimSignature(claim4);
+        signatures[4] = _generateClaimSignature(claim5);
+        boost.claimMultiple(claims, signatures);
         assertEq(token.balanceOf(address(boost)), depositAmount - 5);
         assertEq(token.balanceOf(claimer), 1);
         assertEq(token.balanceOf(claimer2), 1);
@@ -105,28 +134,5 @@ contract BoostClaimTest is BoostTest {
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
         boost.claim(claim, sig);
-    }
-
-    function testClaimMultipleCombined3() public {
-        _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 boostId = _createBoost(depositAmount);
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
-        IBoost.Claim memory claim2 = IBoost.Claim({ boostId: boostId, recipient: claimer2, amount: 1 });
-        IBoost.Claim memory claim3 = IBoost.Claim({ boostId: boostId, recipient: claimer3, amount: 1 });
-        IBoost.Claim memory claim4 = IBoost.Claim({ boostId: boostId, recipient: claimer4, amount: 1 });
-        IBoost.Claim memory claim5 = IBoost.Claim({ boostId: boostId, recipient: claimer5, amount: 1 });
-        IBoost.Claim[] memory claims = new IBoost.Claim[](5);
-        claims[0] = claim;
-        claims[1] = claim2;
-        claims[2] = claim3;
-        claims[3] = claim4;
-        claims[4] = claim5;
-        bytes[] memory signatures = new bytes[](5);
-        signatures[0] = _generateClaimSignature(claim);
-        signatures[1] = _generateClaimSignature(claim2);
-        signatures[2] = _generateClaimSignature(claim3);
-        signatures[3] = _generateClaimSignature(claim4);
-        signatures[4] = _generateClaimSignature(claim5);
-        boost.claimMultiple(claims, signatures);
     }
 }
