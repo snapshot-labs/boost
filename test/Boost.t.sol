@@ -6,11 +6,6 @@ import "./mocks/MockERC20.sol";
 import "../src/Boost.sol";
 
 abstract contract BoostTest is Test, EIP712("boost", "1") {
-    bytes32 public immutable eip712ClaimStructHash =
-        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
-
-    bytes32 public constant domainSeparator = 0xd8d1c3bc2cb8b823d8b8651dd669ba23441e7e1ee9e0b53fe5ed602c863d5189;
-
     event BoostCreated(uint256 boostId, IBoost.BoostConfig boost);
     event TokensClaimed(IBoost.Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
@@ -29,6 +24,9 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     error RecipientAlreadyClaimed();
     error InvalidSignature();
     error InsufficientBoostBalance();
+
+    string constant boostName = "boost";
+    string constant boostVersion = "1";
 
     Boost public boost;
     MockERC20 public token;
@@ -68,10 +66,28 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
         token.approve(address(boost), approveAmount);
     }
 
-    function _generateClaimSignature(IBoost.Claim memory claim) internal returns (bytes memory) {
-        bytes32 digest = ECDSA.toTypedDataHash(
-            domainSeparator,
-            keccak256(abi.encode(eip712ClaimStructHash, claim.boostId, claim.recipient, claim.amount))
+    function _generateClaimSignature(IBoost.Claim memory claim) internal view returns (bytes memory) {
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                keccak256(
+                    abi.encode(
+                        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                        keccak256(bytes(boostName)),
+                        keccak256(bytes(boostVersion)),
+                        block.chainid,
+                        address(boost)
+                    )
+                ),
+                keccak256(
+                    abi.encode(
+                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)"),
+                        claim.boostId,
+                        claim.recipient,
+                        claim.amount
+                    )
+                )
+            )
         );
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(guardKey, digest);
         return abi.encodePacked(r, s, v);
