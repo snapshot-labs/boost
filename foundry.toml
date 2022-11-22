@@ -17,3 +17,4 @@ test = "test"
 [profile.ci]
 fuzz = { runs = 1_000 }
 verbosity = 4
+
