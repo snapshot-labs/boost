@@ -44,7 +44,7 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     uint256 public constant depositAmount = 100;
     string public constant strategyURI = "abc123";
 
-    function setUp() public {
+    function setUp() public virtual {
         boost = new Boost(protocolOwner, 0, 0);
         token = new MockERC20("Test Token", "TEST");
     }

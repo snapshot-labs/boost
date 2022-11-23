@@ -47,6 +47,8 @@ contract BoostCreateTest is BoostTest {
         assertEq(block.timestamp, _start);
         assertEq(block.timestamp + 60, _end);
         assertEq(owner, _owner);
+
+        assertEq(token.balanceOf(address(boost)), depositAmount);
     }
 
     function testCreateBoostInsufficientAllowance() public {

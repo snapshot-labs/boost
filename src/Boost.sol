@@ -79,20 +79,23 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     }
 
     /// @notice Top up an existing boost
-    function depositTokens(uint256 boostId, uint256 amount) external override {
-        if (amount == 0) revert BoostDepositRequired();
+    function depositTokens(uint256 boostId, uint256 _amount) external override {
+        if (_amount == 0) revert BoostDepositRequired();
         if (boosts[boostId].owner == address(0)) revert BoostDoesNotExist();
         if (boosts[boostId].end <= block.timestamp) revert BoostEnded();
 
+        uint256 balanceIncrease = 0;
         if (percentageFee > 0) {
-            uint256 protocolFee = amount / percentageFee;
+            uint256 protocolFee = _amount / percentageFee;
             boosts[boostId].balance -= protocolFee;
             boosts[boostId].token.transferFrom(msg.sender, owner(), protocolFee);
+        } else {
+            balanceIncrease = _amount;
         }
 
-        boosts[boostId].token.transferFrom(msg.sender, address(this), amount);
-        boosts[boostId].balance += amount;
-        emit TokensDeposited(boostId, msg.sender, amount);
+        boosts[boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
+        boosts[boostId].balance += balanceIncrease;
+        emit TokensDeposited(boostId, msg.sender, _amount);
     }
 
     /// @notice Withdraw remaining tokens from an expired boost
