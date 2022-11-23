@@ -66,17 +66,16 @@ contract BoostClaimTest is BoostTest {
     function testClaimBoostNotStarted() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = boost.nextBoostId();
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: depositAmount,
-            guard: guard,
-            start: block.timestamp + 60,
-            end: block.timestamp + 120,
-            owner: owner
-        });
         vm.prank(owner);
-        boost.createBoost(boostConfig);
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp + 60,
+            block.timestamp + 120,
+            owner
+        );
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotStarted.selector, block.timestamp + 60));

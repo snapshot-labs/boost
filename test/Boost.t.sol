@@ -4,6 +4,7 @@ pragma solidity ^0.8.14;
 import "forge-std/Test.sol";
 import "./mocks/MockERC20.sol";
 import "../src/Boost.sol";
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 abstract contract BoostTest is Test, EIP712("boost", "1") {
     event BoostCreated(uint256 boostId, IBoost.BoostConfig boost);
@@ -25,14 +26,18 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     error InvalidSignature();
     error InsufficientBoostBalance();
 
+    address protocolOwner = address(0xFFFF);
+
     string constant boostName = "boost";
     string constant boostVersion = "1";
 
     Boost public boost;
     MockERC20 public token;
+    // IERC20 public token;
 
     uint256 public constant ownerKey = 1234;
     uint256 public constant guardKey = 5678;
+
     address public owner = vm.addr(ownerKey);
     address public guard = vm.addr(guardKey);
 
@@ -40,23 +45,23 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     string public constant strategyURI = "abc123";
 
     function setUp() public {
-        boost = new Boost();
+        boost = new Boost(protocolOwner, 0, 0);
         token = new MockERC20("Test Token", "TEST");
     }
 
     function _createBoost(uint256 amount) internal returns (uint256) {
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: amount,
-            guard: guard,
-            start: block.timestamp,
-            end: block.timestamp + 60,
-            owner: owner
-        });
+        // IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
+        //     strategyURI: strategyURI,
+        //     token: IERC20(address(token)),
+        //     balance: amount,
+        //     guard: guard,
+        //     start: block.timestamp,
+        //     end: block.timestamp + 60,
+        //     owner: owner
+        // });
         uint256 boostID = boost.nextBoostId();
         vm.prank(owner);
-        boost.createBoost(boostConfig);
+        boost.createBoost(strategyURI, IERC20(token), amount, guard, block.timestamp, block.timestamp + 60, owner);
         return boostID;
     }
 

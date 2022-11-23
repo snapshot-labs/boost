@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
 import "openzeppelin-contracts/utils/cryptography/draft-EIP712.sol";
+
 import "./IBoost.sol";
 
-contract Boost is IBoost, EIP712("boost", "1") {
+contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
@@ -14,19 +15,65 @@ contract Boost is IBoost, EIP712("boost", "1") {
     mapping(uint256 => BoostConfig) public boosts;
     mapping(address => mapping(uint256 => bool)) public claimed;
 
+    // Constant eth fee that is the same for all boost creators.
+    uint256 public flatEthFee;
+    // The fraction of the total boost deposit that is taken as a fee.
+    // represented as an integer denominator (1/x)%
+    uint256 public percentageFee;
+
+    constructor(address protocolOwner, uint256 _flatEthFee, uint256 _percentageFee) {
+        transferOwnership(protocolOwner);
+        flatEthFee = _flatEthFee;
+        percentageFee = _percentageFee;
+    }
+
+    function updateProtocolFee(uint256 newFlatEthFee, uint256 newPercentageFee) external override onlyOwner {
+        flatEthFee = newFlatEthFee;
+        percentageFee = newPercentageFee;
+    }
+
+    function collectEthFees() external onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
     /// @notice Create a new boost and transfer tokens to it
-    function createBoost(BoostConfig calldata boost) external override {
-        if (boost.balance == 0) revert BoostDepositRequired();
-        if (boost.end <= block.timestamp) revert BoostEndDateInPast();
-        if (boost.start >= boost.end) revert BoostEndDateBeforeStart();
-        if (boost.guard == address(0)) revert InvalidGuard();
+    function createBoost(
+        string calldata _strategyURI,
+        IERC20 _token,
+        uint256 _amount,
+        address _guard,
+        uint256 _start,
+        uint256 _end,
+        address _owner
+    ) external payable override {
+        if (_amount == 0) revert BoostDepositRequired();
+        if (_end <= block.timestamp) revert BoostEndDateInPast();
+        if (_start >= _end) revert BoostEndDateBeforeStart();
+        if (_guard == address(0)) revert InvalidGuard();
+        if (msg.value < flatEthFee) revert InsufficientEthFee();
+
+        uint256 balance = 0;
+        if (percentageFee > 0) {
+            uint256 protocolFee = _amount / percentageFee;
+            balance = _amount - protocolFee;
+            _token.transferFrom(msg.sender, owner(), protocolFee);
+        } else {
+            balance = _amount;
+        }
 
         uint256 newId = nextBoostId;
         nextBoostId++;
-        boosts[newId] = boost;
+        boosts[newId] = BoostConfig({
+            strategyURI: _strategyURI,
+            token: _token,
+            balance: balance,
+            guard: _guard,
+            start: _start,
+            end: _end,
+            owner: _owner
+        });
 
-        IERC20 token = IERC20(boost.token);
-        token.transferFrom(msg.sender, address(this), boost.balance);
+        _token.transferFrom(msg.sender, address(this), balance);
 
         emit BoostCreated(newId, boosts[newId]);
     }
@@ -37,11 +84,14 @@ contract Boost is IBoost, EIP712("boost", "1") {
         if (boosts[boostId].owner == address(0)) revert BoostDoesNotExist();
         if (boosts[boostId].end <= block.timestamp) revert BoostEnded();
 
+        if (percentageFee > 0) {
+            uint256 protocolFee = amount / percentageFee;
+            boosts[boostId].balance -= protocolFee;
+            boosts[boostId].token.transferFrom(msg.sender, owner(), protocolFee);
+        }
+
+        boosts[boostId].token.transferFrom(msg.sender, address(this), amount);
         boosts[boostId].balance += amount;
-
-        IERC20 token = IERC20(boosts[boostId].token);
-        token.transferFrom(msg.sender, address(this), amount);
-
         emit TokensDeposited(boostId, msg.sender, amount);
     }
 
