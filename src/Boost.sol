@@ -95,8 +95,9 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
             balanceIncrease = _amount;
         }
 
-        boosts[boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
         boosts[boostId].balance += balanceIncrease;
+        boosts[boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
+
         emit TokensDeposited(boostId, msg.sender, balanceIncrease);
     }
 
@@ -110,8 +111,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         uint256 amount = boosts[boostId].balance;
         boosts[boostId].balance = 0;
 
-        IERC20 token = IERC20(boosts[boostId].token);
-        token.transfer(to, amount);
+        boosts[boostId].token.transfer(to, amount);
 
         emit RemainingTokensWithdrawn(boostId, amount);
     }

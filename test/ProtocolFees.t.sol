@@ -115,11 +115,65 @@ contract ProtocolFeesTest is BoostTest {
         assertEq(token.balanceOf(protocolOwner), 2 * tokenFeeAmount);
     }
 
-    // function testCollectEthFees() public {
+    function testCollectEthFees() public {
+        _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+        uint256 boostId = _createBoost(
+            strategyURI,
+            address(token),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner,
+            ethFee
+        );
+        vm.prank(protocolOwner);
+        boost.collectEthFees();
+        assertEq(address(boost).balance, 0);
+        assertEq(protocolOwner.balance, ethFee);
+    }
 
-    // }
+    function testInsufficientEthFee() public {
+        _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+        vm.expectRevert(IBoost.InsufficientEthFee.selector);
+        vm.prank(owner);
+        vm.deal(owner, ethFee - 1);
+        boost.createBoost{ value: ethFee - 1 }(
+            strategyURI,
+            IERC20(token),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
+    }
 
-    // function testOverFlowEthFees() public {
+    function test100PercentTokenFee() public {
+        uint256 newEthFee = 0;
+        uint256 newTokenFee = 1;
+        vm.prank(protocolOwner);
+        boost.updateProtocolFees(newEthFee, newTokenFee);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
+        assertEq(owner.balance, 0);
+        // 100% protocol fee, boost balance is zero
+        assertEq(token.balanceOf(address(boost)), 0);
+        assertEq(token.balanceOf(protocolOwner), depositAmount);
+    }
 
-    // }
+    function testMinTokenFee() public {
+        uint256 newEthFee = 0;
+        uint256 newTokenFee = type(uint256).max;
+        vm.prank(protocolOwner);
+        boost.updateProtocolFees(newEthFee, newTokenFee);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        // Division is rounded towards zero and depositAmount < newTokenFee, therefore the tokenFeeAmount will be zero
+        uint256 tokenFeeAmount = depositAmount / newTokenFee;
+        uint256 boostBalance = depositAmount - tokenFeeAmount;
+        uint256 boostId = _createBoost();
+        assertEq(owner.balance, 0);
+        assertEq(token.balanceOf(address(boost)), depositAmount);
+        assertEq(token.balanceOf(protocolOwner), 0);
+    }
 }
