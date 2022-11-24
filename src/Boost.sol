@@ -15,21 +15,23 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     mapping(uint256 => BoostConfig) public boosts;
     mapping(address => mapping(uint256 => bool)) public claimed;
 
-    // Constant eth fee that is the same for all boost creators.
-    uint256 public flatEthFee;
+    // Constant eth fee (in gwei) that is the same for all boost creators.
+    uint256 public ethFee;
     // The fraction of the total boost deposit that is taken as a fee.
     // represented as an integer denominator (1/x)%
-    uint256 public percentageFee;
+    uint256 public tokenFee;
 
-    constructor(address protocolOwner, uint256 _flatEthFee, uint256 _percentageFee) {
+    constructor(address protocolOwner, uint256 _ethFee, uint256 _tokenFee) {
         transferOwnership(protocolOwner);
-        flatEthFee = _flatEthFee;
-        percentageFee = _percentageFee;
+        ethFee = _ethFee;
+        tokenFee = _tokenFee;
+        emit BoostProtocolDeployed(protocolOwner, _ethFee, _tokenFee);
     }
 
-    function updateProtocolFee(uint256 newFlatEthFee, uint256 newPercentageFee) external override onlyOwner {
-        flatEthFee = newFlatEthFee;
-        percentageFee = newPercentageFee;
+    function updateProtocolFees(uint256 _ethFee, uint256 _tokenFee) external override onlyOwner {
+        ethFee = _ethFee;
+        tokenFee = _tokenFee;
+        emit UpdatedProtocolFees(_ethFee, _tokenFee);
     }
 
     function collectEthFees() external onlyOwner {
@@ -50,13 +52,13 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         if (_end <= block.timestamp) revert BoostEndDateInPast();
         if (_start >= _end) revert BoostEndDateBeforeStart();
         if (_guard == address(0)) revert InvalidGuard();
-        if (msg.value < flatEthFee) revert InsufficientEthFee();
+        if (msg.value < ethFee) revert InsufficientEthFee();
 
         uint256 balance = 0;
-        if (percentageFee > 0) {
-            uint256 protocolFee = _amount / percentageFee;
-            balance = _amount - protocolFee;
-            _token.transferFrom(msg.sender, owner(), protocolFee);
+        if (tokenFee > 0) {
+            uint256 tokenFee = _amount / tokenFee;
+            balance = _amount - tokenFee;
+            _token.transferFrom(msg.sender, owner(), tokenFee);
         } else {
             balance = _amount;
         }
@@ -85,17 +87,17 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         if (boosts[boostId].end <= block.timestamp) revert BoostEnded();
 
         uint256 balanceIncrease = 0;
-        if (percentageFee > 0) {
-            uint256 protocolFee = _amount / percentageFee;
-            boosts[boostId].balance -= protocolFee;
-            boosts[boostId].token.transferFrom(msg.sender, owner(), protocolFee);
+        if (tokenFee > 0) {
+            uint256 tokenFee = _amount / tokenFee;
+            balanceIncrease = _amount - tokenFee;
+            boosts[boostId].token.transferFrom(msg.sender, owner(), tokenFee);
         } else {
             balanceIncrease = _amount;
         }
 
         boosts[boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
         boosts[boostId].balance += balanceIncrease;
-        emit TokensDeposited(boostId, msg.sender, _amount);
+        emit TokensDeposited(boostId, msg.sender, balanceIncrease);
     }
 
     /// @notice Withdraw remaining tokens from an expired boost

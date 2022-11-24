@@ -7,10 +7,12 @@ import "../src/Boost.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 abstract contract BoostTest is Test, EIP712("boost", "1") {
+    event BoostProtocolDeployed(address protocolOwner, uint256 ethFee, uint256 tokenFee);
     event BoostCreated(uint256 boostId, IBoost.BoostConfig boost);
     event TokensClaimed(IBoost.Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
+    event UpdatedProtocolFees(uint256 ethFee, uint256 tokenFee);
 
     error BoostDoesNotExist();
     error BoostDepositRequired();
@@ -49,19 +51,37 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
         token = new MockERC20("Test Token", "TEST");
     }
 
-    function _createBoost(uint256 amount) internal returns (uint256) {
-        // IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-        //     strategyURI: strategyURI,
-        //     token: IERC20(address(token)),
-        //     balance: amount,
-        //     guard: guard,
-        //     start: block.timestamp,
-        //     end: block.timestamp + 60,
-        //     owner: owner
-        // });
+    /// @notice Creates a default boost
+    function _createBoost() internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(owner);
-        boost.createBoost(strategyURI, IERC20(token), amount, guard, block.timestamp, block.timestamp + 60, owner);
+        boost.createBoost(
+            strategyURI,
+            IERC20(token),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
+        return boostID;
+    }
+
+    /// @notice Creates a customizable boost
+    function _createBoost(
+        string memory _strategyURI,
+        address _token,
+        uint256 _amount,
+        address _guard,
+        uint256 _start,
+        uint256 _end,
+        address _owner,
+        uint256 _ethFee
+    ) internal returns (uint256) {
+        uint256 boostID = boost.nextBoostId();
+        vm.prank(_owner);
+        vm.deal(_owner, _ethFee);
+        boost.createBoost{ value: _ethFee }(_strategyURI, IERC20(_token), _amount, _guard, _start, _end, _owner);
         return boostID;
     }
 

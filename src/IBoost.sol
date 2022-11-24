@@ -35,12 +35,14 @@ interface IBoost {
     error InsufficientBoostBalance();
     error InsufficientEthFee();
 
+    event BoostProtocolDeployed(address protocolOwner, uint256 ethFee, uint256 tokenFee);
     event BoostCreated(uint256 boostId, BoostConfig boost);
     event TokensClaimed(Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
+    event UpdatedProtocolFees(uint256 ethFee, uint256 tokenFee);
 
-    function updateProtocolFee(uint256 newFlatEthFee, uint256 newPercentageFee) external;
+    function updateProtocolFees(uint256 ethFee, uint256 tokenFee) external;
 
     function createBoost(
         string calldata _strategyURI,

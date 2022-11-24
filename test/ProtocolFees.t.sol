@@ -2,20 +2,21 @@
 pragma solidity ^0.8.14;
 
 import "./Boost.t.sol";
+import "forge-std/console2.sol";
 
 contract ProtocolFeesTest is BoostTest {
+    uint256 ethFee = 1000;
+    uint256 tokenFee = 10;
+
     function setUp() public override {
         token = new MockERC20("Test Token", "TEST");
+        boost = new Boost(protocolOwner, ethFee, tokenFee);
     }
 
     function testCreateBoostWithProtocolFees() public {
-        boost = new Boost(protocolOwner, 0, 10);
-
-        token.mint(owner, depositAmount);
-        vm.prank(owner);
-        token.approve(address(boost), depositAmount);
-        uint256 tokenFee = depositAmount / 10;
-        uint256 boostBalance = depositAmount - tokenFee;
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 tokenFeeAmount = depositAmount / tokenFee;
+        uint256 boostBalance = depositAmount - tokenFeeAmount;
         vm.expectEmit(true, true, false, true);
         emit BoostCreated(
             1,
@@ -29,8 +30,9 @@ contract ProtocolFeesTest is BoostTest {
                 owner: owner
             })
         );
+        vm.deal(owner, ethFee);
         vm.prank(owner);
-        boost.createBoost(
+        boost.createBoost{ value: ethFee }(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -56,13 +58,62 @@ contract ProtocolFeesTest is BoostTest {
         assertEq(block.timestamp + 60, _end);
         assertEq(owner, _owner);
 
+        assertEq(address(boost).balance, ethFee);
+        assertEq(owner.balance, 0);
         assertEq(token.balanceOf(address(boost)), boostBalance);
-        assertEq(token.balanceOf(protocolOwner), tokenFee);
+        assertEq(token.balanceOf(protocolOwner), tokenFeeAmount);
     }
 
-    // function testUpdateProtocolFees() public {
+    function testUpdateProtocolFees() public {
+        uint256 newEthFee = 2000;
+        uint256 newTokenFee = 20;
+        vm.prank(protocolOwner);
+        boost.updateProtocolFees(newEthFee, newTokenFee);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 tokenFeeAmount = depositAmount / newTokenFee;
+        uint256 boostBalance = depositAmount - tokenFeeAmount;
+        uint256 boostId = _createBoost(
+            strategyURI,
+            address(token),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner,
+            newEthFee
+        );
+        assertEq(address(boost).balance, newEthFee);
+        assertEq(owner.balance, 0);
+        assertEq(token.balanceOf(address(boost)), boostBalance);
+        assertEq(token.balanceOf(protocolOwner), tokenFeeAmount);
+    }
 
-    // }
+    function testDepositWithProtocolFees() public {
+        _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+        uint256 boostId = _createBoost(
+            strategyURI,
+            address(token),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner,
+            ethFee
+        );
+        uint256 tokenFeeAmount = depositAmount / tokenFee;
+        uint256 boostBalanceIncrease = depositAmount - tokenFeeAmount;
+        vm.prank(owner);
+        vm.expectEmit(true, true, false, true);
+        emit TokensDeposited(boostId, owner, boostBalanceIncrease);
+        boost.depositTokens(boostId, depositAmount);
+
+        assertEq(address(boost).balance, ethFee);
+        assertEq(owner.balance, 0);
+        // The deposit amount when the boost was created and when a deposit was added was the same therefore
+        // we multiply the balance increase and token fee amount by 2 to get the aggregate values.
+        assertEq(token.balanceOf(address(boost)), 2 * boostBalanceIncrease);
+        assertEq(token.balanceOf(protocolOwner), 2 * tokenFeeAmount);
+    }
 
     // function testCollectEthFees() public {
 

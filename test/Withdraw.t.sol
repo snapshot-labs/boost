@@ -10,7 +10,7 @@ contract BoostWithdrawTest is BoostTest {
 
     function testWithdrawAfterBoostExpired() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 boostId = _createBoost(depositAmount);
+        uint256 boostId = _createBoost();
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
         boost.withdrawRemainingTokens(boostId, owner);
@@ -20,7 +20,7 @@ contract BoostWithdrawTest is BoostTest {
 
     function testWithdrawBoostNotOwner() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 boostId = _createBoost(depositAmount);
+        uint256 boostId = _createBoost();
         vm.warp(block.timestamp + 60);
         vm.prank(claimer);
         vm.expectRevert(IBoost.OnlyBoostOwner.selector);
@@ -29,7 +29,7 @@ contract BoostWithdrawTest is BoostTest {
 
     function testWithdrawBoostNotExpired() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 boostId = _createBoost(depositAmount);
+        uint256 boostId = _createBoost();
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotEnded.selector, block.timestamp + 60));
         boost.withdrawRemainingTokens(boostId, owner);
@@ -37,7 +37,7 @@ contract BoostWithdrawTest is BoostTest {
 
     function testWithdrawZeroBalance() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 boostId = _createBoost(depositAmount);
+        uint256 boostId = _createBoost();
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: depositAmount });
         boost.claimTokens(claim, _generateClaimSignature(claim));
         vm.prank(owner);
