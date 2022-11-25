@@ -21,11 +21,11 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     // represented as an integer denominator (1/x)%
     uint256 public tokenFee;
 
-    constructor(address protocolOwner, uint256 _ethFee, uint256 _tokenFee) {
-        transferOwnership(protocolOwner);
+    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) {
+        transferOwnership(_protocolOwner);
         ethFee = _ethFee;
         tokenFee = _tokenFee;
-        emit BoostProtocolDeployed(protocolOwner, _ethFee, _tokenFee);
+        emit BoostProtocolDeployed(_protocolOwner, _ethFee, _tokenFee);
     }
 
     function updateProtocolFees(uint256 _ethFee, uint256 _tokenFee) external override onlyOwner {
@@ -56,9 +56,9 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
 
         uint256 balance = 0;
         if (tokenFee > 0) {
-            uint256 tokenFee = _amount / tokenFee;
-            balance = _amount - tokenFee;
-            _token.transferFrom(msg.sender, owner(), tokenFee);
+            uint256 tokenFeeAmount = _amount / tokenFee;
+            balance = _amount - tokenFeeAmount;
+            _token.transferFrom(msg.sender, owner(), tokenFeeAmount);
         } else {
             balance = _amount;
         }
@@ -81,62 +81,62 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     }
 
     /// @notice Top up an existing boost
-    function depositTokens(uint256 boostId, uint256 _amount) external override {
+    function depositTokens(uint256 _boostId, uint256 _amount) external override {
         if (_amount == 0) revert BoostDepositRequired();
-        if (boosts[boostId].owner == address(0)) revert BoostDoesNotExist();
-        if (boosts[boostId].end <= block.timestamp) revert BoostEnded();
+        if (boosts[_boostId].owner == address(0)) revert BoostDoesNotExist();
+        if (boosts[_boostId].end <= block.timestamp) revert BoostEnded();
 
         uint256 balanceIncrease = 0;
         if (tokenFee > 0) {
-            uint256 tokenFee = _amount / tokenFee;
-            balanceIncrease = _amount - tokenFee;
-            boosts[boostId].token.transferFrom(msg.sender, owner(), tokenFee);
+            uint256 tokenFeeAmount = _amount / tokenFee;
+            balanceIncrease = _amount - tokenFeeAmount;
+            boosts[_boostId].token.transferFrom(msg.sender, owner(), tokenFeeAmount);
         } else {
             balanceIncrease = _amount;
         }
 
-        boosts[boostId].balance += balanceIncrease;
-        boosts[boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
+        boosts[_boostId].balance += balanceIncrease;
+        boosts[_boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
 
-        emit TokensDeposited(boostId, msg.sender, balanceIncrease);
+        emit TokensDeposited(_boostId, msg.sender, balanceIncrease);
     }
 
     /// @notice Withdraw remaining tokens from an expired boost
-    function withdrawRemainingTokens(uint256 boostId, address to) external override {
-        if (boosts[boostId].balance == 0) revert InsufficientBoostBalance();
-        if (boosts[boostId].end > block.timestamp) revert BoostNotEnded(boosts[boostId].end);
-        if (boosts[boostId].owner != msg.sender) revert OnlyBoostOwner();
-        if (to == address(0)) revert InvalidRecipient();
+    function withdrawRemainingTokens(uint256 _boostId, address _to) external override {
+        if (boosts[_boostId].balance == 0) revert InsufficientBoostBalance();
+        if (boosts[_boostId].end > block.timestamp) revert BoostNotEnded(boosts[_boostId].end);
+        if (boosts[_boostId].owner != msg.sender) revert OnlyBoostOwner();
+        if (_to == address(0)) revert InvalidRecipient();
 
-        uint256 amount = boosts[boostId].balance;
-        boosts[boostId].balance = 0;
+        uint256 amount = boosts[_boostId].balance;
+        boosts[_boostId].balance = 0;
 
-        boosts[boostId].token.transfer(to, amount);
+        boosts[_boostId].token.transfer(_to, amount);
 
-        emit RemainingTokensWithdrawn(boostId, amount);
+        emit RemainingTokensWithdrawn(_boostId, amount);
     }
 
     /// @notice Claim using a guard signature
-    function claimTokens(Claim calldata claim, bytes calldata signature) external override {
-        if (boosts[claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[claim.boostId].start);
-        if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
-        if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
-        if (claimed[claim.recipient][claim.boostId]) revert RecipientAlreadyClaimed();
-        if (claim.recipient == address(0)) revert InvalidRecipient();
+    function claimTokens(Claim calldata _claim, bytes calldata _signature) external override {
+        if (boosts[_claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[_claim.boostId].start);
+        if (boosts[_claim.boostId].balance < _claim.amount) revert InsufficientBoostBalance();
+        if (boosts[_claim.boostId].end <= block.timestamp) revert BoostEnded();
+        if (claimed[_claim.recipient][_claim.boostId]) revert RecipientAlreadyClaimed();
+        if (_claim.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(eip712ClaimStructHash, claim.boostId, claim.recipient, claim.amount))
+            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount))
         );
 
-        if (!SignatureChecker.isValidSignatureNow(boosts[claim.boostId].guard, digest, signature))
+        if (!SignatureChecker.isValidSignatureNow(boosts[_claim.boostId].guard, digest, _signature))
             revert InvalidSignature();
 
-        claimed[claim.recipient][claim.boostId] = true;
-        boosts[claim.boostId].balance -= claim.amount;
+        claimed[_claim.recipient][_claim.boostId] = true;
+        boosts[_claim.boostId].balance -= _claim.amount;
 
-        IERC20 token = IERC20(boosts[claim.boostId].token);
-        token.transfer(claim.recipient, claim.amount);
+        IERC20 token = IERC20(boosts[_claim.boostId].token);
+        token.transfer(_claim.recipient, _claim.amount);
 
-        emit TokensClaimed(claim);
+        emit TokensClaimed(_claim);
     }
 }

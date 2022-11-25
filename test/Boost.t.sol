@@ -35,7 +35,6 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
 
     Boost public boost;
     MockERC20 public token;
-    // IERC20 public token;
 
     uint256 public constant ownerKey = 1234;
     uint256 public constant guardKey = 5678;
