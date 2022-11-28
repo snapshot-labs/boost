@@ -39,9 +39,10 @@ contract BoostClaimTest is BoostTest {
             amount: 1,
             ref: keccak256("2")
         });
+        // Same address as first claim
         IBoost.Claim memory claim3 = IBoost.Claim({
             boostId: boostId,
-            recipient: claimer3,
+            recipient: claimer,
             amount: 1,
             ref: keccak256("3")
         });
@@ -49,9 +50,9 @@ contract BoostClaimTest is BoostTest {
         boost.claimTokens(claim2, _generateClaimSignature(claim2));
         boost.claimTokens(claim3, _generateClaimSignature(claim3));
         assertEq(token.balanceOf(address(boost)), depositAmount - 3);
-        assertEq(token.balanceOf(claimer), 1);
+        assertEq(token.balanceOf(claimer), 2);
         assertEq(token.balanceOf(claimer2), 1);
-        assertEq(token.balanceOf(claimer3), 1);
+        assertEq(token.balanceOf(claimer3), 0);
     }
 
     function testClaimReusedSignature() public {
