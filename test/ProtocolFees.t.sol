@@ -94,6 +94,18 @@ contract ProtocolFeesTest is BoostTest {
         assertEq(token.balanceOf(protocolOwner), tokenFeeAmount);
     }
 
+    function testSetEthFeeNotProtocolOwner() public {
+        uint256 newEthFee = 2000;
+        vm.expectRevert("Ownable: caller is not the owner");
+        boost.setEthFee(newEthFee);
+    }
+
+    function testSetTokenFeeNotProtocolOwner() public {
+        uint256 newTokenFee = 20;
+        vm.expectRevert("Ownable: caller is not the owner");
+        boost.setTokenFee(newTokenFee);
+    }
+
     function testDepositWithProtocolFees() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
         uint256 boostId = _createBoost(
