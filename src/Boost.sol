@@ -12,7 +12,7 @@ contract Boost is IBoost, EIP712("boost", "1") {
 
     uint256 public nextBoostId = 1;
     mapping(uint256 => BoostConfig) public boosts;
-    mapping(address => mapping(uint256 => bool)) public claimed;
+    mapping(bytes32 => mapping(uint256 => bool)) public claimed;
 
     /// @notice Create a new boost and transfer tokens to it
     function createBoost(BoostConfig calldata boost) external override {
@@ -66,7 +66,7 @@ contract Boost is IBoost, EIP712("boost", "1") {
         if (boosts[claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[claim.boostId].start);
         if (boosts[claim.boostId].balance < claim.amount) revert InsufficientBoostBalance();
         if (boosts[claim.boostId].end <= block.timestamp) revert BoostEnded();
-        if (claimed[claim.recipient][claim.boostId]) revert RecipientAlreadyClaimed();
+        if (claimed[claim.ref][claim.boostId]) revert RecipientAlreadyClaimed();
         if (claim.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
@@ -76,7 +76,7 @@ contract Boost is IBoost, EIP712("boost", "1") {
         if (!SignatureChecker.isValidSignatureNow(boosts[claim.boostId].guard, digest, signature))
             revert InvalidSignature();
 
-        claimed[claim.recipient][claim.boostId] = true;
+        claimed[claim.ref][claim.boostId] = true;
         boosts[claim.boostId].balance -= claim.amount;
 
         IERC20 token = IERC20(boosts[claim.boostId].token);
