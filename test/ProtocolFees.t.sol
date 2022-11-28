@@ -196,4 +196,25 @@ contract ProtocolFeesTest is BoostTest {
         // Division is rounded towards zero and depositAmount < newTokenFee, therefore the token fee amount will be zero
         assertEq(token.balanceOf(protocolOwner), 0);
     }
+
+    function testUpdateProtocolOwner() public {
+        address newProtocolOwner = address(0xBEEF);
+        vm.prank(protocolOwner);
+        vm.expectEmit(true, true, false, true);
+        emit OwnershipTransferred(protocolOwner, newProtocolOwner);
+        boost.transferOwnership(newProtocolOwner);
+    }
+
+    function testUpdateProtocolOwnerNotProtocolOwner() public {
+        address newProtocolOwner = address(0xBEEF);
+        vm.expectRevert("Ownable: caller is not the owner");
+        boost.transferOwnership(newProtocolOwner);
+    }
+
+    function testProtocolOwnerRenounceOwnership() public {
+        vm.prank(protocolOwner);
+        vm.expectEmit(true, true, false, true);
+        emit OwnershipTransferred(protocolOwner, address(0));
+        boost.renounceOwnership();
+    }
 }
