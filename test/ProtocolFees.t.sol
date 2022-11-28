@@ -67,8 +67,14 @@ contract ProtocolFeesTest is BoostTest {
     function testUpdateProtocolFees() public {
         uint256 newEthFee = 2000;
         uint256 newTokenFee = 20;
+        vm.expectEmit(true, true, false, true);
+        emit EthFeeSet(newEthFee);
         vm.prank(protocolOwner);
-        boost.updateProtocolFees(newEthFee, newTokenFee);
+        boost.setEthFee(newEthFee);
+        vm.expectEmit(true, true, false, true);
+        emit TokenFeeSet(newTokenFee);
+        vm.prank(protocolOwner);
+        boost.setTokenFee(newTokenFee);
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = depositAmount / newTokenFee;
         uint256 boostBalance = depositAmount - tokenFeeAmount;
@@ -153,7 +159,9 @@ contract ProtocolFeesTest is BoostTest {
         uint256 newEthFee = 0;
         uint256 newTokenFee = 1;
         vm.prank(protocolOwner);
-        boost.updateProtocolFees(newEthFee, newTokenFee);
+        boost.setEthFee(newEthFee);
+        vm.prank(protocolOwner);
+        boost.setTokenFee(newTokenFee);
         _mintAndApprove(owner, depositAmount, depositAmount);
         _createBoost();
         assertEq(owner.balance, 0);
@@ -166,7 +174,9 @@ contract ProtocolFeesTest is BoostTest {
         uint256 newEthFee = 0;
         uint256 newTokenFee = type(uint256).max;
         vm.prank(protocolOwner);
-        boost.updateProtocolFees(newEthFee, newTokenFee);
+        boost.setEthFee(newEthFee);
+        vm.prank(protocolOwner);
+        boost.setTokenFee(newTokenFee);
         _mintAndApprove(owner, depositAmount, depositAmount);
         _createBoost();
         assertEq(owner.balance, 0);

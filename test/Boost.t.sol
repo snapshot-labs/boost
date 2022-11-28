@@ -7,12 +7,12 @@ import "../src/Boost.sol";
 import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 abstract contract BoostTest is Test, EIP712("boost", "1") {
-    event BoostProtocolDeployed(address protocolOwner, uint256 ethFee, uint256 tokenFee);
     event BoostCreated(uint256 boostId, IBoost.BoostConfig boost);
     event TokensClaimed(IBoost.Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
-    event UpdatedProtocolFees(uint256 ethFee, uint256 tokenFee);
+    event EthFeeSet(uint256 ethFee);
+    event TokenFeeSet(uint256 tokenFee);
 
     error BoostDoesNotExist();
     error BoostDepositRequired();

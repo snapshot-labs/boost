@@ -22,16 +22,19 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     uint256 public tokenFee;
 
     constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) {
+        setEthFee(_ethFee);
+        setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
-        ethFee = _ethFee;
-        tokenFee = _tokenFee;
-        emit BoostProtocolDeployed(_protocolOwner, _ethFee, _tokenFee);
     }
 
-    function updateProtocolFees(uint256 _ethFee, uint256 _tokenFee) external override onlyOwner {
+    function setEthFee(uint256 _ethFee) public override onlyOwner {
         ethFee = _ethFee;
+        emit EthFeeSet(_ethFee);
+    }
+
+    function setTokenFee(uint256 _tokenFee) public override onlyOwner {
         tokenFee = _tokenFee;
-        emit UpdatedProtocolFees(_ethFee, _tokenFee);
+        emit TokenFeeSet(_tokenFee);
     }
 
     function collectEthFees() external onlyOwner {
