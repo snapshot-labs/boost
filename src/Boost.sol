@@ -8,7 +8,7 @@ import "./IBoost.sol";
 
 contract Boost is IBoost, EIP712("boost", "1") {
     bytes32 public immutable eip712ClaimStructHash =
-        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
+        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
 
     uint256 public nextBoostId = 1;
     mapping(uint256 => BoostConfig) public boosts;
@@ -70,7 +70,7 @@ contract Boost is IBoost, EIP712("boost", "1") {
         if (claim.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(eip712ClaimStructHash, claim.boostId, claim.recipient, claim.amount))
+            keccak256(abi.encode(eip712ClaimStructHash, claim.boostId, claim.recipient, claim.amount, claim.ref))
         );
 
         if (!SignatureChecker.isValidSignatureNow(boosts[claim.boostId].guard, digest, signature))
