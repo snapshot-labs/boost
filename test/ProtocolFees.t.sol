@@ -30,6 +30,7 @@ contract ProtocolFeesTest is BoostTest {
                 owner: owner
             })
         );
+
         vm.deal(owner, ethFee);
         vm.prank(owner);
         boost.createBoost{ value: ethFee }(
@@ -41,6 +42,8 @@ contract ProtocolFeesTest is BoostTest {
             block.timestamp + 60,
             owner
         );
+
+        // Checking BoostConfig object is correct
         (
             string memory _strategyURI,
             IERC20 _token,
@@ -58,6 +61,7 @@ contract ProtocolFeesTest is BoostTest {
         assertEq(block.timestamp + 60, _end);
         assertEq(owner, _owner);
 
+        // Checking balances of eth and the token are correct
         assertEq(address(boost).balance, ethFee);
         assertEq(owner.balance, 0);
         assertEq(token.balanceOf(address(boost)), depositAmount);
@@ -67,14 +71,17 @@ contract ProtocolFeesTest is BoostTest {
     function testUpdateProtocolFees() public {
         uint256 newEthFee = 2000;
         uint256 newTokenFee = 20;
+
         vm.expectEmit(true, true, false, true);
         emit EthFeeSet(newEthFee);
         vm.prank(protocolOwner);
         boost.setEthFee(newEthFee);
+
         vm.expectEmit(true, true, false, true);
         emit TokenFeeSet(newTokenFee);
         vm.prank(protocolOwner);
         boost.setTokenFee(newTokenFee);
+
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = depositAmount / newTokenFee;
         _createBoost(
@@ -87,6 +94,8 @@ contract ProtocolFeesTest is BoostTest {
             owner,
             newEthFee
         );
+
+        // Checking balances of eth and the token are correct
         assertEq(address(boost).balance, newEthFee);
         assertEq(owner.balance, 0);
         assertEq(token.balanceOf(address(boost)), depositAmount);
@@ -117,8 +126,10 @@ contract ProtocolFeesTest is BoostTest {
             owner,
             ethFee
         );
+
         uint256 tokenFeeAmount = depositAmount / tokenFee;
         uint256 boostBalanceIncrease = depositAmount - tokenFeeAmount;
+
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
         emit TokensDeposited(boostId, owner, boostBalanceIncrease);
@@ -145,18 +156,23 @@ contract ProtocolFeesTest is BoostTest {
             owner,
             ethFee
         );
+
         assertEq(address(boost).balance, ethFee);
         assertEq(protocolOwner.balance, 0);
         assertEq(token.balanceOf(address(boost)), depositAmount);
         assertEq(boost.tokenFeeBalances(address(token)), tokenFeeAmount);
+
         vm.prank(protocolOwner);
         vm.expectEmit(true, true, false, true);
         emit EthFeesCollected(protocolOwner);
         boost.collectEthFees(protocolOwner);
+
         vm.prank(protocolOwner);
         vm.expectEmit(true, true, false, true);
         emit TokenFeesCollected(IERC20(token), protocolOwner);
         boost.collectTokenFees(IERC20(token), protocolOwner);
+
+        // Checking balances are correct after fees are collected
         assertEq(address(boost).balance, 0);
         assertEq(protocolOwner.balance, ethFee);
         assertEq(token.balanceOf(address(boost)), depositAmount - tokenFeeAmount);
@@ -182,14 +198,19 @@ contract ProtocolFeesTest is BoostTest {
     function test100PercentTokenFee() public {
         uint256 newEthFee = 0;
         uint256 newTokenFee = 1;
+
         vm.prank(protocolOwner);
         boost.setEthFee(newEthFee);
         vm.prank(protocolOwner);
         boost.setTokenFee(newTokenFee);
+
         _mintAndApprove(owner, depositAmount, depositAmount);
         _createBoost();
-        assertEq(owner.balance, 0);
-        // 100% protocol fee, boost balance is zero
+
+        (, , uint256 _balance, , , , ) = boost.boosts(1);
+
+        // 100% protocol fee, boost balance is zero, token fee is the full deposit
+        assertEq(_balance, 0);
         assertEq(token.balanceOf(address(boost)), depositAmount);
         assertEq(boost.tokenFeeBalances(address(token)), depositAmount);
     }
@@ -197,13 +218,14 @@ contract ProtocolFeesTest is BoostTest {
     function testMinTokenFee() public {
         uint256 newEthFee = 0;
         uint256 newTokenFee = type(uint256).max;
+
         vm.prank(protocolOwner);
         boost.setEthFee(newEthFee);
         vm.prank(protocolOwner);
         boost.setTokenFee(newTokenFee);
         _mintAndApprove(owner, depositAmount, depositAmount);
         _createBoost();
-        assertEq(owner.balance, 0);
+
         assertEq(token.balanceOf(address(boost)), depositAmount);
         // Division is rounded towards zero and depositAmount < newTokenFee, therefore the token fee amount will be zero
         assertEq(token.balanceOf(protocolOwner), 0);

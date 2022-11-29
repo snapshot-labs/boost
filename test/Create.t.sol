@@ -31,6 +31,8 @@ contract BoostCreateTest is BoostTest {
             block.timestamp + 60,
             owner
         );
+
+        // Checking contents of BoostConfig object
         (
             string memory _strategyURI,
             IERC20 _token,
@@ -48,6 +50,7 @@ contract BoostCreateTest is BoostTest {
         assertEq(block.timestamp + 60, _end);
         assertEq(owner, _owner);
 
+        // Checking boost balance is equal to the deposit amount
         assertEq(token.balanceOf(address(boost)), depositAmount);
     }
 
@@ -55,8 +58,10 @@ contract BoostCreateTest is BoostTest {
         token.mint(owner, depositAmount);
         vm.prank(owner);
         token.approve(address(boost), depositAmount - 1);
+
         vm.expectRevert("ERC20: insufficient allowance");
         vm.prank(owner);
+        // Attempting to deposit more than what the contract is approved for
         boost.createBoost(
             strategyURI,
             IERC20(address(token)),
@@ -72,8 +77,10 @@ contract BoostCreateTest is BoostTest {
         token.mint(owner, depositAmount - 1);
         vm.prank(owner);
         token.approve(address(boost), depositAmount);
+
         vm.expectRevert("ERC20: transfer amount exceeds balance");
         vm.prank(owner);
+        // Attempting to deposit more than the owner's balance
         boost.createBoost(
             strategyURI,
             IERC20(address(token)),
@@ -88,6 +95,7 @@ contract BoostCreateTest is BoostTest {
     function testCreateBoostZeroDeposit() public {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
+        // Deposit of zero
         boost.createBoost(strategyURI, IERC20(address(token)), 0, guard, block.timestamp, block.timestamp + 60, owner);
     }
 
@@ -95,8 +103,10 @@ contract BoostCreateTest is BoostTest {
         token.mint(owner, depositAmount);
         vm.prank(owner);
         token.approve(address(boost), depositAmount);
+
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEndDateInPast.selector);
+        // Start and end timestamps are equal
         boost.createBoost(
             strategyURI,
             IERC20(address(token)),

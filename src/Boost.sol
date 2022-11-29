@@ -20,7 +20,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     // Constant eth fee (in gwei) that is the same for all boost creators.
     uint256 public ethFee;
     // The fraction of the total boost deposit that is taken as a fee.
-    // represented as an integer denominator (1/x)%
+    // represented as an integer denominator (100/x)%
     uint256 public tokenFee;
 
     constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) {

@@ -87,12 +87,14 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
         return boostID;
     }
 
+    /// @notice Mint and approve token utility function
     function _mintAndApprove(address user, uint256 mintAmount, uint256 approveAmount) internal {
         token.mint(user, mintAmount);
         vm.prank(user);
         token.approve(address(boost), approveAmount);
     }
 
+    /// @notice Generate claim eip712 signature
     function _generateClaimSignature(IBoost.Claim memory claim) internal view returns (bytes memory) {
         bytes32 digest = keccak256(
             abi.encodePacked(
