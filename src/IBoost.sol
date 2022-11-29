@@ -41,10 +41,16 @@ interface IBoost {
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
     event EthFeeSet(uint256 ethFee);
     event TokenFeeSet(uint256 tokenFee);
+    event EthFeesCollected(address recipient);
+    event TokenFeesCollected(IERC20 token, address recipient);
 
     function setEthFee(uint256 ethFee) external;
 
     function setTokenFee(uint256 tokenFee) external;
+
+    function collectEthFees(address _recipient) external;
+
+    function collectTokenFees(IERC20 token, address recipient) external;
 
     function createBoost(
         string calldata _strategyURI,

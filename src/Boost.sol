@@ -12,8 +12,10 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
     uint256 public nextBoostId = 1;
+
     mapping(uint256 => BoostConfig) public boosts;
     mapping(address => mapping(uint256 => bool)) public claimed;
+    mapping(address => uint256) public tokenFeeBalances;
 
     // Constant eth fee (in gwei) that is the same for all boost creators.
     uint256 public ethFee;
@@ -37,8 +39,16 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         emit TokenFeeSet(_tokenFee);
     }
 
-    function collectEthFees() external onlyOwner {
-        payable(msg.sender).transfer(address(this).balance);
+    function collectEthFees(address _recipient) external override onlyOwner {
+        payable(_recipient).transfer(address(this).balance);
+        emit EthFeesCollected(_recipient);
+    }
+
+    function collectTokenFees(IERC20 _token, address _recipient) external override onlyOwner {
+        uint256 fees = tokenFeeBalances[address(_token)];
+        tokenFeeBalances[address(_token)] = 0;
+        _token.transfer(_recipient, fees);
+        emit TokenFeesCollected(_token, _recipient);
     }
 
     /// @notice Create a new boost and transfer tokens to it
@@ -61,7 +71,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         if (tokenFee > 0) {
             uint256 tokenFeeAmount = _amount / tokenFee;
             balance = _amount - tokenFeeAmount;
-            _token.transferFrom(msg.sender, owner(), tokenFeeAmount);
+            tokenFeeBalances[address(_token)] += tokenFeeAmount;
         } else {
             balance = _amount;
         }
@@ -78,7 +88,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
             owner: _owner
         });
 
-        _token.transferFrom(msg.sender, address(this), balance);
+        _token.transferFrom(msg.sender, address(this), _amount);
 
         emit BoostCreated(newId, boosts[newId]);
     }
@@ -93,13 +103,13 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         if (tokenFee > 0) {
             uint256 tokenFeeAmount = _amount / tokenFee;
             balanceIncrease = _amount - tokenFeeAmount;
-            boosts[_boostId].token.transferFrom(msg.sender, owner(), tokenFeeAmount);
+            tokenFeeBalances[address(boosts[_boostId].token)] += tokenFeeAmount;
         } else {
             balanceIncrease = _amount;
         }
 
         boosts[_boostId].balance += balanceIncrease;
-        boosts[_boostId].token.transferFrom(msg.sender, address(this), balanceIncrease);
+        boosts[_boostId].token.transferFrom(msg.sender, address(this), _amount);
 
         emit TokensDeposited(_boostId, msg.sender, balanceIncrease);
     }

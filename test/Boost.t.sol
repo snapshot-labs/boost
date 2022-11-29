@@ -14,6 +14,8 @@ abstract contract BoostTest is Test, EIP712("boost", "1") {
     event EthFeeSet(uint256 ethFee);
     event TokenFeeSet(uint256 tokenFee);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event EthFeesCollected(address recipient);
+    event TokenFeesCollected(IERC20 token, address recipient);
 
     error BoostDoesNotExist();
     error BoostDepositRequired();

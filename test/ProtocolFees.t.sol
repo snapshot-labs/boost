@@ -60,8 +60,8 @@ contract ProtocolFeesTest is BoostTest {
 
         assertEq(address(boost).balance, ethFee);
         assertEq(owner.balance, 0);
-        assertEq(token.balanceOf(address(boost)), boostBalance);
-        assertEq(token.balanceOf(protocolOwner), tokenFeeAmount);
+        assertEq(token.balanceOf(address(boost)), depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), tokenFeeAmount);
     }
 
     function testUpdateProtocolFees() public {
@@ -77,7 +77,6 @@ contract ProtocolFeesTest is BoostTest {
         boost.setTokenFee(newTokenFee);
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = depositAmount / newTokenFee;
-        uint256 boostBalance = depositAmount - tokenFeeAmount;
         _createBoost(
             strategyURI,
             address(token),
@@ -90,8 +89,8 @@ contract ProtocolFeesTest is BoostTest {
         );
         assertEq(address(boost).balance, newEthFee);
         assertEq(owner.balance, 0);
-        assertEq(token.balanceOf(address(boost)), boostBalance);
-        assertEq(token.balanceOf(protocolOwner), tokenFeeAmount);
+        assertEq(token.balanceOf(address(boost)), depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), tokenFeeAmount);
     }
 
     function testSetEthFeeNotProtocolOwner() public {
@@ -129,12 +128,13 @@ contract ProtocolFeesTest is BoostTest {
         assertEq(owner.balance, 0);
         // The deposit amount when the boost was created and when a deposit was added was the same therefore
         // we multiply the balance increase and token fee amount by 2 to get the aggregate values.
-        assertEq(token.balanceOf(address(boost)), 2 * boostBalanceIncrease);
-        assertEq(token.balanceOf(protocolOwner), 2 * tokenFeeAmount);
+        assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), 2 * tokenFeeAmount);
     }
 
-    function testCollectEthFees() public {
-        _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+    function testCollectFees() public {
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 tokenFeeAmount = depositAmount / tokenFee;
         _createBoost(
             strategyURI,
             address(token),
@@ -145,10 +145,22 @@ contract ProtocolFeesTest is BoostTest {
             owner,
             ethFee
         );
+        assertEq(address(boost).balance, ethFee);
+        assertEq(protocolOwner.balance, 0);
+        assertEq(token.balanceOf(address(boost)), depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), tokenFeeAmount);
         vm.prank(protocolOwner);
-        boost.collectEthFees();
+        vm.expectEmit(true, true, false, true);
+        emit EthFeesCollected(protocolOwner);
+        boost.collectEthFees(protocolOwner);
+        vm.prank(protocolOwner);
+        vm.expectEmit(true, true, false, true);
+        emit TokenFeesCollected(IERC20(token), protocolOwner);
+        boost.collectTokenFees(IERC20(token), protocolOwner);
         assertEq(address(boost).balance, 0);
         assertEq(protocolOwner.balance, ethFee);
+        assertEq(token.balanceOf(address(boost)), depositAmount - tokenFeeAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), 0);
     }
 
     function testInsufficientEthFee() public {
@@ -178,8 +190,8 @@ contract ProtocolFeesTest is BoostTest {
         _createBoost();
         assertEq(owner.balance, 0);
         // 100% protocol fee, boost balance is zero
-        assertEq(token.balanceOf(address(boost)), 0);
-        assertEq(token.balanceOf(protocolOwner), depositAmount);
+        assertEq(token.balanceOf(address(boost)), depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), depositAmount);
     }
 
     function testMinTokenFee() public {
