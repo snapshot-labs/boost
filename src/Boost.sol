@@ -130,7 +130,18 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     }
 
     /// @notice Claim using a guard signature
-    function claimTokens(Claim calldata _claim, bytes calldata _signature) external override {
+    function claim(Claim calldata claim, bytes calldata signature) external override {
+        _claim(claim, signature);
+    }
+
+    /// @notice Claim multiple using an array of guard signatures
+    function claimMultiple(Claim[] calldata claims, bytes[] calldata signatures) external override {
+        for (uint i = 0; i < signatures.length; i++) {
+            _claim(claims[i], signatures[i]);
+        }
+    }
+
+    function _claim(Claim memory _claim, bytes memory _signature) internal {
         if (boosts[_claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[_claim.boostId].start);
         if (boosts[_claim.boostId].balance < _claim.amount) revert InsufficientBoostBalance();
         if (boosts[_claim.boostId].end <= block.timestamp) revert BoostEnded();
