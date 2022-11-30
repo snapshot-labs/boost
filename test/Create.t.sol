@@ -8,105 +8,115 @@ contract BoostCreateTest is BoostTest {
         token.mint(owner, depositAmount);
         vm.prank(owner);
         token.approve(address(boost), depositAmount);
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: depositAmount,
-            guard: guard,
-            start: block.timestamp,
-            end: block.timestamp + 60,
-            owner: owner
-        });
         vm.expectEmit(true, true, false, true);
-        emit BoostCreated(1, boostConfig);
+        emit BoostCreated(
+            1,
+            IBoost.BoostConfig({
+                strategyURI: strategyURI,
+                token: IERC20(address(token)),
+                balance: depositAmount,
+                guard: guard,
+                start: block.timestamp,
+                end: block.timestamp + 60,
+                owner: owner
+            })
+        );
         vm.prank(owner);
         snapStart("CreateBoost");
-        boost.createBoost(boostConfig);
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
         snapEnd();
+
+        // Checking contents of BoostConfig object
         (
             string memory _strategyURI,
-            address _token,
+            IERC20 _token,
             uint256 _balance,
             address _guard,
             uint256 _start,
             uint256 _end,
             address _owner
         ) = boost.boosts(1);
-        assertEq(boostConfig.strategyURI, _strategyURI);
-        assertEq(boostConfig.token, _token);
-        assertEq(boostConfig.balance, _balance);
-        assertEq(boostConfig.guard, _guard);
-        assertEq(boostConfig.start, _start);
-        assertEq(boostConfig.end, _end);
-        assertEq(boostConfig.owner, _owner);
+        assertEq(strategyURI, _strategyURI);
+        assertEq(address(token), address(_token));
+        assertEq(depositAmount, _balance);
+        assertEq(guard, _guard);
+        assertEq(block.timestamp, _start);
+        assertEq(block.timestamp + 60, _end);
+        assertEq(owner, _owner);
+
+        // Checking boost balance is equal to the deposit amount
+        assertEq(token.balanceOf(address(boost)), depositAmount);
     }
 
     function testCreateBoostInsufficientAllowance() public {
         token.mint(owner, depositAmount);
         vm.prank(owner);
         token.approve(address(boost), depositAmount - 1);
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: depositAmount,
-            guard: guard,
-            start: block.timestamp,
-            end: block.timestamp + 60,
-            owner: owner
-        });
+
         vm.expectRevert("ERC20: insufficient allowance");
         vm.prank(owner);
-        boost.createBoost(boostConfig);
+        // Attempting to deposit more than what the contract is approved for
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
     }
 
     function testCreateBoostInsufficientBalance() public {
         token.mint(owner, depositAmount - 1);
         vm.prank(owner);
         token.approve(address(boost), depositAmount);
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: depositAmount,
-            guard: guard,
-            start: block.timestamp,
-            end: block.timestamp + 60,
-            owner: owner
-        });
+
         vm.expectRevert("ERC20: transfer amount exceeds balance");
         vm.prank(owner);
-        boost.createBoost(boostConfig);
+        // Attempting to deposit more than the owner's balance
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
     }
 
     function testCreateBoostZeroDeposit() public {
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: 0,
-            guard: guard,
-            start: block.timestamp,
-            end: block.timestamp + 60,
-            owner: owner
-        });
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
-        boost.createBoost(boostConfig);
+        // Deposit of zero
+        boost.createBoost(strategyURI, IERC20(address(token)), 0, guard, block.timestamp, block.timestamp + 60, owner);
     }
 
     function testCreateBoostEndNotGreaterThanStart() public {
         token.mint(owner, depositAmount);
         vm.prank(owner);
         token.approve(address(boost), depositAmount);
-        IBoost.BoostConfig memory boostConfig = IBoost.BoostConfig({
-            strategyURI: strategyURI,
-            token: address(token),
-            balance: depositAmount,
-            guard: guard,
-            start: block.timestamp,
-            end: block.timestamp,
-            owner: owner
-        });
+
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEndDateInPast.selector);
-        boost.createBoost(boostConfig);
+        // Start and end timestamps are equal
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp,
+            owner
+        );
     }
 }

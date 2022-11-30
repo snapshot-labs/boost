@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.15;
 
+import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+
 interface IBoost {
     struct BoostConfig {
         string strategyURI;
-        address token;
+        IERC20 token;
         uint256 balance;
         address guard;
         uint256 start;
@@ -31,13 +33,34 @@ interface IBoost {
     error RecipientAlreadyClaimed();
     error InvalidSignature();
     error InsufficientBoostBalance();
+    error InsufficientEthFee();
 
     event BoostCreated(uint256 boostId, BoostConfig boost);
     event TokensClaimed(Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
+    event EthFeeSet(uint256 ethFee);
+    event TokenFeeSet(uint256 tokenFee);
+    event EthFeesCollected(address recipient);
+    event TokenFeesCollected(IERC20 token, address recipient);
 
-    function createBoost(BoostConfig calldata boost) external;
+    function setEthFee(uint256 ethFee) external;
+
+    function setTokenFee(uint256 tokenFee) external;
+
+    function collectEthFees(address _recipient) external;
+
+    function collectTokenFees(IERC20 token, address recipient) external;
+
+    function createBoost(
+        string calldata _strategyURI,
+        IERC20 _token,
+        uint256 _amount,
+        address _guard,
+        uint256 _start,
+        uint256 _end,
+        address _owner
+    ) external payable;
 
     function depositTokens(uint256 boostId, uint256 amount) external;
 
