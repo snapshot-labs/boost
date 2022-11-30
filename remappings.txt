@@ -1,2 +1,2 @@
-@prb/test/=lib/prb-test/src/
 forge-std/=lib/forge-std/src/
+forge-gas-snapshot/=lib/forge-gas-snapshot/src
