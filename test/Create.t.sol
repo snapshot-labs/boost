@@ -20,7 +20,9 @@ contract BoostCreateTest is BoostTest {
         vm.expectEmit(true, true, false, true);
         emit BoostCreated(1, boostConfig);
         vm.prank(owner);
+        snapStart("CreateBoost");
         boost.createBoost(boostConfig);
+        snapEnd();
         (
             string memory _strategyURI,
             address _token,

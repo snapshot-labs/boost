@@ -13,7 +13,9 @@ contract BoostWithdrawTest is BoostTest {
         uint256 boostId = _createBoost(depositAmount);
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
+        snapStart("Withdraw");
         boost.withdrawRemainingTokens(boostId, owner);
+        snapEnd();
         assertEq(token.balanceOf(address(boost)), 0);
         assertEq(token.balanceOf(owner), depositAmount);
     }

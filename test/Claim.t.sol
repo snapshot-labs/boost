@@ -14,7 +14,9 @@ contract BoostClaimTest is BoostTest {
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
         vm.expectEmit(true, false, false, true);
         emit TokensClaimed(claim);
+        snapStart("ClaimSingle");
         boost.claimTokens(claim, _generateClaimSignature(claim));
+        snapEnd();
         assertEq(token.balanceOf(address(boost)), depositAmount - 1);
         assertEq(token.balanceOf(claimer), 1);
     }

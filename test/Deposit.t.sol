@@ -10,7 +10,9 @@ contract BoostDepositTest is BoostTest {
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
         emit TokensDeposited(boostID, owner, 100);
+        snapStart("Deposit");
         boost.depositTokens(boostID, 100);
+        snapEnd();
     }
 
     function testDepositFromDifferentAccount() public {

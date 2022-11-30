@@ -12,6 +12,8 @@ out = "out"
 solc = "0.8.14"
 src = "src"
 test = "test"
+ffi = "true"
+fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}]
 
 
 [profile.ci]
