@@ -43,7 +43,7 @@ jobs:
           echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
 
       - name: "Show the Foundry config"
-        run: "forge config"
+        run: "forge config --ffi"
 
       - name: "Run the tests"
         run: "forge test --ffi"
