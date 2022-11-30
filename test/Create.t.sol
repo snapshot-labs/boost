@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.15;
 
 import "./Boost.t.sol";
 
@@ -22,6 +22,7 @@ contract BoostCreateTest is BoostTest {
             })
         );
         vm.prank(owner);
+        snapStart("CreateBoost");
         boost.createBoost(
             strategyURI,
             IERC20(address(token)),
@@ -31,6 +32,7 @@ contract BoostCreateTest is BoostTest {
             block.timestamp + 60,
             owner
         );
+        snapEnd();
 
         // Checking contents of BoostConfig object
         (

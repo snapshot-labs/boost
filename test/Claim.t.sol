@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.15;
 
 import "./Boost.t.sol";
 
@@ -15,7 +15,9 @@ contract BoostClaimTest is BoostTest {
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
         vm.expectEmit(true, false, false, true);
         emit TokensClaimed(claim);
+        snapStart("ClaimSingle");
         boost.claimTokens(claim, _generateClaimSignature(claim));
+        snapEnd();
 
         // Checking balances are correct after claim
         assertEq(token.balanceOf(address(boost)), depositAmount - 1);

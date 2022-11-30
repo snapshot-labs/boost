@@ -2,7 +2,6 @@
 pragma solidity ^0.8.14;
 
 import "./Boost.t.sol";
-import "forge-std/console2.sol";
 
 contract ProtocolFeesTest is BoostTest {
     uint256 ethFee = 1000;
@@ -33,6 +32,7 @@ contract ProtocolFeesTest is BoostTest {
 
         vm.deal(owner, ethFee);
         vm.prank(owner);
+        snapStart("CreateBoostWithProtocolFee");
         boost.createBoost{ value: ethFee }(
             strategyURI,
             IERC20(address(token)),
@@ -42,6 +42,7 @@ contract ProtocolFeesTest is BoostTest {
             block.timestamp + 60,
             owner
         );
+        snapEnd();
 
         // Checking BoostConfig object is correct
         (
@@ -133,8 +134,9 @@ contract ProtocolFeesTest is BoostTest {
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
         emit TokensDeposited(boostId, owner, boostBalanceIncrease);
+        snapStart("DepositWithProtocolFees");
         boost.depositTokens(boostId, depositAmount);
-
+        snapEnd();
         assertEq(address(boost).balance, ethFee);
         assertEq(owner.balance, 0);
         // The deposit amount when the boost was created and when a deposit was added was the same therefore

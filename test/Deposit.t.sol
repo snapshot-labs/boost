@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.15;
 
 import "./Boost.t.sol";
 
@@ -12,8 +12,10 @@ contract BoostDepositTest is BoostTest {
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit TokensDeposited(boostID, owner, depositAmount);
+        emit TokensDeposited(boostID, owner, 100);
+        snapStart("Deposit");
         boost.depositTokens(boostID, depositAmount);
+        snapEnd();
     }
 
     function testDepositFromDifferentAccount() public {

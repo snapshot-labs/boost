@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.15;
 
 import "forge-std/Test.sol";
 import "./mocks/MockERC20.sol";
 import "../src/Boost.sol";
-import "openzeppelin-contracts/token/ERC20/IERC20.sol";
+import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
 
-abstract contract BoostTest is Test, EIP712("boost", "1") {
+abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
     event BoostCreated(uint256 boostId, IBoost.BoostConfig boost);
     event TokensClaimed(IBoost.Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);

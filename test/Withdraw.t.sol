@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.15;
 
 import "./Boost.t.sol";
 
@@ -15,7 +15,9 @@ contract BoostWithdrawTest is BoostTest {
         // Increasing timestamp to after boost has ended
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
+        snapStart("Withdraw");
         boost.withdrawRemainingTokens(boostId, owner);
+        snapEnd();
 
         // Checking balances after withdrawal
         assertEq(token.balanceOf(address(boost)), 0);
