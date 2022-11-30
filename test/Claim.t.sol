@@ -47,26 +47,34 @@ contract BoostClaimTest is BoostTest {
     function testClaimMultiple() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
+
         IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
         IBoost.Claim memory claim2 = IBoost.Claim({ boostId: boostId, recipient: claimer2, amount: 1 });
         IBoost.Claim memory claim3 = IBoost.Claim({ boostId: boostId, recipient: claimer3, amount: 1 });
         IBoost.Claim memory claim4 = IBoost.Claim({ boostId: boostId, recipient: claimer4, amount: 1 });
         IBoost.Claim memory claim5 = IBoost.Claim({ boostId: boostId, recipient: claimer5, amount: 1 });
+
+        // Generating Claim array
         IBoost.Claim[] memory claims = new IBoost.Claim[](5);
         claims[0] = claim;
         claims[1] = claim2;
         claims[2] = claim3;
         claims[3] = claim4;
         claims[4] = claim5;
+
+        // Generating signature array from the claims
         bytes[] memory signatures = new bytes[](5);
         signatures[0] = _generateClaimSignature(claim);
         signatures[1] = _generateClaimSignature(claim2);
         signatures[2] = _generateClaimSignature(claim3);
         signatures[3] = _generateClaimSignature(claim4);
         signatures[4] = _generateClaimSignature(claim5);
+
         snapStart("ClaimMultiple");
         boost.claimMultiple(claims, signatures);
         snapEnd();
+
+        // Checking balances are correct after claims made
         assertEq(token.balanceOf(address(boost)), depositAmount - 5);
         assertEq(token.balanceOf(claimer), 1);
         assertEq(token.balanceOf(claimer2), 1);
