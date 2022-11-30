@@ -46,7 +46,7 @@ jobs:
         run: "forge config"
 
       - name: "Run the tests"
-        run: "forge test"
+        run: "forge test --ffi"
 
       - name: "Build the contracts"
         run: |
