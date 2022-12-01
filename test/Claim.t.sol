@@ -126,10 +126,10 @@ contract BoostClaimTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp + 60,
             block.timestamp + 120,
-            owner,
             0
         );
 

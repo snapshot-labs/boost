@@ -56,10 +56,10 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
+        address _owner,
         address _guard,
-        uint256 _start,
-        uint256 _end,
-        address _owner
+        uint48 _start,
+        uint48 _end
     ) external payable override {
         if (_amount == 0) revert BoostDepositRequired();
         if (_end <= block.timestamp) revert BoostEndDateInPast();
@@ -82,15 +82,15 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
             strategyURI: _strategyURI,
             token: _token,
             balance: balance,
+            owner: _owner,
             guard: _guard,
             start: _start,
-            end: _end,
-            owner: _owner
+            end: _end
         });
 
         _token.transferFrom(msg.sender, address(this), _amount);
 
-        emit BoostCreated(newId, boosts[newId]);
+        emit BoostCreated(newId, _strategyURI, boosts[newId]);
     }
 
     /// @notice Top up an existing boost
