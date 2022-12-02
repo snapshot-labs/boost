@@ -36,9 +36,15 @@ contract BoostCreateTest is BoostTest {
         snapEnd();
 
         // Checking contents of BoostConfig object
-        (string memory _strategyURI, IERC20 _token, uint256 _balance, address _owner, address _guard, uint48 _start, uint48 _end) = boost.boosts(
-            1
-        );
+        (
+            string memory _strategyURI,
+            IERC20 _token,
+            uint256 _balance,
+            address _owner,
+            address _guard,
+            uint48 _start,
+            uint48 _end
+        ) = boost.boosts(1);
         assertEq(strategyURI, _strategyURI);
         assertEq(address(token), address(_token));
         assertEq(depositAmount, _balance);
@@ -93,7 +99,15 @@ contract BoostCreateTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
         // Deposit of zero
-        boost.createBoost(strategyURI, IERC20(address(token)), 0, owner, guard, uint48(block.timestamp), uint48(block.timestamp + 60));
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            0,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
+        );
     }
 
     function testCreateBoostEndNotGreaterThanStart() public {

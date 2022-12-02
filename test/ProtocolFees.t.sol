@@ -46,9 +46,15 @@ contract ProtocolFeesTest is BoostTest {
         snapEnd();
 
         // Checking BoostConfig object is correct
-        (string memory _strategyURI, IERC20 _token, uint256 _balance, address _owner, address _guard, uint48 _start, uint48 _end) = boost.boosts(
-            1
-        );
+        (
+            string memory _strategyURI,
+            IERC20 _token,
+            uint256 _balance,
+            address _owner,
+            address _guard,
+            uint48 _start,
+            uint48 _end
+        ) = boost.boosts(1);
         assertEq(strategyURI, _strategyURI);
         assertEq(address(token), address(_token));
         assertEq(boostBalance, _balance);

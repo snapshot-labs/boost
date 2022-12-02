@@ -9,8 +9,8 @@ interface IBoost {
         IERC20 token;
         uint256 balance;
         address owner;
-        address guard; 
-        uint48 start;  
+        address guard;
+        uint48 start;
         uint48 end;
     }
 
