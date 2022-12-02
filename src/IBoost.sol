@@ -11,7 +11,6 @@ interface IBoost {
         address guard;
         uint256 start;
         uint256 end;
-        address owner;
     }
 
     struct Claim {

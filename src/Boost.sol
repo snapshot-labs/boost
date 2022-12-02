@@ -4,10 +4,11 @@ pragma solidity ^0.8.15;
 import "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
 import "openzeppelin-contracts/utils/cryptography/draft-EIP712.sol";
+import "openzeppelin-contracts/token/ERC721/ERC721.sol";
 
 import "./IBoost.sol";
 
-contract Boost is IBoost, EIP712("boost", "1"), Ownable {
+contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721("boost", "BOOST") {
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
@@ -27,6 +28,10 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return "ipfs://";
     }
 
     function setEthFee(uint256 _ethFee) public override onlyOwner {
@@ -77,18 +82,23 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         }
 
         uint256 newId = nextBoostId;
-        nextBoostId++;
+        unchecked {
+            // Overflows if 2**256 boosts are minted
+            nextBoostId++;
+        }
+
         boosts[newId] = BoostConfig({
             strategyURI: _strategyURI,
             token: _token,
             balance: balance,
             guard: _guard,
             start: _start,
-            end: _end,
-            owner: _owner
+            end: _end
         });
 
         _token.transferFrom(msg.sender, address(this), _amount);
+
+        _safeMint(_owner, newId);
 
         emit BoostCreated(newId, boosts[newId]);
     }
@@ -96,7 +106,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     /// @notice Top up an existing boost
     function depositTokens(uint256 _boostId, uint256 _amount) external override {
         if (_amount == 0) revert BoostDepositRequired();
-        if (boosts[_boostId].owner == address(0)) revert BoostDoesNotExist();
+        // if (boosts[_boostId].owner == address(0)) revert BoostDoesNotExist();
         if (boosts[_boostId].end <= block.timestamp) revert BoostEnded();
 
         uint256 balanceIncrease = 0;
@@ -118,7 +128,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     function withdrawRemainingTokens(uint256 _boostId, address _to) external override {
         if (boosts[_boostId].balance == 0) revert InsufficientBoostBalance();
         if (boosts[_boostId].end > block.timestamp) revert BoostNotEnded(boosts[_boostId].end);
-        if (boosts[_boostId].owner != msg.sender) revert OnlyBoostOwner();
+        // if (boosts[_boostId].owner != msg.sender) revert OnlyBoostOwner();
         if (_to == address(0)) revert InvalidRecipient();
 
         uint256 amount = boosts[_boostId].balance;
