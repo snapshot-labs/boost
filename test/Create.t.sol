@@ -34,7 +34,7 @@ contract BoostCreateTest is BoostTest {
         );
         snapEnd();
 
-        // Checking contents of BoostConfig object and other data that we store separately to conform to the ERC721 standard
+        // Checking BoostConfig object and other data that we store separately to obey the ERC721 standard
         (IERC20 _token, uint256 _balance, address _guard, uint256 _start, uint256 _end) = boost.boosts(boostId);
         assertEq(address(token), address(_token));
         assertEq(depositAmount, _balance);
