@@ -12,7 +12,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
-    uint256 public nextBoostId = 1;
+    uint256 public nextBoostId;
 
     mapping(uint256 => BoostConfig) public boosts;
     mapping(address => mapping(uint256 => bool)) public claimed;

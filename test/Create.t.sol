@@ -10,9 +10,10 @@ contract BoostCreateTest is BoostTest {
         token.approve(address(boost), depositAmount);
         // Id of the next boost that will be created
         uint256 boostId = boost.nextBoostId();
+        assertEq(boostId, 0); // The first boost created should have an id of 0
         vm.expectEmit(true, true, false, true);
         emit BoostCreated(
-            1,
+            boostId,
             IBoost.BoostConfig({
                 token: IERC20(address(token)),
                 balance: depositAmount,
@@ -22,7 +23,7 @@ contract BoostCreateTest is BoostTest {
             })
         );
         vm.prank(owner);
-        snapStart("CreateBoost");
+
         boost.createBoost(
             strategyURI,
             IERC20(address(token)),
@@ -32,7 +33,6 @@ contract BoostCreateTest is BoostTest {
             block.timestamp + 60,
             owner
         );
-        snapEnd();
 
         // Checking BoostConfig object and other data that we store separately to obey the ERC721 standard
         (IERC20 _token, uint256 _balance, address _guard, uint256 _start, uint256 _end) = boost.boosts(boostId);
@@ -43,9 +43,22 @@ contract BoostCreateTest is BoostTest {
         assertEq(block.timestamp + 60, _end);
         assertEq(boost.ownerOf(boostId), owner);
         assertEq(boost.tokenURI(boostId), string(abi.encodePacked("ipfs://", strategyURI)));
+        assertEq(boost.balanceOf(owner), 1); // The owner minted a single boost
 
         // Checking boost balance is equal to the deposit amount
         assertEq(token.balanceOf(address(boost)), depositAmount);
+    }
+
+    function testCreateMultipleBoosts() public {
+        _mintAndApprove(owner, 2 * depositAmount, 2 * depositAmount);
+        uint256 boostId1 = _createBoost();
+        snapStart("CreateBoost");
+        uint256 boostId2 = _createBoost();
+        snapEnd();
+        assertEq(boostId1, 0);
+        assertEq(boostId2, 1);
+        // After creating 2 boosts, the owner's balance should be 2
+        assertEq(boost.balanceOf(owner), 2);
     }
 
     function testCreateBoostInsufficientAllowance() public {

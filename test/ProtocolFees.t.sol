@@ -16,9 +16,10 @@ contract ProtocolFeesTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = depositAmount / tokenFee;
         uint256 boostBalance = depositAmount - tokenFeeAmount;
+        uint256 boostId = boost.nextBoostId();
         vm.expectEmit(true, true, false, true);
         emit BoostCreated(
-            1,
+            boostId,
             IBoost.BoostConfig({
                 token: IERC20(address(token)),
                 balance: boostBalance,
@@ -43,7 +44,7 @@ contract ProtocolFeesTest is BoostTest {
         snapEnd();
 
         // Checking BoostConfig object is correct
-        (IERC20 _token, uint256 _balance, address _guard, uint256 _start, uint256 _end) = boost.boosts(1);
+        (IERC20 _token, uint256 _balance, address _guard, uint256 _start, uint256 _end) = boost.boosts(boostId);
         assertEq(address(token), address(_token));
         assertEq(boostBalance, _balance);
         assertEq(guard, _guard);
