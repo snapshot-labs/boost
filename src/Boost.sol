@@ -132,6 +132,9 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
 
         boost.token.transfer(_to, amount);
 
+        // The ERC721 token is burnt when the remaining boost balance is withdrawn
+        _burn(_boostId);
+
         emit RemainingTokensWithdrawn(_boostId, amount);
     }
 
