@@ -9,16 +9,16 @@ contract BoostERC721Test is BoostTest {
         token.mint(owner, 2 * depositAmount);
         vm.prank(owner);
         token.approve(address(boost), 2 * depositAmount);
-        // vm.prank(owner);
-        // boost.createBoost(
-        //     strategyURI,
-        //     IERC20(address(token)),
-        //     depositAmount,
-        //     guard,
-        //     block.timestamp,
-        //     block.timestamp + 60,
-        //     owner
-        // );
+        vm.prank(owner);
+        boost.createBoost(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
 
         vm.prank(owner);
         snapStart("CreateBoostERC721");
@@ -32,6 +32,6 @@ contract BoostERC721Test is BoostTest {
             owner
         );
         snapEnd();
-        console2.log(boost.name());
+        console2.log(boost.tokenURI(1));
     }
 }

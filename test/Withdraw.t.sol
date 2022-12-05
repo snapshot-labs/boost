@@ -8,51 +8,53 @@ contract BoostWithdrawTest is BoostTest {
     address public constant claimer2 = address(0x2222);
     address public constant claimer3 = address(0x3333);
 
-    // function testWithdrawAfterBoostExpired() public {
-    //     _mintAndApprove(owner, depositAmount, depositAmount);
-    //     uint256 boostId = _createBoost();
+    function testWithdrawAfterBoostExpired() public {
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
 
-    //     // Increasing timestamp to after boost has ended
-    //     vm.warp(block.timestamp + 60);
-    //     vm.prank(owner);
-    //     snapStart("Withdraw");
-    //     boost.withdrawRemainingTokens(boostId, owner);
-    //     snapEnd();
+        // Increasing timestamp to after boost has ended
+        vm.warp(block.timestamp + 60);
+        vm.prank(owner);
+        snapStart("Withdraw");
+        boost.withdrawRemainingTokens(boostId, owner);
+        snapEnd();
 
-    //     // Checking balances after withdrawal
-    //     assertEq(token.balanceOf(address(boost)), 0);
-    //     assertEq(token.balanceOf(owner), depositAmount);
-    // }
+        // Checking balances after withdrawal
+        assertEq(token.balanceOf(address(boost)), 0);
+        assertEq(token.balanceOf(owner), depositAmount);
+    }
 
-    // function testWithdrawBoostNotOwner() public {
-    //     _mintAndApprove(owner, depositAmount, depositAmount);
-    //     uint256 boostId = _createBoost();
+    function testWithdrawBoostNotOwner() public {
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
 
-    //     vm.warp(block.timestamp + 60);
-    //     // Not boost owner
-    //     vm.prank(claimer);
-    //     vm.expectRevert(IBoost.OnlyBoostOwner.selector);
-    //     boost.withdrawRemainingTokens(boostId, claimer);
-    // }
+        vm.warp(block.timestamp + 60);
+        // Not boost owner
+        vm.prank(claimer);
+        vm.expectRevert(IBoost.OnlyBoostOwner.selector);
+        boost.withdrawRemainingTokens(boostId, claimer);
+    }
 
-    // function testWithdrawBoostNotExpired() public {
-    //     _mintAndApprove(owner, depositAmount, depositAmount);
-    //     uint256 boostId = _createBoost();
+    function testWithdrawBoostNotExpired() public {
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
 
-    //     vm.prank(owner);
-    //     vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotEnded.selector, block.timestamp + 60));
-    //     // Boost still active
-    //     boost.withdrawRemainingTokens(boostId, owner);
-    // }
+        vm.prank(owner);
+        vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotEnded.selector, block.timestamp + 60));
+        // Boost still active
+        boost.withdrawRemainingTokens(boostId, owner);
+    }
 
-    // function testWithdrawZeroBalance() public {
-    //     _mintAndApprove(owner, depositAmount, depositAmount);
-    //     uint256 boostId = _createBoost();
+    function testWithdrawZeroBalance() public {
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
 
-    //     IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: depositAmount });
-    //     boost.claim(claim, _generateClaimSignature(claim));
-    //     vm.prank(owner);
-    //     vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
-    //     boost.withdrawRemainingTokens(boostId, owner);
-    // }
+        // Claiming the entire deposit amount so that the boost balance will be zero
+        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: depositAmount });
+        boost.claim(claim, _generateClaimSignature(claim));
+        vm.warp(block.timestamp + 60);
+        vm.prank(owner);
+        vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
+        boost.withdrawRemainingTokens(boostId, owner);
+    }
 }

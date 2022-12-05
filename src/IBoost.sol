@@ -5,7 +5,6 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 interface IBoost {
     struct BoostConfig {
-        string strategyURI;
         IERC20 token;
         uint256 balance;
         address guard;

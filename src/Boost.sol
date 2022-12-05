@@ -4,11 +4,11 @@ pragma solidity ^0.8.15;
 import "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
 import "openzeppelin-contracts/utils/cryptography/draft-EIP712.sol";
-import "openzeppelin-contracts/token/ERC721/ERC721.sol";
+import "openzeppelin-contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 import "./IBoost.sol";
 
-contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721("boost", "BOOST") {
+contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
@@ -24,7 +24,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721("boost", "BOOST"
     // represented as an integer denominator (100/x)%
     uint256 public tokenFee;
 
-    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) {
+    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) ERC721("boost", "BOOST") {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
@@ -87,54 +87,50 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721("boost", "BOOST"
             nextBoostId++;
         }
 
-        boosts[newId] = BoostConfig({
-            strategyURI: _strategyURI,
-            token: _token,
-            balance: balance,
-            guard: _guard,
-            start: _start,
-            end: _end
-        });
+        boosts[newId] = BoostConfig({ token: _token, balance: balance, guard: _guard, start: _start, end: _end });
 
         _token.transferFrom(msg.sender, address(this), _amount);
 
         _safeMint(_owner, newId);
-
+        _setTokenURI(newId, _strategyURI);
         emit BoostCreated(newId, boosts[newId]);
     }
 
     /// @notice Top up an existing boost
     function depositTokens(uint256 _boostId, uint256 _amount) external override {
+        BoostConfig storage boost = boosts[_boostId];
         if (_amount == 0) revert BoostDepositRequired();
-        // if (boosts[_boostId].owner == address(0)) revert BoostDoesNotExist();
-        if (boosts[_boostId].end <= block.timestamp) revert BoostEnded();
+        if (!_exists(_boostId)) revert BoostDoesNotExist();
+        if (boost.end <= block.timestamp) revert BoostEnded();
 
         uint256 balanceIncrease = 0;
         if (tokenFee > 0) {
             uint256 tokenFeeAmount = _amount / tokenFee;
             balanceIncrease = _amount - tokenFeeAmount;
-            tokenFeeBalances[address(boosts[_boostId].token)] += tokenFeeAmount;
+            tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
         } else {
             balanceIncrease = _amount;
         }
 
-        boosts[_boostId].balance += balanceIncrease;
-        boosts[_boostId].token.transferFrom(msg.sender, address(this), _amount);
+        boost.balance += balanceIncrease;
+        boost.token.transferFrom(msg.sender, address(this), _amount);
 
         emit TokensDeposited(_boostId, msg.sender, balanceIncrease);
     }
 
     /// @notice Withdraw remaining tokens from an expired boost
     function withdrawRemainingTokens(uint256 _boostId, address _to) external override {
-        if (boosts[_boostId].balance == 0) revert InsufficientBoostBalance();
-        if (boosts[_boostId].end > block.timestamp) revert BoostNotEnded(boosts[_boostId].end);
-        // if (boosts[_boostId].owner != msg.sender) revert OnlyBoostOwner();
+        BoostConfig storage boost = boosts[_boostId];
+        if (!_exists(_boostId)) revert BoostDoesNotExist();
+        if (boost.balance == 0) revert InsufficientBoostBalance();
+        if (boost.end > block.timestamp) revert BoostNotEnded(boost.end);
+        if (ownerOf(_boostId) != msg.sender) revert OnlyBoostOwner();
         if (_to == address(0)) revert InvalidRecipient();
 
-        uint256 amount = boosts[_boostId].balance;
-        boosts[_boostId].balance = 0;
+        uint256 amount = boost.balance;
+        boost.balance = 0;
 
-        boosts[_boostId].token.transfer(_to, amount);
+        boost.token.transfer(_to, amount);
 
         emit RemainingTokensWithdrawn(_boostId, amount);
     }
@@ -152,9 +148,10 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721("boost", "BOOST"
     }
 
     function _claim(Claim memory _claim, bytes memory _signature) internal {
-        if (boosts[_claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[_claim.boostId].start);
-        if (boosts[_claim.boostId].balance < _claim.amount) revert InsufficientBoostBalance();
-        if (boosts[_claim.boostId].end <= block.timestamp) revert BoostEnded();
+        BoostConfig storage boost = boosts[_claim.boostId];
+        if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
+        if (boost.balance < _claim.amount) revert InsufficientBoostBalance();
+        if (boost.end <= block.timestamp) revert BoostEnded();
         if (claimed[_claim.recipient][_claim.boostId]) revert RecipientAlreadyClaimed();
         if (_claim.recipient == address(0)) revert InvalidRecipient();
 
@@ -162,13 +159,12 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721("boost", "BOOST"
             keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount))
         );
 
-        if (!SignatureChecker.isValidSignatureNow(boosts[_claim.boostId].guard, digest, _signature))
-            revert InvalidSignature();
+        if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
         claimed[_claim.recipient][_claim.boostId] = true;
-        boosts[_claim.boostId].balance -= _claim.amount;
+        boost.balance -= _claim.amount;
 
-        IERC20 token = IERC20(boosts[_claim.boostId].token);
+        IERC20 token = IERC20(boost.token);
         token.transfer(_claim.recipient, _claim.amount);
 
         emit TokensClaimed(_claim);
