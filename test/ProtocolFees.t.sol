@@ -18,7 +18,7 @@ contract ProtocolFeesTest is BoostTest {
         uint256 boostBalance = depositAmount - tokenFeeAmount;
         uint256 boostId = boost.nextBoostId();
         vm.expectEmit(true, true, false, true);
-        emit BoostCreated(
+        emit Mint(
             boostId,
             IBoost.BoostConfig({
                 token: IERC20(address(token)),
@@ -170,7 +170,7 @@ contract ProtocolFeesTest is BoostTest {
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit TokensDeposited(boostId, owner, boostBalanceIncrease);
+        emit Deposit(boostId, owner, boostBalanceIncrease);
         snapStart("DepositWithProtocolFees");
         boost.deposit(boostId, depositAmount);
         snapEnd();

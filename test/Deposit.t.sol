@@ -12,7 +12,7 @@ contract BoostDepositTest is BoostTest {
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit TokensDeposited(boostId, owner, 100);
+        emit Deposit(boostId, owner, 100);
         snapStart("Deposit");
         boost.deposit(boostId, depositAmount);
         snapEnd();

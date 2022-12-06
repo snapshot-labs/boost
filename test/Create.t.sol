@@ -12,7 +12,7 @@ contract BoostCreateTest is BoostTest {
         uint256 boostId = boost.nextBoostId();
         assertEq(boostId, 0); // The first boost created should have an id of 0
         vm.expectEmit(true, true, false, true);
-        emit BoostCreated(
+        emit Mint(
             boostId,
             IBoost.BoostConfig({
                 token: IERC20(address(token)),

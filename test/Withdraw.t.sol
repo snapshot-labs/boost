@@ -50,7 +50,7 @@ contract BoostWithdrawTest is BoostTest {
         uint256 boostId = _createBoost();
 
         // Claiming the entire deposit amount so that the boost balance will be zero
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: depositAmount });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: depositAmount });
         boost.claim(claim, _generateClaimSignature(claim));
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
