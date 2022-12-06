@@ -57,7 +57,7 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
     function _createBoost() internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(owner);
-        boost.createBoost(
+        boost.mint(
             strategyURI,
             IERC20(token),
             depositAmount,
@@ -83,7 +83,7 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.createBoost{ value: _ethFee }(_strategyURI, IERC20(_token), _amount, _guard, _start, _end, _owner);
+        boost.mint{ value: _ethFee }(_strategyURI, IERC20(_token), _amount, _guard, _start, _end, _owner);
         return boostID;
     }
 

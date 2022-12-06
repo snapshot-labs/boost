@@ -32,7 +32,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.deal(owner, ethFee);
         vm.prank(owner);
         snapStart("CreateBoostWithProtocolFee");
-        boost.createBoost{ value: ethFee }(
+        boost.mint{ value: ethFee }(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -66,7 +66,7 @@ contract ProtocolFeesTest is BoostTest {
         uint256 boostId1 = boost.nextBoostId();
         vm.deal(owner, 2 * ethFee);
         vm.prank(owner);
-        boost.createBoost{ value: ethFee }(
+        boost.mint{ value: ethFee }(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -78,7 +78,7 @@ contract ProtocolFeesTest is BoostTest {
         uint256 boostId2 = boost.nextBoostId();
         vm.prank(owner);
         snapStart("CreateBoostWithProtocolFee");
-        boost.createBoost{ value: ethFee }(
+        boost.mint{ value: ethFee }(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -172,7 +172,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.expectEmit(true, true, false, true);
         emit TokensDeposited(boostId, owner, boostBalanceIncrease);
         snapStart("DepositWithProtocolFees");
-        boost.depositTokens(boostId, depositAmount);
+        boost.deposit(boostId, depositAmount);
         snapEnd();
         assertEq(address(boost).balance, ethFee);
         assertEq(owner.balance, 0);
@@ -223,7 +223,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.expectRevert(IBoost.InsufficientEthFee.selector);
         vm.prank(owner);
         vm.deal(owner, ethFee - 1);
-        boost.createBoost{ value: ethFee - 1 }(
+        boost.mint{ value: ethFee - 1 }(
             strategyURI,
             IERC20(token),
             depositAmount,

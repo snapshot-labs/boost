@@ -24,7 +24,7 @@ contract BoostCreateTest is BoostTest {
         );
         vm.prank(owner);
 
-        boost.createBoost(
+        boost.mint(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -73,7 +73,7 @@ contract BoostCreateTest is BoostTest {
         vm.expectRevert("ERC20: insufficient allowance");
         vm.prank(owner);
         // Attempting to deposit more than what the contract is approved for
-        boost.createBoost(
+        boost.mint(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -91,7 +91,7 @@ contract BoostCreateTest is BoostTest {
         vm.expectRevert("ERC20: transfer amount exceeds balance");
         vm.prank(owner);
         // Attempting to deposit more than the owner's balance
-        boost.createBoost(
+        boost.mint(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -106,7 +106,7 @@ contract BoostCreateTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
         // Deposit of zero
-        boost.createBoost(strategyURI, IERC20(address(token)), 0, guard, block.timestamp, block.timestamp + 60, owner);
+        boost.mint(strategyURI, IERC20(address(token)), 0, guard, block.timestamp, block.timestamp + 60, owner);
     }
 
     function testCreateBoostEndNotGreaterThanStart() public {
@@ -116,7 +116,7 @@ contract BoostCreateTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEndDateInPast.selector);
         // Start and end timestamps are equal
-        boost.createBoost(
+        boost.mint(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
