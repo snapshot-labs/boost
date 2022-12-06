@@ -102,7 +102,9 @@ contract BoostClaimTest is BoostTest {
 
         IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
         // Creating signature with different claim data
-        bytes memory sig = _generateClaimSignature(IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 2 }));
+        bytes memory sig = _generateClaimSignature(
+            IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 2 })
+        );
         vm.expectRevert(IBoost.InvalidSignature.selector);
         boost.claim(claim, sig);
     }
@@ -151,7 +153,11 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
         // Claim larger than boost balance
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: depositAmount + 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
+            boostId: boostId,
+            recipient: claimer,
+            amount: depositAmount + 1
+        });
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
         boost.claim(claim, sig);

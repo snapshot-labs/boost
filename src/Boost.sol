@@ -24,7 +24,11 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // represented as an integer denominator (100/x)%
     uint256 public tokenFee;
 
-    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) ERC721("boost", "BOOST") EIP712("boost", "1") {
+    constructor(
+        address _protocolOwner,
+        uint256 _ethFee,
+        uint256 _tokenFee
+    ) ERC721("boost", "BOOST") EIP712("boost", "1") {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
