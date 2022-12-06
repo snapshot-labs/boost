@@ -135,14 +135,13 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         if (_to == address(0)) revert InvalidRecipient();
 
         uint256 amount = boost.balance;
-        boost.balance = 0;
+
+        // Transferring remaining ERC20 token balance to the designated address
+        boost.token.transfer(_to, amount);
 
         // Deleting the boost data
         _burn(_boostId);
         delete boosts[_boostId];
-
-        // Transferring remaining ERC20 token balance to the designated address
-        boost.token.transfer(_to, amount);
 
         emit RemainingTokensWithdrawn(_boostId, amount);
     }
