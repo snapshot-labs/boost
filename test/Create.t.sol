@@ -42,7 +42,7 @@ contract BoostCreateTest is BoostTest {
         assertEq(block.timestamp, _start);
         assertEq(block.timestamp + 60, _end);
         assertEq(boost.ownerOf(boostId), owner);
-        assertEq(boost.tokenURI(boostId), string(abi.encodePacked("ipfs://", strategyURI)));
+        assertEq(boost.tokenURI(boostId), strategyURI);
         assertEq(boost.balanceOf(owner), 1); // The owner minted a single boost
 
         // Checking boost balance is equal to the deposit amount

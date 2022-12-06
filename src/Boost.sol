@@ -30,10 +30,6 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         transferOwnership(_protocolOwner);
     }
 
-    function _baseURI() internal view override returns (string memory) {
-        return "ipfs://";
-    }
-
     function setEthFee(uint256 _ethFee) public override onlyOwner {
         ethFee = _ethFee;
         emit EthFeeSet(_ethFee);
