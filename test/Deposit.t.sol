@@ -1,64 +1,80 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.14;
+pragma solidity ^0.8.15;
 
 import "./Boost.t.sol";
 
 contract BoostDepositTest is BoostTest {
+    address public constant depositee = address(0x1111);
+
     function testDepositToExistingBoost() public {
-        _mintAndApprove(owner, 200, 200);
-        uint256 boostID = _createBoost(100);
+        _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+        uint256 boostId = _createBoost();
+
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit TokensDeposited(boostID, owner, 100);
-        boost.depositTokens(boostID, 100);
+        emit TokensDeposited(boostId, owner, 100);
+        snapStart("Deposit");
+        boost.depositTokens(boostId, depositAmount);
+        snapEnd();
     }
 
     function testDepositFromDifferentAccount() public {
-        _mintAndApprove(owner, 200, 200);
-        _mintAndApprove(guard, 50, 50);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        _mintAndApprove(depositee, 50, 50);
+
         vm.prank(owner);
-        uint256 boostID = _createBoost(100);
-        vm.prank(guard);
-        boost.depositTokens(boostID, 50);
+        uint256 boostId = _createBoost();
+
+        // Depositing from a different account
+        vm.prank(depositee);
+        boost.depositTokens(boostId, 50);
     }
 
     function testDepositToBoostThatDoesntExist() public {
-        _mintAndApprove(owner, 200, 200);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDoesNotExist.selector);
-        boost.depositTokens(1, 100);
+        // Boost with id 1 has not been created yet
+        boost.depositTokens(1, depositAmount);
     }
 
     function testDepositToExpiredBoost() public {
-        _mintAndApprove(owner, 200, 200);
-        uint256 boostID = _createBoost(100);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
+
+        // Increasing timestamp to after boost has ended
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEnded.selector);
-        boost.depositTokens(boostID, 100);
+        boost.depositTokens(boostId, depositAmount);
     }
 
     function testDepositExceedsAllowance() public {
-        _mintAndApprove(owner, 200, 50);
-        uint256 boostID = _createBoost(50);
+        _mintAndApprove(owner, depositAmount * 2, depositAmount);
+        uint256 boostId = _createBoost();
+
         vm.prank(owner);
         vm.expectRevert("ERC20: insufficient allowance");
-        boost.depositTokens(boostID, 10);
+        // Full allowance of depositAmount has been used to create the boost
+        boost.depositTokens(boostId, 1);
     }
 
     function testDepositExceedsBalance() public {
-        _mintAndApprove(owner, 100, 200);
-        uint256 boostID = _createBoost(100);
+        _mintAndApprove(owner, depositAmount, 200);
+        uint256 boostId = _createBoost();
+
         vm.prank(owner);
         vm.expectRevert("ERC20: transfer amount exceeds balance");
-        boost.depositTokens(boostID, 10);
+        // Attempting to deposit more than the owner's balance
+        boost.depositTokens(boostId, 1);
     }
 
     function testDepositZero() public {
-        _mintAndApprove(owner, 100, 100);
-        uint256 boostID = _createBoost(100);
+        _mintAndApprove(owner, depositAmount, depositAmount);
+        uint256 boostId = _createBoost();
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
-        boost.depositTokens(boostID, 0);
+        boost.depositTokens(boostId, 0);
     }
 }
