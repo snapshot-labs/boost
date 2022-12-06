@@ -12,7 +12,7 @@ interface IBoost {
         uint256 end;
     }
 
-    struct Claim {
+    struct ClaimConfig {
         uint256 boostId;
         address recipient;
         uint256 amount;
@@ -33,11 +33,10 @@ interface IBoost {
     error InsufficientBoostBalance();
     error InsufficientEthFee();
 
-    event BoostCreated(uint256 boostId, BoostConfig boost);
-    event TokensClaimed(Claim claim);
-    event MultipleTokensClaimed(uint256 boostId, address[] recipients);
-    event TokensDeposited(uint256 boostId, address sender, uint256 amount);
-    event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
+    event Mint(uint256 boostId, BoostConfig boost);
+    event Claim(ClaimConfig claim);
+    event Deposit(uint256 boostId, address sender, uint256 amount);
+    event Burn(uint256 boostId);
     event EthFeeSet(uint256 ethFee);
     event TokenFeeSet(uint256 tokenFee);
     event EthFeesCollected(address recipient);
@@ -65,7 +64,7 @@ interface IBoost {
 
     function burn(uint256 boostId, address to) external;
 
-    function claim(Claim calldata claim, bytes calldata signature) external;
+    function claim(ClaimConfig calldata claim, bytes calldata signature) external;
 
-    function claimMultiple(Claim[] calldata claims, bytes[] calldata signatures) external;
+    function claimMultiple(ClaimConfig[] calldata claims, bytes[] calldata signatures) external;
 }

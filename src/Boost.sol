@@ -98,7 +98,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         // Transferring the deposit amount of the ERC20 token to the contract
         _token.transferFrom(msg.sender, address(this), _amount);
 
-        emit BoostCreated(boostId, boosts[boostId]);
+        emit Mint(boostId, boosts[boostId]);
     }
 
     /// @notice Top up an existing boost
@@ -122,7 +122,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         boost.balance += balanceIncrease;
         boost.token.transferFrom(msg.sender, address(this), _amount);
 
-        emit TokensDeposited(_boostId, msg.sender, balanceIncrease);
+        emit Deposit(_boostId, msg.sender, balanceIncrease);
     }
 
     /// @notice Withdraw remaining tokens from an expired boost
@@ -143,22 +143,22 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         _burn(_boostId);
         delete boosts[_boostId];
 
-        emit RemainingTokensWithdrawn(_boostId, amount);
+        emit Burn(_boostId);
     }
 
     /// @notice Claim using a guard signature
-    function claim(Claim calldata claim, bytes calldata signature) external override {
+    function claim(ClaimConfig calldata claim, bytes calldata signature) external override {
         _claim(claim, signature);
     }
 
     /// @notice Claim multiple using an array of guard signatures
-    function claimMultiple(Claim[] calldata claims, bytes[] calldata signatures) external override {
+    function claimMultiple(ClaimConfig[] calldata claims, bytes[] calldata signatures) external override {
         for (uint i = 0; i < signatures.length; i++) {
             _claim(claims[i], signatures[i]);
         }
     }
 
-    function _claim(Claim memory _claim, bytes memory _signature) internal {
+    function _claim(ClaimConfig memory _claim, bytes memory _signature) internal {
         BoostConfig storage boost = boosts[_claim.boostId];
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
         if (boost.balance < _claim.amount) revert InsufficientBoostBalance();
@@ -182,6 +182,6 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         // Transferring claim amount tp recipient address
         boost.token.transfer(_claim.recipient, _claim.amount);
 
-        emit TokensClaimed(_claim);
+        emit Claim(_claim);
     }
 }
