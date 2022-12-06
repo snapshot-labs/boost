@@ -8,7 +8,7 @@ import "openzeppelin-contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 import "./IBoost.sol";
 
-contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
+contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
@@ -24,7 +24,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
     // represented as an integer denominator (100/x)%
     uint256 public tokenFee;
 
-    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) ERC721("boost", "BOOST") {
+    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee) ERC721("boost", "BOOST") EIP712("boost", "1") {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
