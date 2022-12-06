@@ -74,26 +74,31 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
 
         uint256 balance = 0;
         if (tokenFee > 0) {
+            // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
             uint256 tokenFeeAmount = _amount / tokenFee;
+            // tokenFeeAmount < _amount, therefore balance will never underflow
             balance = _amount - tokenFeeAmount;
             tokenFeeBalances[address(_token)] += tokenFeeAmount;
         } else {
+            // When there is no token fee, the boost balance is full deposit amount
             balance = _amount;
         }
 
-        uint256 newId = nextBoostId;
+        uint256 boostId = nextBoostId;
         unchecked {
             // Overflows if 2**256 boosts are minted
             nextBoostId++;
         }
 
-        boosts[newId] = BoostConfig({ token: _token, balance: balance, guard: _guard, start: _start, end: _end });
+        // Minting the boost as an ERC721 and storing the config data
+        _safeMint(_owner, boostId);
+        _setTokenURI(boostId, _strategyURI);
+        boosts[boostId] = BoostConfig({ token: _token, balance: balance, guard: _guard, start: _start, end: _end });
 
+        // Transferring the deposit amount of the ERC20 token to the contract
         _token.transferFrom(msg.sender, address(this), _amount);
 
-        _safeMint(_owner, newId);
-        _setTokenURI(newId, _strategyURI);
-        emit BoostCreated(newId, boosts[newId]);
+        emit BoostCreated(boostId, boosts[boostId]);
     }
 
     /// @notice Top up an existing boost
@@ -105,10 +110,12 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
 
         uint256 balanceIncrease = 0;
         if (tokenFee > 0) {
+            // The token fee is calculated and subtracted from the deposit amount to get the boost balance increase
             uint256 tokenFeeAmount = _amount / tokenFee;
             balanceIncrease = _amount - tokenFeeAmount;
             tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
         } else {
+            // When there is no token fee, the boost balance increase is the full deposit amount
             balanceIncrease = _amount;
         }
 
@@ -130,10 +137,8 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
         uint256 amount = boost.balance;
         boost.balance = 0;
 
+        // Transferring remaining ERC20 token balance to the designated address
         boost.token.transfer(_to, amount);
-
-        // The ERC721 token is burnt when the remaining boost balance is withdrawn
-        _burn(_boostId);
 
         emit RemainingTokensWithdrawn(_boostId, amount);
     }
@@ -164,11 +169,15 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
 
         if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
+        // Storing recipients that claimed to prevent reusing signatures
         claimed[_claim.recipient][_claim.boostId] = true;
+
+        // Calculating the boost balance after the claim, will not underflow as we have already checked
+        // that the claim amount is less than the balance
         boost.balance -= _claim.amount;
 
-        IERC20 token = IERC20(boost.token);
-        token.transfer(_claim.recipient, _claim.amount);
+        // Transferring claim amount tp recipient address
+        boost.token.transfer(_claim.recipient, _claim.amount);
 
         emit TokensClaimed(_claim);
     }

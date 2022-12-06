@@ -58,6 +58,54 @@ contract ProtocolFeesTest is BoostTest {
         assertEq(boost.tokenFeeBalances(address(token)), tokenFeeAmount);
     }
 
+    function testCreateMultipleBoostsWithProtocolFee() public {
+        _mintAndApprove(owner, 2 * depositAmount, 2 * depositAmount);
+        uint256 tokenFeeAmount = depositAmount / tokenFee;
+        uint256 boostBalance = depositAmount - tokenFeeAmount;
+
+        uint256 boostId1 = boost.nextBoostId();
+        vm.deal(owner, 2 * ethFee);
+        vm.prank(owner);
+        boost.createBoost{ value: ethFee }(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
+        uint256 boostId2 = boost.nextBoostId();
+        vm.prank(owner);
+        snapStart("CreateBoostWithProtocolFee");
+        boost.createBoost{ value: ethFee }(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            guard,
+            block.timestamp,
+            block.timestamp + 60,
+            owner
+        );
+        snapEnd();
+
+        (, uint256 _balance1, , , ) = boost.boosts(boostId1);
+        (, uint256 _balance2, , , ) = boost.boosts(boostId2);
+
+        assertEq(boostId1, 0);
+        assertEq(boostId2, 1);
+
+        // After creating 2 boosts, the owner's balance should be 2
+        assertEq(boost.balanceOf(owner), 2);
+
+        assertEq(_balance1, boostBalance);
+        assertEq(_balance2, boostBalance);
+
+        assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), 2 * tokenFeeAmount);
+        assertEq(address(boost).balance, 2 * ethFee);
+    }
+
     function testUpdateProtocolFees() public {
         uint256 newEthFee = 2000;
         uint256 newTokenFee = 20;
@@ -196,9 +244,9 @@ contract ProtocolFeesTest is BoostTest {
         boost.setTokenFee(newTokenFee);
 
         _mintAndApprove(owner, depositAmount, depositAmount);
-        _createBoost();
+        uint256 boostId = _createBoost();
 
-        (, uint256 _balance, , , ) = boost.boosts(1);
+        (, uint256 _balance, , , ) = boost.boosts(boostId);
 
         // 100% protocol fee, boost balance is zero, token fee is the full deposit
         assertEq(_balance, 0);

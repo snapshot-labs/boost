@@ -51,14 +51,19 @@ contract BoostCreateTest is BoostTest {
 
     function testCreateMultipleBoosts() public {
         _mintAndApprove(owner, 2 * depositAmount, 2 * depositAmount);
+
+        // Creating 2 boosts, gas snapshot on second
         uint256 boostId1 = _createBoost();
         snapStart("CreateBoost");
         uint256 boostId2 = _createBoost();
         snapEnd();
+
         assertEq(boostId1, 0);
         assertEq(boostId2, 1);
+
         // After creating 2 boosts, the owner's balance should be 2
         assertEq(boost.balanceOf(owner), 2);
+        assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
     }
 
     function testCreateBoostInsufficientAllowance() public {
