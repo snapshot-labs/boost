@@ -12,6 +12,7 @@ contract BoostWithdrawTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
+        assertEq(boost.balanceOf(owner), 1); // sanity check
         // Increasing timestamp to after boost has ended
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
@@ -22,6 +23,7 @@ contract BoostWithdrawTest is BoostTest {
         // Checking balances after withdrawal
         assertEq(token.balanceOf(address(boost)), 0);
         assertEq(token.balanceOf(owner), depositAmount);
+        assertEq(boost.balanceOf(owner), 0);
     }
 
     function testWithdrawBoostNotOwner() public {
