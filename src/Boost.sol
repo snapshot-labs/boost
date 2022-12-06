@@ -57,7 +57,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
     }
 
     /// @notice Create a new boost and transfer tokens to it
-    function createBoost(
+    function mint(
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
@@ -102,7 +102,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
     }
 
     /// @notice Top up an existing boost
-    function depositTokens(uint256 _boostId, uint256 _amount) external override {
+    function deposit(uint256 _boostId, uint256 _amount) external override {
         BoostConfig storage boost = boosts[_boostId];
         if (_amount == 0) revert BoostDepositRequired();
         if (!_exists(_boostId)) revert BoostDoesNotExist();
@@ -126,7 +126,7 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable, ERC721URIStorage {
     }
 
     /// @notice Withdraw remaining tokens from an expired boost
-    function withdrawRemainingTokens(uint256 _boostId, address _to) external override {
+    function burn(uint256 _boostId, address _to) external override {
         BoostConfig storage boost = boosts[_boostId];
         if (!_exists(_boostId)) revert BoostDoesNotExist();
         if (boost.balance == 0) revert InsufficientBoostBalance();

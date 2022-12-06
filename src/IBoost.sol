@@ -51,7 +51,7 @@ interface IBoost {
 
     function collectTokenFees(IERC20 token, address recipient) external;
 
-    function createBoost(
+    function mint(
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
@@ -61,9 +61,9 @@ interface IBoost {
         address _owner
     ) external payable;
 
-    function depositTokens(uint256 boostId, uint256 amount) external;
+    function deposit(uint256 boostId, uint256 amount) external;
 
-    function withdrawRemainingTokens(uint256 boostId, address to) external;
+    function burn(uint256 boostId, address to) external;
 
     function claim(Claim calldata claim, bytes calldata signature) external;
 
