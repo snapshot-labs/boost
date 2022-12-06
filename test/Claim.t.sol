@@ -53,9 +53,9 @@ contract BoostClaimTest is BoostTest {
             amount: 1,
             ref: keccak256("3")
         });
-        boost.claimTokens(claim, _generateClaimSignature(claim));
-        boost.claimTokens(claim2, _generateClaimSignature(claim2));
-        boost.claimTokens(claim3, _generateClaimSignature(claim3));
+        boost.claim(claim, _generateClaimSignature(claim));
+        boost.claim(claim2, _generateClaimSignature(claim2));
+        boost.claim(claim3, _generateClaimSignature(claim3));
 
         // Checking balances are correct after claim
         assertEq(token.balanceOf(address(boost)), depositAmount - 3);
@@ -68,11 +68,36 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
-        IBoost.Claim memory claim2 = IBoost.Claim({ boostId: boostId, recipient: claimer2, amount: 1 });
-        IBoost.Claim memory claim3 = IBoost.Claim({ boostId: boostId, recipient: claimer3, amount: 1 });
-        IBoost.Claim memory claim4 = IBoost.Claim({ boostId: boostId, recipient: claimer4, amount: 1 });
-        IBoost.Claim memory claim5 = IBoost.Claim({ boostId: boostId, recipient: claimer5, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
+        IBoost.Claim memory claim2 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer2,
+            amount: 1,
+            ref: keccak256("2")
+        });
+        IBoost.Claim memory claim3 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer3,
+            amount: 1,
+            ref: keccak256("3")
+        });
+        IBoost.Claim memory claim4 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer4,
+            amount: 1,
+            ref: keccak256("4")
+        });
+        IBoost.Claim memory claim5 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer5,
+            amount: 1,
+            ref: keccak256("5")
+        });
 
         // Generating Claim array
         IBoost.Claim[] memory claims = new IBoost.Claim[](5);

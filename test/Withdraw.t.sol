@@ -57,7 +57,7 @@ contract BoostWithdrawTest is BoostTest {
         });
 
         // Claiming the entire boost balance, so there is nothing less to withdraw
-        boost.claimTokens(claim, _generateClaimSignature(claim));
+        boost.claim(claim, _generateClaimSignature(claim));
 
         vm.prank(owner);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
