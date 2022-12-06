@@ -116,14 +116,6 @@ contract BoostCreateTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEndDateInPast.selector);
         // Start and end timestamps are equal
-        boost.mint(
-            strategyURI,
-            IERC20(address(token)),
-            depositAmount,
-            guard,
-            block.timestamp,
-            block.timestamp,
-            owner
-        );
+        boost.mint(strategyURI, IERC20(address(token)), depositAmount, guard, block.timestamp, block.timestamp, owner);
     }
 }
