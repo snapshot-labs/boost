@@ -18,6 +18,7 @@ interface IBoost {
         uint256 boostId;
         address recipient;
         uint256 amount;
+        bytes32 ref;
     }
 
     error BoostDoesNotExist();

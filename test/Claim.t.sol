@@ -13,8 +13,12 @@ contract BoostClaimTest is BoostTest {
     function testClaimSingleRecipient() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
-
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
         vm.expectEmit(true, false, false, true);
         emit TokensClaimed(claim);
         snapStart("ClaimSingle");
@@ -30,29 +34,70 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
-        IBoost.Claim memory claim2 = IBoost.Claim({ boostId: boostId, recipient: claimer2, amount: 1 });
-        IBoost.Claim memory claim3 = IBoost.Claim({ boostId: boostId, recipient: claimer3, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
+        IBoost.Claim memory claim2 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer2,
+            amount: 1,
+            ref: keccak256("2")
+        });
+        // Same address as first claim
+        IBoost.Claim memory claim3 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("3")
+        });
         boost.claim(claim, _generateClaimSignature(claim));
         boost.claim(claim2, _generateClaimSignature(claim2));
         boost.claim(claim3, _generateClaimSignature(claim3));
 
         // Checking balances are correct after claim
         assertEq(token.balanceOf(address(boost)), depositAmount - 3);
-        assertEq(token.balanceOf(claimer), 1);
+        assertEq(token.balanceOf(claimer), 2);
         assertEq(token.balanceOf(claimer2), 1);
-        assertEq(token.balanceOf(claimer3), 1);
+        assertEq(token.balanceOf(claimer3), 0);
     }
 
     function testClaimMultiple() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
-        IBoost.Claim memory claim2 = IBoost.Claim({ boostId: boostId, recipient: claimer2, amount: 1 });
-        IBoost.Claim memory claim3 = IBoost.Claim({ boostId: boostId, recipient: claimer3, amount: 1 });
-        IBoost.Claim memory claim4 = IBoost.Claim({ boostId: boostId, recipient: claimer4, amount: 1 });
-        IBoost.Claim memory claim5 = IBoost.Claim({ boostId: boostId, recipient: claimer5, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
+        IBoost.Claim memory claim2 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer2,
+            amount: 1,
+            ref: keccak256("2")
+        });
+        IBoost.Claim memory claim3 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer3,
+            amount: 1,
+            ref: keccak256("3")
+        });
+        IBoost.Claim memory claim4 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer4,
+            amount: 1,
+            ref: keccak256("4")
+        });
+        IBoost.Claim memory claim5 = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer5,
+            amount: 1,
+            ref: keccak256("5")
+        });
 
         // Generating Claim array
         IBoost.Claim[] memory claims = new IBoost.Claim[](5);
@@ -87,7 +132,12 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
         bytes memory sig = _generateClaimSignature(claim);
         boost.claim(claim, sig);
 
@@ -100,9 +150,16 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
-        // Creating signature with different claim data
-        bytes memory sig = _generateClaimSignature(IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 2 }));
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
+        // Creating signature with different claim amount
+        bytes memory sig = _generateClaimSignature(
+            IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 2, ref: keccak256("1") })
+        );
         vm.expectRevert(IBoost.InvalidSignature.selector);
         boost.claim(claim, sig);
     }
@@ -111,7 +168,12 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
         bytes memory sig = _generateClaimSignature(claim);
         // skipped ahead to after boost has ended
         vm.warp(block.timestamp + 60);
@@ -121,6 +183,7 @@ contract BoostClaimTest is BoostTest {
 
     function testClaimBoostNotStarted() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
+
         // Start timestamp is in future
         uint256 boostId = _createBoost(
             strategyURI,
@@ -133,14 +196,19 @@ contract BoostClaimTest is BoostTest {
             0
         );
 
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotStarted.selector, block.timestamp + 60));
         boost.claim(claim, sig);
     }
 
     function testClaimBoostDoesntExist() public {
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: 1, recipient: claimer, amount: 1 });
+        IBoost.Claim memory claim = IBoost.Claim({ boostId: 1, recipient: claimer, amount: 1, ref: keccak256("1") });
         bytes memory sig = _generateClaimSignature(claim);
         // If the boost does not exist, then the balance of the boost will be zero
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
@@ -150,8 +218,14 @@ contract BoostClaimTest is BoostTest {
     function testClaimExceedsBalance() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
+
         // Claim larger than boost balance
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: boostId, recipient: claimer, amount: depositAmount + 1 });
+        IBoost.Claim memory claim = IBoost.Claim({
+            boostId: boostId,
+            recipient: claimer,
+            amount: depositAmount + 1,
+            ref: keccak256("1")
+        });
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
         boost.claim(claim, sig);

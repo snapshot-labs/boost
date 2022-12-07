@@ -9,12 +9,12 @@ import "./IBoost.sol";
 
 contract Boost is IBoost, EIP712("boost", "1"), Ownable {
     bytes32 public immutable eip712ClaimStructHash =
-        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
+        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
 
     uint256 public nextBoostId = 1;
 
     mapping(uint256 => BoostConfig) public boosts;
-    mapping(address => mapping(uint256 => bool)) public claimed;
+    mapping(bytes32 => mapping(uint256 => bool)) public claimed;
     mapping(address => uint256) public tokenFeeBalances;
 
     // Constant eth fee (in gwei) that is the same for all boost creators.
@@ -145,17 +145,17 @@ contract Boost is IBoost, EIP712("boost", "1"), Ownable {
         if (boosts[_claim.boostId].start > block.timestamp) revert BoostNotStarted(boosts[_claim.boostId].start);
         if (boosts[_claim.boostId].balance < _claim.amount) revert InsufficientBoostBalance();
         if (boosts[_claim.boostId].end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claim.recipient][_claim.boostId]) revert RecipientAlreadyClaimed();
+        if (claimed[_claim.ref][_claim.boostId]) revert RecipientAlreadyClaimed();
         if (_claim.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount))
+            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount, _claim.ref))
         );
 
         if (!SignatureChecker.isValidSignatureNow(boosts[_claim.boostId].guard, digest, _signature))
             revert InvalidSignature();
 
-        claimed[_claim.recipient][_claim.boostId] = true;
+        claimed[_claim.ref][_claim.boostId] = true;
         boosts[_claim.boostId].balance -= _claim.amount;
 
         IERC20 token = IERC20(boosts[_claim.boostId].token);
