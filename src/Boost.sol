@@ -10,12 +10,12 @@ import "./IBoost.sol";
 
 contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     bytes32 public immutable eip712ClaimStructHash =
-        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
+        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
 
     uint256 public nextBoostId;
 
     mapping(uint256 => BoostConfig) public boosts;
-    mapping(address => mapping(uint256 => bool)) public claimed;
+    mapping(bytes32 => mapping(uint256 => bool)) public claimed;
     mapping(address => uint256) public tokenFeeBalances;
 
     // Constant eth fee (in gwei) that is the same for all boost creators.
@@ -61,10 +61,10 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
+        address _owner,
         address _guard,
-        uint256 _start,
-        uint256 _end,
-        address _owner
+        uint48 _start,
+        uint48 _end
     ) external payable override {
         if (_amount == 0) revert BoostDepositRequired();
         if (_end <= block.timestamp) revert BoostEndDateInPast();
@@ -163,17 +163,17 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
         if (boost.balance < _claim.amount) revert InsufficientBoostBalance();
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claim.recipient][_claim.boostId]) revert RecipientAlreadyClaimed();
+        if (claimed[_claim.ref][_claim.boostId]) revert RecipientAlreadyClaimed();
         if (_claim.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount))
+            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount, _claim.ref))
         );
 
         if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
         // Storing recipients that claimed to prevent reusing signatures
-        claimed[_claim.recipient][_claim.boostId] = true;
+        claimed[_claim.ref][_claim.boostId] = true;
 
         // Calculating the boost balance after the claim, will not underflow as we have already checked
         // that the claim amount is less than the balance

@@ -58,7 +58,15 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
     function _createBoost() internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(owner);
-        boost.mint(strategyURI, IERC20(token), depositAmount, guard, block.timestamp, block.timestamp + 60, owner);
+        boost.mint(
+            strategyURI,
+            IERC20(token),
+            depositAmount,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
+        );
         return boostID;
     }
 
@@ -67,16 +75,24 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
         string memory _strategyURI,
         address _token,
         uint256 _amount,
+        address _owner,
         address _guard,
         uint256 _start,
         uint256 _end,
-        address _owner,
         uint256 _ethFee
     ) internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.mint{ value: _ethFee }(_strategyURI, IERC20(_token), _amount, _guard, _start, _end, _owner);
+        boost.mint{ value: _ethFee }(
+            _strategyURI,
+            IERC20(_token),
+            _amount,
+            _owner,
+            _guard,
+            uint48(_start),
+            uint48(_end)
+        );
         return boostID;
     }
 
@@ -103,10 +119,11 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
                 ),
                 keccak256(
                     abi.encode(
-                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)"),
+                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)"),
                         claim.boostId,
                         claim.recipient,
-                        claim.amount
+                        claim.amount,
+                        claim.ref
                     )
                 )
             )

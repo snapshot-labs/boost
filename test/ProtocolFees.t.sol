@@ -24,8 +24,8 @@ contract ProtocolFeesTest is BoostTest {
                 token: IERC20(address(token)),
                 balance: boostBalance,
                 guard: guard,
-                start: block.timestamp,
-                end: block.timestamp + 60
+                start: uint48(block.timestamp),
+                end: uint48(block.timestamp + 60)
             })
         );
 
@@ -36,20 +36,20 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
         snapEnd();
 
         // Checking BoostConfig object is correct
-        (IERC20 _token, uint256 _balance, address _guard, uint256 _start, uint256 _end) = boost.boosts(boostId);
+        (IERC20 _token, uint256 _balance, address _guard, uint48 _start, uint48 _end) = boost.boosts(boostId);
         assertEq(address(token), address(_token));
         assertEq(boostBalance, _balance);
         assertEq(guard, _guard);
-        assertEq(block.timestamp, _start);
-        assertEq(block.timestamp + 60, _end);
+        assertEq(uint48(block.timestamp), _start);
+        assertEq(uint48(block.timestamp + 60), _end);
 
         // Checking balances of eth and the token are correct
         assertEq(address(boost).balance, ethFee);
@@ -70,10 +70,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
         uint256 boostId2 = boost.nextBoostId();
         vm.prank(owner);
@@ -82,10 +82,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
         snapEnd();
 
@@ -126,10 +126,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp,
             block.timestamp + 60,
-            owner,
             newEthFee
         );
 
@@ -158,10 +158,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp,
             block.timestamp + 60,
-            owner,
             ethFee
         );
 
@@ -189,10 +189,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp,
             block.timestamp + 60,
-            owner,
             ethFee
         );
 
@@ -227,10 +227,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             IERC20(token),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
     }
 

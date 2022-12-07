@@ -18,8 +18,8 @@ contract BoostCreateTest is BoostTest {
                 token: IERC20(address(token)),
                 balance: depositAmount,
                 guard: guard,
-                start: block.timestamp,
-                end: block.timestamp + 60
+                start: uint48(block.timestamp),
+                end: uint48(block.timestamp + 60)
             })
         );
         vm.prank(owner);
@@ -28,19 +28,19 @@ contract BoostCreateTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
 
         // Checking BoostConfig object and other data that we store separately to obey the ERC721 standard
-        (IERC20 _token, uint256 _balance, address _guard, uint256 _start, uint256 _end) = boost.boosts(boostId);
+        (IERC20 _token, uint256 _balance, address _guard, uint48 _start, uint48 _end) = boost.boosts(boostId);
         assertEq(address(token), address(_token));
         assertEq(depositAmount, _balance);
         assertEq(guard, _guard);
-        assertEq(block.timestamp, _start);
-        assertEq(block.timestamp + 60, _end);
+        assertEq(uint48(block.timestamp), _start);
+        assertEq(uint48(block.timestamp + 60), _end);
         assertEq(boost.ownerOf(boostId), owner);
         assertEq(boost.tokenURI(boostId), strategyURI);
         assertEq(boost.balanceOf(owner), 1); // The owner minted a single boost
@@ -77,10 +77,10 @@ contract BoostCreateTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
     }
 
@@ -95,10 +95,10 @@ contract BoostCreateTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
     }
 
@@ -106,7 +106,15 @@ contract BoostCreateTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
         // Deposit of zero
-        boost.mint(strategyURI, IERC20(address(token)), 0, guard, block.timestamp, block.timestamp + 60, owner);
+        boost.mint(
+            strategyURI,
+            IERC20(address(token)),
+            0,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
+        );
     }
 
     function testCreateBoostEndNotGreaterThanStart() public {
@@ -116,6 +124,14 @@ contract BoostCreateTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEndDateInPast.selector);
         // Start and end timestamps are equal
-        boost.mint(strategyURI, IERC20(address(token)), depositAmount, guard, block.timestamp, block.timestamp, owner);
+        boost.mint(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp)
+        );
     }
 }

@@ -8,14 +8,15 @@ interface IBoost {
         IERC20 token;
         uint256 balance;
         address guard;
-        uint256 start;
-        uint256 end;
+        uint48 start;
+        uint48 end;
     }
 
     struct ClaimConfig {
         uint256 boostId;
         address recipient;
         uint256 amount;
+        bytes32 ref;
     }
 
     error BoostDoesNotExist();
@@ -54,10 +55,10 @@ interface IBoost {
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
+        address _owner,
         address _guard,
-        uint256 _start,
-        uint256 _end,
-        address _owner
+        uint48 _start,
+        uint48 _end
     ) external payable;
 
     function deposit(uint256 boostId, uint256 amount) external;
