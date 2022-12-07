@@ -19,14 +19,15 @@ contract ProtocolFeesTest is BoostTest {
         vm.expectEmit(true, true, false, true);
         emit BoostCreated(
             1,
+            strategyURI,
             IBoost.BoostConfig({
                 strategyURI: strategyURI,
                 token: IERC20(address(token)),
                 balance: boostBalance,
+                owner: owner,
                 guard: guard,
-                start: block.timestamp,
-                end: block.timestamp + 60,
-                owner: owner
+                start: uint48(block.timestamp),
+                end: uint48(block.timestamp + 60)
             })
         );
 
@@ -37,10 +38,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             IERC20(address(token)),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
         snapEnd();
 
@@ -49,17 +50,17 @@ contract ProtocolFeesTest is BoostTest {
             string memory _strategyURI,
             IERC20 _token,
             uint256 _balance,
+            address _owner,
             address _guard,
-            uint256 _start,
-            uint256 _end,
-            address _owner
+            uint48 _start,
+            uint48 _end
         ) = boost.boosts(1);
         assertEq(strategyURI, _strategyURI);
         assertEq(address(token), address(_token));
         assertEq(boostBalance, _balance);
         assertEq(guard, _guard);
-        assertEq(block.timestamp, _start);
-        assertEq(block.timestamp + 60, _end);
+        assertEq(uint48(block.timestamp), _start);
+        assertEq(uint48(block.timestamp + 60), _end);
         assertEq(owner, _owner);
 
         // Checking balances of eth and the token are correct
@@ -89,10 +90,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp,
             block.timestamp + 60,
-            owner,
             newEthFee
         );
 
@@ -121,10 +122,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp,
             block.timestamp + 60,
-            owner,
             ethFee
         );
 
@@ -152,10 +153,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             address(token),
             depositAmount,
+            owner,
             guard,
             block.timestamp,
             block.timestamp + 60,
-            owner,
             ethFee
         );
 
@@ -190,10 +191,10 @@ contract ProtocolFeesTest is BoostTest {
             strategyURI,
             IERC20(token),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
     }
 

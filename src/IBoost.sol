@@ -8,10 +8,10 @@ interface IBoost {
         string strategyURI;
         IERC20 token;
         uint256 balance;
-        address guard;
-        uint256 start;
-        uint256 end;
         address owner;
+        address guard;
+        uint48 start;
+        uint48 end;
     }
 
     struct Claim {
@@ -36,7 +36,7 @@ interface IBoost {
     error InsufficientBoostBalance();
     error InsufficientEthFee();
 
-    event BoostCreated(uint256 boostId, BoostConfig boost);
+    event BoostCreated(uint256 boostId, string strategyURI, BoostConfig boost);
     event TokensClaimed(Claim claim);
     event MultipleTokensClaimed(uint256 boostId, address[] recipients);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
@@ -58,10 +58,10 @@ interface IBoost {
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
+        address _owner,
         address _guard,
-        uint256 _start,
-        uint256 _end,
-        address _owner
+        uint48 _start,
+        uint48 _end
     ) external payable;
 
     function depositTokens(uint256 boostId, uint256 amount) external;

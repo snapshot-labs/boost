@@ -7,7 +7,7 @@ import "../src/Boost.sol";
 import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
 
 abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
-    event BoostCreated(uint256 boostId, IBoost.BoostConfig boost);
+    event BoostCreated(uint256 boostId, string strategyURI, IBoost.BoostConfig boost);
     event TokensClaimed(IBoost.Claim claim);
     event TokensDeposited(uint256 boostId, address sender, uint256 amount);
     event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
@@ -61,10 +61,10 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
             strategyURI,
             IERC20(token),
             depositAmount,
+            owner,
             guard,
-            block.timestamp,
-            block.timestamp + 60,
-            owner
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
         return boostID;
     }
@@ -74,16 +74,24 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
         string memory _strategyURI,
         address _token,
         uint256 _amount,
+        address _owner,
         address _guard,
         uint256 _start,
         uint256 _end,
-        address _owner,
         uint256 _ethFee
     ) internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.createBoost{ value: _ethFee }(_strategyURI, IERC20(_token), _amount, _guard, _start, _end, _owner);
+        boost.createBoost{ value: _ethFee }(
+            _strategyURI,
+            IERC20(_token),
+            _amount,
+            _owner,
+            _guard,
+            uint48(_start),
+            uint48(_end)
+        );
         return boostID;
     }
 
