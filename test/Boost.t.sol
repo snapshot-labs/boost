@@ -118,10 +118,11 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
                 ),
                 keccak256(
                     abi.encode(
-                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)"),
+                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)"),
                         claim.boostId,
                         claim.recipient,
-                        claim.amount
+                        claim.amount,
+                        claim.ref
                     )
                 )
             )
