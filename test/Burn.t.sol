@@ -60,9 +60,5 @@ contract BoostWithdrawTest is BoostTest {
         });
         boost.claim(claim, _generateClaimSignature(claim));
         vm.warp(block.timestamp + 60);
-
-        // vm.prank(owner);
-        // vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
-        // boost.burn(boostId, owner);
     }
 }
