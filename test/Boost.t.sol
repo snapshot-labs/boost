@@ -7,15 +7,16 @@ import "../src/Boost.sol";
 import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
 
 abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
-    event BoostCreated(uint256 boostId, string strategyURI, IBoost.BoostConfig boost);
-    event TokensClaimed(IBoost.Claim claim);
-    event TokensDeposited(uint256 boostId, address sender, uint256 amount);
-    event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
+    event Mint(uint256 boostId, IBoost.BoostConfig boost);
+    event Claim(IBoost.ClaimConfig claim);
+    event Deposit(uint256 boostId, address sender, uint256 amount);
+    event Burn(uint256 boostId);
     event EthFeeSet(uint256 ethFee);
     event TokenFeeSet(uint256 tokenFee);
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event EthFeesCollected(address recipient);
     event TokenFeesCollected(IERC20 token, address recipient);
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     error BoostDoesNotExist();
     error BoostDepositRequired();
@@ -57,7 +58,7 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
     function _createBoost() internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(owner);
-        boost.createBoost(
+        boost.mint(
             strategyURI,
             IERC20(token),
             depositAmount,
@@ -83,7 +84,7 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.createBoost{ value: _ethFee }(
+        boost.mint{ value: _ethFee }(
             _strategyURI,
             IERC20(_token),
             _amount,
@@ -103,7 +104,7 @@ abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
     }
 
     /// @notice Generate claim eip712 signature
-    function _generateClaimSignature(IBoost.Claim memory claim) internal view returns (bytes memory) {
+    function _generateClaimSignature(IBoost.ClaimConfig memory claim) internal view returns (bytes memory) {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",

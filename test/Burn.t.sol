@@ -12,16 +12,18 @@ contract BoostWithdrawTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
+        assertEq(boost.balanceOf(owner), 1); // sanity check
         // Increasing timestamp to after boost has ended
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
         snapStart("Withdraw");
-        boost.withdrawRemainingTokens(boostId, owner);
+        boost.burn(boostId, owner);
         snapEnd();
 
         // Checking balances after withdrawal
         assertEq(token.balanceOf(address(boost)), 0);
         assertEq(token.balanceOf(owner), depositAmount);
+        assertEq(boost.balanceOf(owner), 0);
     }
 
     function testWithdrawBoostNotOwner() public {
@@ -32,7 +34,7 @@ contract BoostWithdrawTest is BoostTest {
         // Not boost owner
         vm.prank(claimer);
         vm.expectRevert(IBoost.OnlyBoostOwner.selector);
-        boost.withdrawRemainingTokens(boostId, claimer);
+        boost.burn(boostId, claimer);
     }
 
     function testWithdrawBoostNotExpired() public {
@@ -42,25 +44,21 @@ contract BoostWithdrawTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotEnded.selector, block.timestamp + 60));
         // Boost still active
-        boost.withdrawRemainingTokens(boostId, owner);
+        boost.burn(boostId, owner);
     }
 
     function testWithdrawZeroBalance() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        // Claiming the entire deposit amount so that the boost balance will be zero
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: depositAmount,
             ref: keccak256("1")
         });
-
-        // Claiming the entire boost balance, so there is nothing less to withdraw
         boost.claim(claim, _generateClaimSignature(claim));
-
-        vm.prank(owner);
-        vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
-        boost.withdrawRemainingTokens(boostId, owner);
+        vm.warp(block.timestamp + 60);
     }
 }

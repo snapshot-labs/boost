@@ -13,14 +13,15 @@ contract BoostClaimTest is BoostTest {
     function testClaimSingleRecipient() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
-        IBoost.Claim memory claim = IBoost.Claim({
+
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
             ref: keccak256("1")
         });
         vm.expectEmit(true, false, false, true);
-        emit TokensClaimed(claim);
+        emit Claim(claim);
         snapStart("ClaimSingle");
         boost.claim(claim, _generateClaimSignature(claim));
         snapEnd();
@@ -34,22 +35,21 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
             ref: keccak256("1")
         });
-        IBoost.Claim memory claim2 = IBoost.Claim({
+        IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({
             boostId: boostId,
-            recipient: claimer2,
+            recipient: claimer,
             amount: 1,
             ref: keccak256("2")
         });
-        // Same address as first claim
-        IBoost.Claim memory claim3 = IBoost.Claim({
+        IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({
             boostId: boostId,
-            recipient: claimer,
+            recipient: claimer2,
             amount: 1,
             ref: keccak256("3")
         });
@@ -68,31 +68,31 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
             ref: keccak256("1")
         });
-        IBoost.Claim memory claim2 = IBoost.Claim({
+        IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer2,
             amount: 1,
             ref: keccak256("2")
         });
-        IBoost.Claim memory claim3 = IBoost.Claim({
+        IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer3,
             amount: 1,
             ref: keccak256("3")
         });
-        IBoost.Claim memory claim4 = IBoost.Claim({
+        IBoost.ClaimConfig memory claim4 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer4,
             amount: 1,
             ref: keccak256("4")
         });
-        IBoost.Claim memory claim5 = IBoost.Claim({
+        IBoost.ClaimConfig memory claim5 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer5,
             amount: 1,
@@ -100,7 +100,7 @@ contract BoostClaimTest is BoostTest {
         });
 
         // Generating Claim array
-        IBoost.Claim[] memory claims = new IBoost.Claim[](5);
+        IBoost.ClaimConfig[] memory claims = new IBoost.ClaimConfig[](5);
         claims[0] = claim;
         claims[1] = claim2;
         claims[2] = claim3;
@@ -132,7 +132,7 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
@@ -150,15 +150,15 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
             ref: keccak256("1")
         });
-        // Creating signature with different claim amount
+        // Creating signature with different claim data
         bytes memory sig = _generateClaimSignature(
-            IBoost.Claim({ boostId: boostId, recipient: claimer, amount: 2, ref: keccak256("1") })
+            IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 2, ref: keccak256("1") })
         );
         vm.expectRevert(IBoost.InvalidSignature.selector);
         boost.claim(claim, sig);
@@ -168,7 +168,7 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
@@ -196,7 +196,7 @@ contract BoostClaimTest is BoostTest {
             0
         );
 
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
@@ -208,7 +208,12 @@ contract BoostClaimTest is BoostTest {
     }
 
     function testClaimBoostDoesntExist() public {
-        IBoost.Claim memory claim = IBoost.Claim({ boostId: 1, recipient: claimer, amount: 1, ref: keccak256("1") });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
+            boostId: 1,
+            recipient: claimer,
+            amount: 1,
+            ref: keccak256("1")
+        });
         bytes memory sig = _generateClaimSignature(claim);
         // If the boost does not exist, then the balance of the boost will be zero
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
@@ -220,7 +225,7 @@ contract BoostClaimTest is BoostTest {
         uint256 boostId = _createBoost();
 
         // Claim larger than boost balance
-        IBoost.Claim memory claim = IBoost.Claim({
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: depositAmount + 1,

@@ -16,15 +16,13 @@ contract ProtocolFeesTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = depositAmount / tokenFee;
         uint256 boostBalance = depositAmount - tokenFeeAmount;
+        uint256 boostId = boost.nextBoostId();
         vm.expectEmit(true, true, false, true);
-        emit BoostCreated(
-            1,
-            strategyURI,
+        emit Mint(
+            boostId,
             IBoost.BoostConfig({
-                strategyURI: strategyURI,
                 token: IERC20(address(token)),
                 balance: boostBalance,
-                owner: owner,
                 guard: guard,
                 start: uint48(block.timestamp),
                 end: uint48(block.timestamp + 60)
@@ -34,7 +32,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.deal(owner, ethFee);
         vm.prank(owner);
         snapStart("CreateBoostWithProtocolFee");
-        boost.createBoost{ value: ethFee }(
+        boost.mint{ value: ethFee }(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -46,28 +44,66 @@ contract ProtocolFeesTest is BoostTest {
         snapEnd();
 
         // Checking BoostConfig object is correct
-        (
-            string memory _strategyURI,
-            IERC20 _token,
-            uint256 _balance,
-            address _owner,
-            address _guard,
-            uint48 _start,
-            uint48 _end
-        ) = boost.boosts(1);
-        assertEq(strategyURI, _strategyURI);
+        (IERC20 _token, uint256 _balance, address _guard, uint48 _start, uint48 _end) = boost.boosts(boostId);
         assertEq(address(token), address(_token));
         assertEq(boostBalance, _balance);
         assertEq(guard, _guard);
         assertEq(uint48(block.timestamp), _start);
         assertEq(uint48(block.timestamp + 60), _end);
-        assertEq(owner, _owner);
 
         // Checking balances of eth and the token are correct
         assertEq(address(boost).balance, ethFee);
         assertEq(owner.balance, 0);
         assertEq(token.balanceOf(address(boost)), depositAmount);
         assertEq(boost.tokenFeeBalances(address(token)), tokenFeeAmount);
+    }
+
+    function testCreateMultipleBoostsWithProtocolFee() public {
+        _mintAndApprove(owner, 2 * depositAmount, 2 * depositAmount);
+        uint256 tokenFeeAmount = depositAmount / tokenFee;
+        uint256 boostBalance = depositAmount - tokenFeeAmount;
+
+        uint256 boostId1 = boost.nextBoostId();
+        vm.deal(owner, 2 * ethFee);
+        vm.prank(owner);
+        boost.mint{ value: ethFee }(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
+        );
+        uint256 boostId2 = boost.nextBoostId();
+        vm.prank(owner);
+        snapStart("CreateBoostWithProtocolFee");
+        boost.mint{ value: ethFee }(
+            strategyURI,
+            IERC20(address(token)),
+            depositAmount,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
+        );
+        snapEnd();
+
+        (, uint256 _balance1, , , ) = boost.boosts(boostId1);
+        (, uint256 _balance2, , , ) = boost.boosts(boostId2);
+
+        assertEq(boostId1, 0);
+        assertEq(boostId2, 1);
+
+        // After creating 2 boosts, the owner's balance should be 2
+        assertEq(boost.balanceOf(owner), 2);
+
+        assertEq(_balance1, boostBalance);
+        assertEq(_balance2, boostBalance);
+
+        assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
+        assertEq(boost.tokenFeeBalances(address(token)), 2 * tokenFeeAmount);
+        assertEq(address(boost).balance, 2 * ethFee);
     }
 
     function testUpdateProtocolFees() public {
@@ -134,9 +170,9 @@ contract ProtocolFeesTest is BoostTest {
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit TokensDeposited(boostId, owner, boostBalanceIncrease);
+        emit Deposit(boostId, owner, boostBalanceIncrease);
         snapStart("DepositWithProtocolFees");
-        boost.depositTokens(boostId, depositAmount);
+        boost.deposit(boostId, depositAmount);
         snapEnd();
         assertEq(address(boost).balance, ethFee);
         assertEq(owner.balance, 0);
@@ -187,7 +223,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.expectRevert(IBoost.InsufficientEthFee.selector);
         vm.prank(owner);
         vm.deal(owner, ethFee - 1);
-        boost.createBoost{ value: ethFee - 1 }(
+        boost.mint{ value: ethFee - 1 }(
             strategyURI,
             IERC20(token),
             depositAmount,
@@ -208,9 +244,9 @@ contract ProtocolFeesTest is BoostTest {
         boost.setTokenFee(newTokenFee);
 
         _mintAndApprove(owner, depositAmount, depositAmount);
-        _createBoost();
+        uint256 boostId = _createBoost();
 
-        (, , uint256 _balance, , , , ) = boost.boosts(1);
+        (, uint256 _balance, , , ) = boost.boosts(boostId);
 
         // 100% protocol fee, boost balance is zero, token fee is the full deposit
         assertEq(_balance, 0);

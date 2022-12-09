@@ -5,16 +5,14 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 interface IBoost {
     struct BoostConfig {
-        string strategyURI;
         IERC20 token;
         uint256 balance;
-        address owner;
         address guard;
         uint48 start;
         uint48 end;
     }
 
-    struct Claim {
+    struct ClaimConfig {
         uint256 boostId;
         address recipient;
         uint256 amount;
@@ -36,11 +34,10 @@ interface IBoost {
     error InsufficientBoostBalance();
     error InsufficientEthFee();
 
-    event BoostCreated(uint256 boostId, string strategyURI, BoostConfig boost);
-    event TokensClaimed(Claim claim);
-    event MultipleTokensClaimed(uint256 boostId, address[] recipients);
-    event TokensDeposited(uint256 boostId, address sender, uint256 amount);
-    event RemainingTokensWithdrawn(uint256 boostId, uint256 amount);
+    event Mint(uint256 boostId, BoostConfig boost);
+    event Claim(ClaimConfig claim);
+    event Deposit(uint256 boostId, address sender, uint256 amount);
+    event Burn(uint256 boostId);
     event EthFeeSet(uint256 ethFee);
     event TokenFeeSet(uint256 tokenFee);
     event EthFeesCollected(address recipient);
@@ -54,7 +51,7 @@ interface IBoost {
 
     function collectTokenFees(IERC20 token, address recipient) external;
 
-    function createBoost(
+    function mint(
         string calldata _strategyURI,
         IERC20 _token,
         uint256 _amount,
@@ -64,11 +61,11 @@ interface IBoost {
         uint48 _end
     ) external payable;
 
-    function depositTokens(uint256 boostId, uint256 amount) external;
+    function deposit(uint256 boostId, uint256 amount) external;
 
-    function withdrawRemainingTokens(uint256 boostId, address to) external;
+    function burn(uint256 boostId, address to) external;
 
-    function claim(Claim calldata claim, bytes calldata signature) external;
+    function claim(ClaimConfig calldata claim, bytes calldata signature) external;
 
-    function claimMultiple(Claim[] calldata claims, bytes[] calldata signatures) external;
+    function claimMultiple(ClaimConfig[] calldata claims, bytes[] calldata signatures) external;
 }

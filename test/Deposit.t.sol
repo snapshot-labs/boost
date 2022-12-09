@@ -12,10 +12,15 @@ contract BoostDepositTest is BoostTest {
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit TokensDeposited(boostId, owner, 100);
+        emit Deposit(boostId, owner, 100);
         snapStart("Deposit");
-        boost.depositTokens(boostId, depositAmount);
+        boost.deposit(boostId, depositAmount);
         snapEnd();
+
+        // Checking state after deposit
+        (, uint256 _balance, , , ) = boost.boosts(boostId);
+        assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
+        assertEq(_balance, 2 * depositAmount);
     }
 
     function testDepositFromDifferentAccount() public {
@@ -27,7 +32,7 @@ contract BoostDepositTest is BoostTest {
 
         // Depositing from a different account
         vm.prank(depositee);
-        boost.depositTokens(boostId, 50);
+        boost.deposit(boostId, 50);
     }
 
     function testDepositToBoostThatDoesntExist() public {
@@ -36,7 +41,7 @@ contract BoostDepositTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDoesNotExist.selector);
         // Boost with id 1 has not been created yet
-        boost.depositTokens(1, depositAmount);
+        boost.deposit(1, depositAmount);
     }
 
     function testDepositToExpiredBoost() public {
@@ -47,7 +52,7 @@ contract BoostDepositTest is BoostTest {
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostEnded.selector);
-        boost.depositTokens(boostId, depositAmount);
+        boost.deposit(boostId, depositAmount);
     }
 
     function testDepositExceedsAllowance() public {
@@ -57,7 +62,7 @@ contract BoostDepositTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert("ERC20: insufficient allowance");
         // Full allowance of depositAmount has been used to create the boost
-        boost.depositTokens(boostId, 1);
+        boost.deposit(boostId, 1);
     }
 
     function testDepositExceedsBalance() public {
@@ -67,7 +72,7 @@ contract BoostDepositTest is BoostTest {
         vm.prank(owner);
         vm.expectRevert("ERC20: transfer amount exceeds balance");
         // Attempting to deposit more than the owner's balance
-        boost.depositTokens(boostId, 1);
+        boost.deposit(boostId, 1);
     }
 
     function testDepositZero() public {
@@ -75,6 +80,6 @@ contract BoostDepositTest is BoostTest {
         uint256 boostId = _createBoost();
         vm.prank(owner);
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
-        boost.depositTokens(boostId, 0);
+        boost.deposit(boostId, 0);
     }
 }
