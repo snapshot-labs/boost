@@ -42,7 +42,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
     uint256 public ethFee;
 
-    // The fraction of the total boost deposit that is taken as a protocol fee, represented as an integer denominator (100/x)%
+    // The fraction of the total boost deposit that is taken as a protocol fee
+    // represented as an integer denominator (100/x)%
     uint256 public tokenFee;
 
     /// @notice Initializes the boost contract
