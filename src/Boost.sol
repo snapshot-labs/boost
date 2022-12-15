@@ -106,7 +106,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (tokenFee > 0) {
             // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
             uint256 tokenFeeAmount = _amount / tokenFee;
-            // tokenFeeAmount < _amount, therefore balance will never underflow
+            // Since tokenFeeAmount < _amount, therefore balance will never underflow
             balance = _amount - tokenFeeAmount;
             tokenFeeBalances[address(_token)] += tokenFeeAmount;
         } else {
@@ -177,44 +177,52 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function claim(ClaimConfig calldata _claim, bytes calldata _signature) external override {
-        _claim(claim, signature);
+    function claim(ClaimConfig calldata _claimConfig, bytes calldata _signature) external override {
+        _claim(_claimConfig, _signature);
     }
 
     /// @inheritdoc IBoost
-    function claimMultiple(ClaimConfig[] calldata _claims, bytes[] calldata _signatures) external override {
-        for (uint i = 0; i < signatures.length; i++) {
-            _claim(claims[i], signatures[i]);
+    function claimMultiple(ClaimConfig[] calldata _claimConfigs, bytes[] calldata _signatures) external override {
+        for (uint i = 0; i < _signatures.length; i++) {
+            _claim(_claimConfigs[i], _signatures[i]);
         }
     }
 
     /// @notice Claims a boost
-    /// @param _claim The claim
+    /// @param _claimConfig The claim
     /// @param _signature The signature of the claim, signed by the boost guard
-    function _claim(ClaimConfig memory _claim, bytes memory _signature) internal {
-        BoostConfig storage boost = boosts[_claim.boostId];
+    function _claim(ClaimConfig memory _claimConfig, bytes memory _signature) internal {
+        BoostConfig storage boost = boosts[_claimConfig.boostId];
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
-        if (boost.balance < _claim.amount) revert InsufficientBoostBalance();
+        if (boost.balance < _claimConfig.amount) revert InsufficientBoostBalance();
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claim.ref][_claim.boostId]) revert RecipientAlreadyClaimed();
-        if (_claim.recipient == address(0)) revert InvalidRecipient();
+        if (claimed[_claimConfig.ref][_claimConfig.boostId]) revert RecipientAlreadyClaimed();
+        if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount, _claim.ref))
+            keccak256(
+                abi.encode(
+                    eip712ClaimStructHash,
+                    _claimConfig.boostId,
+                    _claimConfig.recipient,
+                    _claimConfig.amount,
+                    _claimConfig.ref
+                )
+            )
         );
 
         if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
         // Storing recipients that claimed to prevent reusing signatures
-        claimed[_claim.ref][_claim.boostId] = true;
+        claimed[_claimConfig.ref][_claimConfig.boostId] = true;
 
         // Calculating the boost balance after the claim, will not underflow as we have already checked
         // that the claim amount is less than the balance
-        boost.balance -= _claim.amount;
+        boost.balance -= _claimConfig.amount;
 
         // Transferring claim amount tp recipient address
-        boost.token.transfer(_claim.recipient, _claim.amount);
+        boost.token.transfer(_claimConfig.recipient, _claimConfig.amount);
 
-        emit Claim(_claim);
+        emit Claim(_claimConfig);
     }
 }

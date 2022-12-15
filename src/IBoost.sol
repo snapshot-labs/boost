@@ -126,12 +126,12 @@ interface IBoost {
     function burn(uint256 boostId, address to) external;
 
     /// @notice Claims a boost
-    /// @param claim The claim
+    /// @param claimConfig The claim
     /// @param signature The signature of the claim, signed by the boost guard
-    function claim(ClaimConfig calldata claim, bytes calldata signature) external;
+    function claim(ClaimConfig calldata claimConfig, bytes calldata signature) external;
 
     /// @notice Wrapper function to claim multiple boosts in a single transaction
-    /// @param claims Array of claims
+    /// @param claimConfigs Array of claims
     /// @param signatures Array of signatures, that correspond to the claims array
-    function claimMultiple(ClaimConfig[] calldata claims, bytes[] calldata signatures) external;
+    function claimMultiple(ClaimConfig[] calldata claimConfigs, bytes[] calldata signatures) external;
 }
