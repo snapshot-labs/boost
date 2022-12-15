@@ -6,26 +6,26 @@ import "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 interface IBoost {
     struct BoostConfig {
-        // the token that is being distributed as a boost
+        // The token that is being distributed as a boost
         IERC20 token;
-        // the current balance of the boost
+        // The current balance of the boost
         uint256 balance;
-        // the boost guard, which is the address of the account that should sign claims
+        // The boost guard, which is the address of the account that should sign claims
         address guard;
-        // the start timestamp of the boost, after which claims can be made
+        // The start timestamp of the boost, after which claims can be made
         uint48 start;
-        // the end timestamp of the boost, after which no more claims can be made
+        // The end timestamp of the boost, after which no more claims can be made
         uint48 end;
     }
 
     struct ClaimConfig {
-        // the boost id
+        // The boost id where the claim is being made
         uint256 boostId;
-        // the address of the recipient for the claim
+        // The address of the recipient for the claim
         address recipient;
-        // the amount of boost token in the claim
+        // The amount of boost token in the claim
         uint256 amount;
-        // a reference string for the claim
+        // A reference string for the claim
         bytes32 ref;
     }
 
