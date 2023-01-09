@@ -2,5 +2,6 @@
 
 # Boost
 
-Programmable Rewards to incentivize participation. Refer to the [documentation](https://docs.boost.limo/) for more
-information.
+Programmable token distribution.
+
+**[Documentation](https://docs.boost.limo)**
