@@ -1,4 +1,14 @@
-// SPDX-License-Identifier: MIT
+/**
+ * SPDX-License-Identifier: MIT
+ *
+ *   ____                      _
+ *  |  _ \                    | |
+ *  | |_) |  ___    ___   ___ | |_
+ *  |  _ <  / _ \  / _ \ / __|| __|
+ *  | |_) || (_) || (_) |\__ \| |_
+ *  |____/  \___/  \___/ |___/ \__|
+ */
+
 pragma solidity ^0.8.15;
 
 import "openzeppelin-contracts/access/Ownable.sol";
@@ -9,24 +19,41 @@ import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./IBoost.sol";
 
+/**
+ * @title Boost
+ * @author @SnapshotLabs - admin@snapshot.org
+ * @notice Incentivize actions with ERC20 token disbursals
+ */
 contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     using SafeERC20 for IERC20;
 
+    // The EIP712 typehash for the claim struct
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
 
+    // The id of the next boost to be minted
     uint256 public nextBoostId;
 
+    // Mapping of boost id to boost config
     mapping(uint256 => BoostConfig) public boosts;
+
+    // Mapping of boost id and recipient to claimed status, to prevent double claims
     mapping(bytes32 => mapping(uint256 => bool)) public claimed;
+
+    // Mapping of token address to the total amount of fees collected in that token
     mapping(address => uint256) public tokenFeeBalances;
 
-    // Constant eth fee (in gwei) that is the same for all boost creators.
+    // Constant eth protocol fee (in wei) that must be paid by all boost creators
     uint256 public ethFee;
-    // The fraction of the total boost deposit that is taken as a fee.
+
+    // The fraction of the total boost deposit that is taken as a protocol fee
     // represented as an integer denominator (100/x)%
     uint256 public tokenFee;
 
+    /// @notice Initializes the boost contract
+    /// @param _protocolOwner The address of the owner of the protocol
+    /// @param _ethFee The eth protocol fee
+    /// @param _tokenFee The token protocol fee
     constructor(
         address _protocolOwner,
         uint256 _ethFee,
@@ -37,21 +64,25 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         transferOwnership(_protocolOwner);
     }
 
+    /// @inheritdoc IBoost
     function setEthFee(uint256 _ethFee) public override onlyOwner {
         ethFee = _ethFee;
         emit EthFeeSet(_ethFee);
     }
 
+    /// @inheritdoc IBoost
     function setTokenFee(uint256 _tokenFee) public override onlyOwner {
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);
     }
 
+    /// @inheritdoc IBoost
     function collectEthFees(address _recipient) external override onlyOwner {
         payable(_recipient).transfer(address(this).balance);
         emit EthFeesCollected(_recipient);
     }
 
+    /// @inheritdoc IBoost
     function collectTokenFees(IERC20 _token, address _recipient) external override onlyOwner {
         uint256 fees = tokenFeeBalances[address(_token)];
         tokenFeeBalances[address(_token)] = 0;
@@ -59,7 +90,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         emit TokenFeesCollected(_token, _recipient);
     }
 
-    /// @notice Create a new boost and transfer tokens to it
+    /// @inheritdoc IBoost
     function mint(
         string calldata _strategyURI,
         IERC20 _token,
@@ -79,7 +110,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (tokenFee > 0) {
             // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
             uint256 tokenFeeAmount = _amount / tokenFee;
-            // tokenFeeAmount < _amount, therefore balance will never underflow
+            // Since tokenFeeAmount < _amount, therefore balance will never underflow
             balance = _amount - tokenFeeAmount;
             tokenFeeBalances[address(_token)] += tokenFeeAmount;
         } else {
@@ -104,7 +135,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         emit Mint(boostId, boosts[boostId]);
     }
 
-    /// @notice Top up an existing boost
+    /// @inheritdoc IBoost
     function deposit(uint256 _boostId, uint256 _amount) external override {
         BoostConfig storage boost = boosts[_boostId];
         if (_amount == 0) revert BoostDepositRequired();
@@ -128,7 +159,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         emit Deposit(_boostId, msg.sender, balanceIncrease);
     }
 
-    /// @notice Withdraw remaining tokens from an expired boost
+    /// @inheritdoc IBoost
     function burn(uint256 _boostId, address _to) external override {
         BoostConfig storage boost = boosts[_boostId];
         if (!_exists(_boostId)) revert BoostDoesNotExist();
@@ -149,42 +180,53 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         emit Burn(_boostId);
     }
 
-    /// @notice Claim using a guard signature
-    function claim(ClaimConfig calldata claim, bytes calldata signature) external override {
-        _claim(claim, signature);
+    /// @inheritdoc IBoost
+    function claim(ClaimConfig calldata _claimConfig, bytes calldata _signature) external override {
+        _claim(_claimConfig, _signature);
     }
 
-    /// @notice Claim multiple using an array of guard signatures
-    function claimMultiple(ClaimConfig[] calldata claims, bytes[] calldata signatures) external override {
-        for (uint i = 0; i < signatures.length; i++) {
-            _claim(claims[i], signatures[i]);
+    /// @inheritdoc IBoost
+    function claimMultiple(ClaimConfig[] calldata _claimConfigs, bytes[] calldata _signatures) external override {
+        for (uint i = 0; i < _signatures.length; i++) {
+            _claim(_claimConfigs[i], _signatures[i]);
         }
     }
 
-    function _claim(ClaimConfig memory _claim, bytes memory _signature) internal {
-        BoostConfig storage boost = boosts[_claim.boostId];
+    /// @notice Claims a boost
+    /// @param _claimConfig The claim
+    /// @param _signature The signature of the claim, signed by the boost guard
+    function _claim(ClaimConfig memory _claimConfig, bytes memory _signature) internal {
+        BoostConfig storage boost = boosts[_claimConfig.boostId];
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
-        if (boost.balance < _claim.amount) revert InsufficientBoostBalance();
+        if (boost.balance < _claimConfig.amount) revert InsufficientBoostBalance();
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claim.ref][_claim.boostId]) revert RecipientAlreadyClaimed();
-        if (_claim.recipient == address(0)) revert InvalidRecipient();
+        if (claimed[_claimConfig.ref][_claimConfig.boostId]) revert RecipientAlreadyClaimed();
+        if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(eip712ClaimStructHash, _claim.boostId, _claim.recipient, _claim.amount, _claim.ref))
+            keccak256(
+                abi.encode(
+                    eip712ClaimStructHash,
+                    _claimConfig.boostId,
+                    _claimConfig.recipient,
+                    _claimConfig.amount,
+                    _claimConfig.ref
+                )
+            )
         );
 
         if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
         // Storing recipients that claimed to prevent reusing signatures
-        claimed[_claim.ref][_claim.boostId] = true;
+        claimed[_claimConfig.ref][_claimConfig.boostId] = true;
 
         // Calculating the boost balance after the claim, will not underflow as we have already checked
         // that the claim amount is less than the balance
-        boost.balance -= _claim.amount;
+        boost.balance -= _claimConfig.amount;
 
         // Transferring claim amount to recipient address
-        boost.token.safeTransfer(_claim.recipient, _claim.amount);
+        boost.token.safeTransfer(_claimConfig.recipient, _claimConfig.amount);
 
-        emit Claim(_claim);
+        emit Claim(_claimConfig);
     }
 }
