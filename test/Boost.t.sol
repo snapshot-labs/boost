@@ -6,7 +6,7 @@ import "./mocks/MockERC20.sol";
 import "../src/Boost.sol";
 import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
 
-abstract contract BoostTest is Test, GasSnapshot, EIP712("boost", "1") {
+abstract contract BoostTest is Test, GasSnapshot {
     event Mint(uint256 boostId, IBoost.BoostConfig boost);
     event Claim(IBoost.ClaimConfig claim);
     event Deposit(uint256 boostId, address sender, uint256 amount);
