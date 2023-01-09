@@ -15,6 +15,8 @@ import "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";
 import "openzeppelin-contracts/utils/cryptography/draft-EIP712.sol";
 import "openzeppelin-contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "./IBoost.sol";
 
 /**
@@ -23,6 +25,8 @@ import "./IBoost.sol";
  * @notice Incentivize actions with ERC20 token disbursals
  */
 contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
+    using SafeERC20 for IERC20;
+
     // The EIP712 typehash for the claim struct
     bytes32 public immutable eip712ClaimStructHash =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
@@ -82,7 +86,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     function collectTokenFees(IERC20 _token, address _recipient) external override onlyOwner {
         uint256 fees = tokenFeeBalances[address(_token)];
         tokenFeeBalances[address(_token)] = 0;
-        _token.transfer(_recipient, fees);
+        _token.safeTransfer(_recipient, fees);
         emit TokenFeesCollected(_token, _recipient);
     }
 
@@ -126,7 +130,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         boosts[boostId] = BoostConfig({ token: _token, balance: balance, guard: _guard, start: _start, end: _end });
 
         // Transferring the deposit amount of the ERC20 token to the contract
-        _token.transferFrom(msg.sender, address(this), _amount);
+        _token.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Mint(boostId, boosts[boostId]);
     }
@@ -150,7 +154,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         }
 
         boost.balance += balanceIncrease;
-        boost.token.transferFrom(msg.sender, address(this), _amount);
+        boost.token.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Deposit(_boostId, msg.sender, balanceIncrease);
     }
@@ -167,7 +171,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         uint256 amount = boost.balance;
 
         // Transferring remaining ERC20 token balance to the designated address
-        boost.token.transfer(_to, amount);
+        boost.token.safeTransfer(_to, amount);
 
         // Deleting the boost data
         _burn(_boostId);
@@ -221,7 +225,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         boost.balance -= _claimConfig.amount;
 
         // Transferring claim amount to recipient address
-        boost.token.transfer(_claimConfig.recipient, _claimConfig.amount);
+        boost.token.safeTransfer(_claimConfig.recipient, _claimConfig.amount);
 
         emit Claim(_claimConfig);
     }
