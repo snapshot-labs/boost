@@ -28,7 +28,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     using SafeERC20 for IERC20;
 
     // The EIP712 typehash for the claim struct
-    bytes32 public immutable eip712ClaimStructHash =
+    bytes32 private constant CLAIM_TYPE_HASH =
         keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
 
     // The id of the next boost to be minted
@@ -206,7 +206,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
-                    eip712ClaimStructHash,
+                    CLAIM_TYPE_HASH,
                     _claimConfig.boostId,
                     _claimConfig.recipient,
                     _claimConfig.amount,
