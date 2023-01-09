@@ -19,7 +19,7 @@ import "./IBoost.sol";
 
 /**
  * @title Boost
- * @author @SnapshotLabs - orlando@snapshot.org
+ * @author @SnapshotLabs - admin@snapshot.org
  * @notice Incentivize actions with ERC20 token disbursals
  */
 contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
@@ -36,7 +36,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Mapping of boost id and recipient to claimed status, to prevent double claims
     mapping(bytes32 => mapping(uint256 => bool)) public claimed;
 
-    // Mapping of token address to the total amount of fees collected in that token.
+    // Mapping of token address to the total amount of fees collected in that token
     mapping(address => uint256) public tokenFeeBalances;
 
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
@@ -220,7 +220,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         // that the claim amount is less than the balance
         boost.balance -= _claimConfig.amount;
 
-        // Transferring claim amount tp recipient address
+        // Transferring claim amount to recipient address
         boost.token.transfer(_claimConfig.recipient, _claimConfig.amount);
 
         emit Claim(_claimConfig);
