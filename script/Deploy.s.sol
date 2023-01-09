@@ -13,8 +13,11 @@ contract BoostSingletonDeployer is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
         SingletonFactory singletonFactory = SingletonFactory(0xce0042B868300000d44A59004Da54A005ffdcf9f);
-        bytes32 salt = bytes32(uint256(2));
-        singletonFactory.deploy(type(Boost).creationCode, salt);
+        bytes32 salt = bytes32(0);
+        singletonFactory.deploy(
+            abi.encodePacked(type(Boost).creationCode, abi.encode(vm.envAddress("PROTOCOL_OWNER"), 0, 0)),
+            salt
+        );
 
         vm.stopBroadcast();
     }
