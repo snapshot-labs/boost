@@ -7,7 +7,7 @@ import "../src/Boost.sol";
 import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
 
 abstract contract BoostTest is Test, GasSnapshot {
-    event Mint(uint256 boostId, IBoost.BoostConfig boost);
+    event Mint(uint256 boostId, address owner, IBoost.BoostConfig boost, string strategyURI);
     event Claim(IBoost.ClaimConfig claim);
     event Deposit(uint256 boostId, address sender, uint256 amount);
     event Burn(uint256 boostId);
@@ -119,11 +119,10 @@ abstract contract BoostTest is Test, GasSnapshot {
                 ),
                 keccak256(
                     abi.encode(
-                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)"),
+                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)"),
                         claim.boostId,
                         claim.recipient,
-                        claim.amount,
-                        claim.ref
+                        claim.amount
                     )
                 )
             )

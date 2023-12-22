@@ -28,8 +28,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     using SafeERC20 for IERC20;
 
     // The EIP712 typehash for the claim struct
-    bytes32 private constant CLAIM_TYPE_HASH =
-        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
+    bytes32 private constant CLAIM_TYPE_HASH = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
     // The id of the next boost to be minted
     uint256 public nextBoostId;
@@ -38,7 +37,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     mapping(uint256 => BoostConfig) public boosts;
 
     // Mapping of boost id and recipient to claimed status, to prevent double claims
-    mapping(bytes32 => mapping(uint256 => bool)) public claimed;
+    mapping(uint256 => mapping(address => bool)) public claimed;
 
     // Mapping of token address to the total amount of fees collected in that token
     mapping(address => uint256) public tokenFeeBalances;
@@ -200,24 +199,17 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
         if (boost.balance < _claimConfig.amount) revert InsufficientBoostBalance();
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claimConfig.recipient][_claimConfig.boostId]) revert RecipientAlreadyClaimed();
+        if (claimed[_claimConfig.boostId][_claimConfig.recipient]) revert RecipientAlreadyClaimed();
         if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(
-                abi.encode(
-                    CLAIM_TYPE_HASH,
-                    _claimConfig.boostId,
-                    _claimConfig.recipient,
-                    _claimConfig.amount,
-                )
-            )
+            keccak256(abi.encode(CLAIM_TYPE_HASH, _claimConfig.boostId, _claimConfig.recipient, _claimConfig.amount))
         );
 
         if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
         // Storing recipients that claimed to prevent reusing signatures
-        claimed[_claimConfig.recipient][_claimConfig.boostId] = true;
+        claimed[_claimConfig.boostId][_claimConfig.recipient] = true;
 
         // Calculating the boost balance after the claim, will not underflow as we have already checked
         // that the claim amount is less than the balance

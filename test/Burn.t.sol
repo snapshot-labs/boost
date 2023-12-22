@@ -47,7 +47,8 @@ contract BoostWithdrawTest is BoostTest {
         boost.burn(boostId, owner);
     }
 
-    function testWithdrawZeroBalance() public { // todo: investigate if this is not a duplicate?  wrong name at least...
+    function testWithdrawZeroBalance() public {
+        // todo: investigate if this is not a duplicate?  wrong name at least...
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
@@ -55,7 +56,7 @@ contract BoostWithdrawTest is BoostTest {
         IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
-            amount: depositAmount,
+            amount: depositAmount
         });
         boost.claim(claim, _generateClaimSignature(claim));
         vm.warp(block.timestamp + 60);

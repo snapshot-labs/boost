@@ -18,7 +18,6 @@
     "solhint": "^3.3.7",
     "solhint-plugin-prettier": "^0.0.5"
   },
-  "packageManager": "yarn@3.2.4",
   "private": true,
   "resolutions": {
     "solhint/@solidity-parser/parser": "^0.14.5"

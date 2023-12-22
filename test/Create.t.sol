@@ -14,13 +14,15 @@ contract BoostCreateTest is BoostTest {
         vm.expectEmit(true, true, false, true);
         emit Mint(
             boostId,
+            owner,
             IBoost.BoostConfig({
                 token: IERC20(address(token)),
                 balance: depositAmount,
                 guard: guard,
                 start: uint48(block.timestamp),
                 end: uint48(block.timestamp + 60)
-            })
+            }),
+            strategyURI
         );
         vm.prank(owner);
 
