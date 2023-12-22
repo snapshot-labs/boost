@@ -29,7 +29,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
     // The EIP712 typehash for the claim struct
     bytes32 private constant CLAIM_TYPE_HASH =
-        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)");
+        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
     // The id of the next boost to be minted
     uint256 public nextBoostId;
@@ -200,7 +200,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
         if (boost.balance < _claimConfig.amount) revert InsufficientBoostBalance();
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claimConfig.ref][_claimConfig.boostId]) revert RecipientAlreadyClaimed();
+        if (claimed[_claimConfig.recipient][_claimConfig.boostId]) revert RecipientAlreadyClaimed();
         if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
@@ -210,7 +210,6 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
                     _claimConfig.boostId,
                     _claimConfig.recipient,
                     _claimConfig.amount,
-                    _claimConfig.ref
                 )
             )
         );
@@ -218,7 +217,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
 
         // Storing recipients that claimed to prevent reusing signatures
-        claimed[_claimConfig.ref][_claimConfig.boostId] = true;
+        claimed[_claimConfig.recipient][_claimConfig.boostId] = true;
 
         // Calculating the boost balance after the claim, will not underflow as we have already checked
         // that the claim amount is less than the balance

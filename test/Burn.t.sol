@@ -47,7 +47,7 @@ contract BoostWithdrawTest is BoostTest {
         boost.burn(boostId, owner);
     }
 
-    function testWithdrawZeroBalance() public {
+    function testWithdrawZeroBalance() public { // todo: investigate if this is not a duplicate?  wrong name at least...
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
@@ -56,7 +56,6 @@ contract BoostWithdrawTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: depositAmount,
-            ref: keccak256("1")
         });
         boost.claim(claim, _generateClaimSignature(claim));
         vm.warp(block.timestamp + 60);

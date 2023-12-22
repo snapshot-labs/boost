@@ -25,8 +25,6 @@ interface IBoost {
         address recipient;
         // The amount of boost token in the claim
         uint256 amount;
-        // A reference string for the claim
-        bytes32 ref;
     }
 
     error BoostDoesNotExist();

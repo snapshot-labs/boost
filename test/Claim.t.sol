@@ -18,7 +18,6 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         vm.expectEmit(true, false, false, true);
         emit Claim(claim);
@@ -39,19 +38,16 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("2")
         });
         IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer2,
             amount: 1,
-            ref: keccak256("3")
         });
         boost.claim(claim, _generateClaimSignature(claim));
         boost.claim(claim2, _generateClaimSignature(claim2));
@@ -72,31 +68,26 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer2,
             amount: 1,
-            ref: keccak256("2")
         });
         IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer3,
             amount: 1,
-            ref: keccak256("3")
         });
         IBoost.ClaimConfig memory claim4 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer4,
             amount: 1,
-            ref: keccak256("4")
         });
         IBoost.ClaimConfig memory claim5 = IBoost.ClaimConfig({
             boostId: boostId,
             recipient: claimer5,
             amount: 1,
-            ref: keccak256("5")
         });
 
         // Generating Claim array
@@ -136,7 +127,6 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         bytes memory sig = _generateClaimSignature(claim);
         boost.claim(claim, sig);
@@ -154,11 +144,10 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         // Creating signature with different claim data
         bytes memory sig = _generateClaimSignature(
-            IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 2, ref: keccak256("1") })
+            IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 2 })
         );
         vm.expectRevert(IBoost.InvalidSignature.selector);
         boost.claim(claim, sig);
@@ -172,7 +161,6 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         bytes memory sig = _generateClaimSignature(claim);
         // skipped ahead to after boost has ended
@@ -200,7 +188,6 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotStarted.selector, block.timestamp + 60));
@@ -212,7 +199,6 @@ contract BoostClaimTest is BoostTest {
             boostId: 1,
             recipient: claimer,
             amount: 1,
-            ref: keccak256("1")
         });
         bytes memory sig = _generateClaimSignature(claim);
         // If the boost does not exist, then the balance of the boost will be zero
@@ -229,7 +215,6 @@ contract BoostClaimTest is BoostTest {
             boostId: boostId,
             recipient: claimer,
             amount: depositAmount + 1,
-            ref: keccak256("1")
         });
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
