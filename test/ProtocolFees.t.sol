@@ -162,7 +162,7 @@ contract ProtocolFeesTest is BoostTest {
             depositAmount,
             owner,
             guard,
-            block.timestamp,
+            block.timestamp + 1,
             block.timestamp + 60,
             ethFee
         );

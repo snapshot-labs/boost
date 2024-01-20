@@ -34,6 +34,7 @@ interface IBoost {
     error BoostEnded();
     error BoostNotEnded(uint256 end);
     error BoostNotStarted(uint256 start);
+    error ClaimingPeriodStarted();
     error OnlyBoostOwner();
     error InvalidRecipient();
     error InvalidGuard();
