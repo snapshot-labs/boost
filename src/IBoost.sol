@@ -66,7 +66,7 @@ interface IBoost {
 
     /// @notice Emitted when the ETH fee is set
     /// @param ethFee The ETH fee
-    event EthFeeSet(uint256 ethFee);
+    event EthFeeSet(uint128 ethFee);
 
     /// @notice Emitted when the token fee is set
     /// @param tokenFee The token fee
@@ -83,7 +83,7 @@ interface IBoost {
 
     /// @notice Updates the eth protocol fee
     /// @param ethFee The new eth fee in wei
-    function setEthFee(uint256 ethFee) external;
+    function setEthFee(uint128 ethFee) external;
 
     /// @notice Updates the token protocol fee
     /// @param tokenFee The new token fee, represented as an integer denominator (100/x)%

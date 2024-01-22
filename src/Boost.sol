@@ -30,9 +30,6 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // The EIP712 typehash for the claim struct
     bytes32 private constant CLAIM_TYPE_HASH = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
-    // The id of the next boost to be minted
-    uint256 public nextBoostId;
-
     // Mapping of boost id to boost config
     mapping(uint256 => BoostConfig) public boosts;
 
@@ -43,7 +40,10 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     mapping(address => uint256) public tokenFeeBalances;
 
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
-    uint256 public ethFee;
+    uint128 public ethFee;
+
+    // The id of the next boost to be minted
+    uint64 public nextBoostId;
 
     // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee
     uint16 public tokenFee;
@@ -54,7 +54,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     /// @param _tokenFee The token protocol fee
     constructor(
         address _protocolOwner,
-        uint256 _ethFee,
+        uint128 _ethFee,
         uint16 _tokenFee
     ) ERC721("boost", "BOOST") EIP712("boost", "1") {
         setEthFee(_ethFee);
@@ -63,7 +63,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function setEthFee(uint256 _ethFee) public override onlyOwner {
+    function setEthFee(uint128 _ethFee) public override onlyOwner {
         ethFee = _ethFee;
         emit EthFeeSet(_ethFee);
     }
@@ -118,7 +118,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
         uint256 boostId = nextBoostId;
         unchecked {
-            // Overflows if 2**256 boosts are minted
+            // Overflows if 2**128 boosts are minted
             nextBoostId++;
         }
 

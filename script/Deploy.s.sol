@@ -19,7 +19,7 @@ contract BoostSingletonDeployer is Script {
 
         // Eth fee in WEI for creating a new boost
         // 0.01 ETH
-        uint256 ethFee = 10000000000000000;
+        uint128 ethFee = 10000000000000000;
 
         // Percentage taken as a fee from the boost deposit
         uint256 tokenFee = 0;

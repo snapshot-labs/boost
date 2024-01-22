@@ -11,7 +11,7 @@ abstract contract BoostTest is Test, GasSnapshot {
     event Claim(IBoost.ClaimConfig claim);
     event Deposit(uint256 boostId, address sender, uint256 amount);
     event Burn(uint256 boostId);
-    event EthFeeSet(uint256 ethFee);
+    event EthFeeSet(uint128 ethFee);
     event TokenFeeSet(uint16 tokenFee);
     event EthFeesCollected(address recipient);
     event TokenFeesCollected(IERC20 token, address recipient);
@@ -79,7 +79,7 @@ abstract contract BoostTest is Test, GasSnapshot {
         address _guard,
         uint256 _start,
         uint256 _end,
-        uint256 _ethFee
+        uint128 _ethFee
     ) internal returns (uint256) {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);

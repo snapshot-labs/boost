@@ -4,7 +4,7 @@ pragma solidity ^0.8.14;
 import "./Boost.t.sol";
 
 contract ProtocolFeesTest is BoostTest {
-    uint256 ethFee = 1000;
+    uint128 ethFee = 1000;
     uint16 tokenFee = 10;
 
     function setUp() public override {
@@ -112,7 +112,7 @@ contract ProtocolFeesTest is BoostTest {
     }
 
     function testUpdateProtocolFees() public {
-        uint256 newEthFee = 2000;
+        uint128 newEthFee = 2000;
         uint16 newTokenFee = 20;
 
         vm.expectEmit(true, true, false, true);
@@ -146,7 +146,7 @@ contract ProtocolFeesTest is BoostTest {
     }
 
     function testSetEthFeeNotProtocolOwner() public {
-        uint256 newEthFee = 2000;
+        uint128 newEthFee = 2000;
         vm.expectRevert("Ownable: caller is not the owner");
         boost.setEthFee(newEthFee);
     }
@@ -248,7 +248,7 @@ contract ProtocolFeesTest is BoostTest {
     }
 
     function testMaxTokenFee() public {
-        uint256 newEthFee = 0;
+        uint128 newEthFee = 0;
         uint16 newTokenFee = 10000;
 
         vm.prank(protocolOwner);
