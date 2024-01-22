@@ -8,7 +8,7 @@ contract BoostDepositTest is BoostTest {
 
     function testDepositToExistingBoost() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
-        
+
         vm.warp(block.timestamp + 1); // Increase here so we can decrease later
         uint256 boostId = _createBoost();
         vm.warp(block.timestamp - 1); // Decrease here so claim period hasn't started
@@ -30,11 +30,7 @@ contract BoostDepositTest is BoostTest {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
         uint256 boostId = _createBoost();
 
-        (IERC20 token,
-        uint256 balance,
-        address guard,
-        uint48 start,
-        uint48 end) = boost.boosts(boostId);
+        (IERC20 token, uint256 balance, address guard, uint48 start, uint48 end) = boost.boosts(boostId);
         vm.warp(start);
         vm.prank(owner);
         vm.expectRevert(IBoost.ClaimingPeriodStarted.selector);
