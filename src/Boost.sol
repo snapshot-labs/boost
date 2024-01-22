@@ -45,9 +45,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
     uint256 public ethFee;
 
-    // The fraction of the total boost deposit that is taken as a protocol fee
-    // represented as an integer denominator (100/x)%
-    uint256 public tokenFee;
+    // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee
+    uint32 public tokenFee;
 
     /// @notice Initializes the boost contract
     /// @param _protocolOwner The address of the owner of the protocol
@@ -56,7 +55,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     constructor(
         address _protocolOwner,
         uint256 _ethFee,
-        uint256 _tokenFee
+        uint32 _tokenFee
     ) ERC721("boost", "BOOST") EIP712("boost", "1") {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
@@ -70,7 +69,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function setTokenFee(uint256 _tokenFee) public override onlyOwner {
+    function setTokenFee(uint32 _tokenFee) public override onlyOwner {
+        if (_tokenFee > 10000) revert InvalidTokenFee();
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);
     }
@@ -106,15 +106,14 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (msg.value < ethFee) revert InsufficientEthFee();
 
         uint256 balance = 0;
-        if (tokenFee > 0) {
+        if (tokenFee > 10000) {
+            revert InvalidTokenFee();
+        } else {
             // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
-            uint256 tokenFeeAmount = _amount / tokenFee; // TODO: fix
+            uint256 tokenFeeAmount = (_amount * tokenFee) / 10000;
             // Since tokenFeeAmount < _amount, therefore balance will never underflow
             balance = _amount - tokenFeeAmount;
             tokenFeeBalances[address(_token)] += tokenFeeAmount;
-        } else {
-            // When there is no token fee, the boost balance is full deposit amount
-            balance = _amount;
         }
 
         uint256 boostId = nextBoostId;
@@ -142,14 +141,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (boost.end <= block.timestamp) revert BoostEnded();
 
         uint256 balanceIncrease = 0;
-        if (tokenFee > 0) {
+        if (tokenFee > 10000) {
+            revert InvalidTokenFee();
+        } else {
             // The token fee is calculated and subtracted from the deposit amount to get the boost balance increase
-            uint256 tokenFeeAmount = _amount / tokenFee; // TODO: fix
+            uint256 tokenFeeAmount = (_amount * tokenFee) / 10000;
             balanceIncrease = _amount - tokenFeeAmount;
             tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
-        } else {
-            // When there is no token fee, the boost balance increase is the full deposit amount
-            balanceIncrease = _amount;
         }
 
         boost.balance += balanceIncrease;

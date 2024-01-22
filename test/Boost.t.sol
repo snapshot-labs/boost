@@ -12,7 +12,7 @@ abstract contract BoostTest is Test, GasSnapshot {
     event Deposit(uint256 boostId, address sender, uint256 amount);
     event Burn(uint256 boostId);
     event EthFeeSet(uint256 ethFee);
-    event TokenFeeSet(uint256 tokenFee);
+    event TokenFeeSet(uint32 tokenFee);
     event EthFeesCollected(address recipient);
     event TokenFeesCollected(IERC20 token, address recipient);
 

@@ -37,6 +37,7 @@ interface IBoost {
     error OnlyBoostOwner();
     error InvalidRecipient();
     error InvalidGuard();
+    error InvalidTokenFee();
     error RecipientAlreadyClaimed();
     error InvalidSignature();
     error InsufficientBoostBalance();
@@ -69,7 +70,7 @@ interface IBoost {
 
     /// @notice Emitted when the token fee is set
     /// @param tokenFee The token fee
-    event TokenFeeSet(uint256 tokenFee);
+    event TokenFeeSet(uint32 tokenFee);
 
     /// @notice Emitted when ETH fees are collected
     /// @param recipient The recipient of the ETH fees
@@ -86,7 +87,7 @@ interface IBoost {
 
     /// @notice Updates the token protocol fee
     /// @param tokenFee The new token fee, represented as an integer denominator (100/x)%
-    function setTokenFee(uint256 tokenFee) external;
+    function setTokenFee(uint32 tokenFee) external;
 
     /// @notice Collects the accumulated Eth protocol fees
     /// @param recipient The address to send the fees to
