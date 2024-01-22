@@ -70,7 +70,7 @@ interface IBoost {
 
     /// @notice Emitted when the token fee is set
     /// @param tokenFee The token fee
-    event TokenFeeSet(uint32 tokenFee);
+    event TokenFeeSet(uint16 tokenFee);
 
     /// @notice Emitted when ETH fees are collected
     /// @param recipient The recipient of the ETH fees
@@ -87,7 +87,7 @@ interface IBoost {
 
     /// @notice Updates the token protocol fee
     /// @param tokenFee The new token fee, represented as an integer denominator (100/x)%
-    function setTokenFee(uint32 tokenFee) external;
+    function setTokenFee(uint16 tokenFee) external;
 
     /// @notice Collects the accumulated Eth protocol fees
     /// @param recipient The address to send the fees to

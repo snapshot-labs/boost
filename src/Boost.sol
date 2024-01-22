@@ -46,7 +46,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     uint256 public ethFee;
 
     // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee
-    uint32 public tokenFee;
+    uint16 public tokenFee;
 
     /// @notice Initializes the boost contract
     /// @param _protocolOwner The address of the owner of the protocol
@@ -55,7 +55,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     constructor(
         address _protocolOwner,
         uint256 _ethFee,
-        uint32 _tokenFee
+        uint16 _tokenFee
     ) ERC721("boost", "BOOST") EIP712("boost", "1") {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
@@ -69,7 +69,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function setTokenFee(uint32 _tokenFee) public override onlyOwner {
+    function setTokenFee(uint16 _tokenFee) public override onlyOwner {
         if (_tokenFee > 10000) revert InvalidTokenFee();
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);

@@ -5,7 +5,7 @@ import "./Boost.t.sol";
 
 contract ProtocolFeesTest is BoostTest {
     uint256 ethFee = 1000;
-    uint32 tokenFee = 10;
+    uint16 tokenFee = 10;
 
     function setUp() public override {
         token = new MockERC20("Test Token", "TEST");
@@ -113,7 +113,7 @@ contract ProtocolFeesTest is BoostTest {
 
     function testUpdateProtocolFees() public {
         uint256 newEthFee = 2000;
-        uint32 newTokenFee = 20;
+        uint16 newTokenFee = 20;
 
         vm.expectEmit(true, true, false, true);
         emit EthFeeSet(newEthFee);
@@ -152,13 +152,13 @@ contract ProtocolFeesTest is BoostTest {
     }
 
     function testSetTokenFeeNotProtocolOwner() public {
-        uint32 newTokenFee = 20;
+        uint16 newTokenFee = 20;
         vm.expectRevert("Ownable: caller is not the owner");
         boost.setTokenFee(newTokenFee);
     }
 
     function testSetInvalidTokenFee() public {
-        uint32 newTokenFee = 10001;
+        uint16 newTokenFee = 10001;
 
         vm.expectRevert(IBoost.InvalidTokenFee.selector);
         vm.prank(protocolOwner);
@@ -249,7 +249,7 @@ contract ProtocolFeesTest is BoostTest {
 
     function testMaxTokenFee() public {
         uint256 newEthFee = 0;
-        uint32 newTokenFee = 10000;
+        uint16 newTokenFee = 10000;
 
         vm.prank(protocolOwner);
         boost.setEthFee(newEthFee);
