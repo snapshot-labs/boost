@@ -4,7 +4,7 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "./mocks/MockERC20.sol";
 import "../src/Boost.sol";
-import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
+import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 
 abstract contract BoostTest is Test, GasSnapshot {
     event Mint(uint256 boostId, address owner, IBoost.BoostConfig boost, string strategyURI);
@@ -84,15 +84,7 @@ abstract contract BoostTest is Test, GasSnapshot {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.mint{ value: _ethFee }(
-            _strategyURI,
-            IERC20(_token),
-            _amount,
-            _owner,
-            _guard,
-            uint48(_start),
-            uint48(_end)
-        );
+        boost.mint{value: _ethFee}(_strategyURI, IERC20(_token), _amount, _owner, _guard, uint48(_start), uint48(_end));
         return boostID;
     }
 

@@ -18,7 +18,7 @@ contract BoostDepositTest is BoostTest {
         snapEnd();
 
         // Checking state after deposit
-        (, uint256 _balance, , , ) = boost.boosts(boostId);
+        (, uint256 _balance,,,) = boost.boosts(boostId);
         assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
         assertEq(_balance, 2 * depositAmount);
     }
