@@ -34,8 +34,9 @@ abstract contract BoostTest is Test, GasSnapshot {
 
     address protocolOwner = address(0xFFFF);
 
-    string constant boostName = "boost";
-    string constant boostVersion = "1";
+    string constant boostName = "Boost";
+    string constant boostSymbol = "BOOST";
+    string constant boostVersion = "0.1.0";
 
     Boost public boost;
     MockERC20 public token;
@@ -50,7 +51,7 @@ abstract contract BoostTest is Test, GasSnapshot {
     string public constant strategyURI = "abc123";
 
     function setUp() public virtual {
-        boost = new Boost(protocolOwner, 0, 0);
+        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, 0, 0);
         token = new MockERC20("Test Token", "TEST");
     }
 

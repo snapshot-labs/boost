@@ -9,7 +9,7 @@ contract ProtocolFeesTest is BoostTest {
 
     function setUp() public override {
         token = new MockERC20("Test Token", "TEST");
-        boost = new Boost(protocolOwner, ethFee, tokenFee);
+        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, ethFee, tokenFee);
     }
 
     function testCreateBoostWithProtocolFees() public {
