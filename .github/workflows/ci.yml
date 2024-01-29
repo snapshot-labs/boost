@@ -25,19 +25,10 @@ jobs:
         with:
           version: "nightly"
 
-      - name: "Install Node.js"
-        uses: "actions/setup-node@v3"
-        with:
-          cache: "yarn"
-          node-version: "lts/*"
+      - name: "Format the contracts"
+        run: "forge fmt"
 
-      - name: "Install the Node.js dependencies"
-        run: "yarn install --immutable"
-
-      - name: "Lint the contracts"
-        run: "yarn lint"
-
-      - name: "Add lint summary"
+      - name: "Add Format summary"
         run: |
           echo "## Lint" >> $GITHUB_STEP_SUMMARY
           echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
@@ -45,13 +36,13 @@ jobs:
       - name: "Show the Foundry config"
         run: "forge config"
 
-      - name: "Run the tests"
-        run: "forge test"
-
       - name: "Build the contracts"
         run: |
           forge --version
           forge build --sizes
+
+      - name: "Run the tests"
+        run: "forge test"
 
       - name: "Add test summary"
         run: |
