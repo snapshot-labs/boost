@@ -53,11 +53,10 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     /// @param _protocolOwner The address of the owner of the protocol
     /// @param _ethFee The eth protocol fee
     /// @param _tokenFee The token protocol fee
-    constructor(
-        address _protocolOwner,
-        uint256 _ethFee,
-        uint256 _tokenFee
-    ) ERC721("boost", "BOOST") EIP712("boost", "1") {
+    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee)
+        ERC721("boost", "BOOST")
+        EIP712("boost", "1")
+    {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
@@ -126,7 +125,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         // Minting the boost as an ERC721 and storing the config data
         _safeMint(_owner, boostId);
         _setTokenURI(boostId, _strategyURI);
-        boosts[boostId] = BoostConfig({ token: _token, balance: balance, guard: _guard, start: _start, end: _end });
+        boosts[boostId] = BoostConfig({token: _token, balance: balance, guard: _guard, start: _start, end: _end});
 
         // Transferring the deposit amount of the ERC20 token to the contract
         _token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -186,7 +185,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
     /// @inheritdoc IBoost
     function claimMultiple(ClaimConfig[] calldata _claimConfigs, bytes[] calldata _signatures) external override {
-        for (uint i = 0; i < _signatures.length; i++) {
+        for (uint256 i = 0; i < _signatures.length; i++) {
             _claim(_claimConfigs[i], _signatures[i]);
         }
     }
