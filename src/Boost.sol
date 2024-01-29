@@ -53,10 +53,14 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     /// @param _protocolOwner The address of the owner of the protocol
     /// @param _ethFee The eth protocol fee
     /// @param _tokenFee The token protocol fee
-    constructor(address _protocolOwner, uint256 _ethFee, uint256 _tokenFee)
-        ERC721("boost", "BOOST")
-        EIP712("boost", "1")
-    {
+    constructor(
+        address _protocolOwner,
+        string memory name,
+        string memory symbol,
+        string memory version,
+        uint256 _ethFee,
+        uint256 _tokenFee
+    ) ERC721(name, symbol) EIP712(name, version) {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
@@ -196,9 +200,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     function _claim(ClaimConfig memory _claimConfig, bytes memory _signature) internal {
         BoostConfig storage boost = boosts[_claimConfig.boostId];
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
-        if (boost.balance < _claimConfig.amount) revert InsufficientBoostBalance();
+        if (boost.balance < _claimConfig.amount) {
+            revert InsufficientBoostBalance();
+        }
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claimConfig.boostId][_claimConfig.recipient]) revert RecipientAlreadyClaimed();
+        if (claimed[_claimConfig.boostId][_claimConfig.recipient]) {
+            revert RecipientAlreadyClaimed();
+        }
         if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
