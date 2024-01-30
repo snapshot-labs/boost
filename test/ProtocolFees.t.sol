@@ -38,7 +38,7 @@ contract ProtocolFeesTest is BoostTest {
 
         vm.deal(owner, ethFee);
         vm.prank(owner);
-        snapStart("CreateBoostWithProtocolFee");
+
         boost.mint{value: ethFee}(
             strategyURI,
             IERC20(address(token)),
@@ -48,7 +48,6 @@ contract ProtocolFeesTest is BoostTest {
             uint48(block.timestamp),
             uint48(block.timestamp + 60)
         );
-        snapEnd();
 
         // Checking BoostConfig object is correct
         (IERC20 _token, uint256 _balance, address _guard, uint48 _start, uint48 _end) = boost.boosts(boostId);
@@ -84,6 +83,7 @@ contract ProtocolFeesTest is BoostTest {
         );
         uint256 boostId2 = boost.nextBoostId();
         vm.prank(owner);
+        snapStart("CreateBoostWithProtocolFee");
         boost.mint{value: ethFee}(
             strategyURI,
             IERC20(address(token)),
@@ -93,6 +93,7 @@ contract ProtocolFeesTest is BoostTest {
             uint48(block.timestamp),
             uint48(block.timestamp + 60)
         );
+        snapEnd();
 
         (, uint256 _balance1,,,) = boost.boosts(boostId1);
         (, uint256 _balance2,,,) = boost.boosts(boostId2);
