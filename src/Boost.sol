@@ -43,7 +43,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     uint128 public ethFee;
 
     // The id of the next boost to be minted
-    uint64 public nextBoostId;
+    uint256 public nextBoostId;
 
     // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee
     uint16 public tokenFee;
