@@ -18,7 +18,7 @@ contract Deployer is Script {
     string constant boostName = "boost";
     string constant boostSymbol = "BOOST";
     string constant boostVersion = "0.1.0";
-    uint256 constant ethFee = 0;
+    uint256 constant ethFee = 10000000000000000; //  0.01 ETH
     uint256 constant tokenFee = 0;
 
     function run() external {

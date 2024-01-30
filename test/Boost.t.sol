@@ -4,10 +4,10 @@ pragma solidity ^0.8.15;
 import "forge-std/Test.sol";
 import "./mocks/MockERC20.sol";
 import "../src/Boost.sol";
-import { GasSnapshot } from "forge-gas-snapshot/GasSnapshot.sol";
+import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 
 abstract contract BoostTest is Test, GasSnapshot {
-    event Mint(uint256 boostId, IBoost.BoostConfig boost);
+    event Mint(uint256 boostId, address owner, IBoost.BoostConfig boost, string strategyURI);
     event Claim(IBoost.ClaimConfig claim);
     event Deposit(uint256 boostId, address sender, uint256 amount);
     event Burn(uint256 boostId);
@@ -34,8 +34,9 @@ abstract contract BoostTest is Test, GasSnapshot {
 
     address protocolOwner = address(0xFFFF);
 
-    string constant boostName = "boost";
-    string constant boostVersion = "1";
+    string constant boostName = "Boost";
+    string constant boostSymbol = "BOOST";
+    string constant boostVersion = "0.1.0";
 
     Boost public boost;
     MockERC20 public token;
@@ -50,7 +51,7 @@ abstract contract BoostTest is Test, GasSnapshot {
     string public constant strategyURI = "abc123";
 
     function setUp() public virtual {
-        boost = new Boost(protocolOwner, 0, 0);
+        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, 0, 0);
         token = new MockERC20("Test Token", "TEST");
     }
 
@@ -84,15 +85,7 @@ abstract contract BoostTest is Test, GasSnapshot {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.mint{ value: _ethFee }(
-            _strategyURI,
-            IERC20(_token),
-            _amount,
-            _owner,
-            _guard,
-            uint48(_start),
-            uint48(_end)
-        );
+        boost.mint{value: _ethFee}(_strategyURI, IERC20(_token), _amount, _owner, _guard, uint48(_start), uint48(_end));
         return boostID;
     }
 
@@ -119,11 +112,10 @@ abstract contract BoostTest is Test, GasSnapshot {
                 ),
                 keccak256(
                     abi.encode(
-                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount,bytes32 ref)"),
+                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)"),
                         claim.boostId,
                         claim.recipient,
-                        claim.amount,
-                        claim.ref
+                        claim.amount
                     )
                 )
             )

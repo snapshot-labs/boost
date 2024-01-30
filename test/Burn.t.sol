@@ -48,16 +48,13 @@ contract BoostWithdrawTest is BoostTest {
     }
 
     function testWithdrawZeroBalance() public {
+        // todo: investigate if this is not a duplicate?  wrong name at least...
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
         // Claiming the entire deposit amount so that the boost balance will be zero
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
-            boostId: boostId,
-            recipient: claimer,
-            amount: depositAmount,
-            ref: keccak256("1")
-        });
+        IBoost.ClaimConfig memory claim =
+            IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: depositAmount});
         boost.claim(claim, _generateClaimSignature(claim));
         vm.warp(block.timestamp + 60);
     }

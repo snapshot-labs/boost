@@ -25,8 +25,6 @@ interface IBoost {
         address recipient;
         // The amount of boost token in the claim
         uint256 amount;
-        // A reference string for the claim
-        bytes32 ref;
     }
 
     error BoostDoesNotExist();
@@ -46,8 +44,10 @@ interface IBoost {
 
     /// @notice Emitted when a boost is minted
     /// @param boostId The boost id
+    /// @param owner The boost owner
     /// @param boost The boost config
-    event Mint(uint256 boostId, BoostConfig boost);
+    /// @param strategyURI The URI of the boost strategy
+    event Mint(uint256 boostId, address owner, BoostConfig boost, string strategyURI);
 
     /// @notice Emitted when a claim is made
     /// @param claim The claim config

@@ -14,13 +14,15 @@ contract BoostCreateTest is BoostTest {
         vm.expectEmit(true, true, false, true);
         emit Mint(
             boostId,
+            owner,
             IBoost.BoostConfig({
                 token: IERC20(address(token)),
                 balance: depositAmount,
                 guard: guard,
                 start: uint48(block.timestamp),
                 end: uint48(block.timestamp + 60)
-            })
+            }),
+            strategyURI
         );
         vm.prank(owner);
 
@@ -107,13 +109,7 @@ contract BoostCreateTest is BoostTest {
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
         // Deposit of zero
         boost.mint(
-            strategyURI,
-            IERC20(address(token)),
-            0,
-            owner,
-            guard,
-            uint48(block.timestamp),
-            uint48(block.timestamp + 60)
+            strategyURI, IERC20(address(token)), 0, owner, guard, uint48(block.timestamp), uint48(block.timestamp + 60)
         );
     }
 
