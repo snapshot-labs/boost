@@ -14,7 +14,7 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
         vm.expectEmit(true, false, false, true);
         emit Claim(claim);
         snapStart("ClaimSingle");
@@ -30,9 +30,9 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
-        IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer2, amount: 1 });
-        IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer3, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
+        IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({boostId: boostId, recipient: claimer2, amount: 1});
+        IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({boostId: boostId, recipient: claimer3, amount: 1});
         boost.claim(claim, _generateClaimSignature(claim));
         boost.claim(claim2, _generateClaimSignature(claim2));
         boost.claim(claim3, _generateClaimSignature(claim3));
@@ -48,11 +48,11 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
-        IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer2, amount: 1 });
-        IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer3, amount: 1 });
-        IBoost.ClaimConfig memory claim4 = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer4, amount: 1 });
-        IBoost.ClaimConfig memory claim5 = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer5, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
+        IBoost.ClaimConfig memory claim2 = IBoost.ClaimConfig({boostId: boostId, recipient: claimer2, amount: 1});
+        IBoost.ClaimConfig memory claim3 = IBoost.ClaimConfig({boostId: boostId, recipient: claimer3, amount: 1});
+        IBoost.ClaimConfig memory claim4 = IBoost.ClaimConfig({boostId: boostId, recipient: claimer4, amount: 1});
+        IBoost.ClaimConfig memory claim5 = IBoost.ClaimConfig({boostId: boostId, recipient: claimer5, amount: 1});
 
         // Generating Claim array
         IBoost.ClaimConfig[] memory claims = new IBoost.ClaimConfig[](5);
@@ -87,7 +87,7 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
         bytes memory sig = _generateClaimSignature(claim);
         boost.claim(claim, sig);
 
@@ -100,11 +100,10 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
         // Creating signature with different claim data
-        bytes memory sig = _generateClaimSignature(
-            IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 2 })
-        );
+        bytes memory sig =
+            _generateClaimSignature(IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 2}));
         vm.expectRevert(IBoost.InvalidSignature.selector);
         boost.claim(claim, sig);
     }
@@ -113,7 +112,7 @@ contract BoostClaimTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 boostId = _createBoost();
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
         bytes memory sig = _generateClaimSignature(claim);
         // skipped ahead to after boost has ended
         vm.warp(block.timestamp + 60);
@@ -126,24 +125,17 @@ contract BoostClaimTest is BoostTest {
 
         // Start timestamp is in future
         uint256 boostId = _createBoost(
-            strategyURI,
-            address(token),
-            depositAmount,
-            owner,
-            guard,
-            block.timestamp + 60,
-            block.timestamp + 120,
-            0
+            strategyURI, address(token), depositAmount, owner, guard, block.timestamp + 60, block.timestamp + 120, 0
         );
 
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: boostId, recipient: claimer, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: 1});
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(abi.encodeWithSelector(IBoost.BoostNotStarted.selector, block.timestamp + 60));
         boost.claim(claim, sig);
     }
 
     function testClaimBoostDoesntExist() public {
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({ boostId: 1, recipient: claimer, amount: 1 });
+        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({boostId: 1, recipient: claimer, amount: 1});
         bytes memory sig = _generateClaimSignature(claim);
         // If the boost does not exist, then the balance of the boost will be zero
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
@@ -155,11 +147,8 @@ contract BoostClaimTest is BoostTest {
         uint256 boostId = _createBoost();
 
         // Claim larger than boost balance
-        IBoost.ClaimConfig memory claim = IBoost.ClaimConfig({
-            boostId: boostId,
-            recipient: claimer,
-            amount: depositAmount + 1
-        });
+        IBoost.ClaimConfig memory claim =
+            IBoost.ClaimConfig({boostId: boostId, recipient: claimer, amount: depositAmount + 1});
         bytes memory sig = _generateClaimSignature(claim);
         vm.expectRevert(IBoost.InsufficientBoostBalance.selector);
         boost.claim(claim, sig);

@@ -55,9 +55,12 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     /// @param _tokenFee The token protocol fee
     constructor(
         address _protocolOwner,
+        string memory name,
+        string memory symbol,
+        string memory version,
         uint256 _ethFee,
         uint256 _tokenFee
-    ) ERC721("boost", "BOOST") EIP712("boost", "1") {
+    ) ERC721(name, symbol) EIP712(name, version) {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
         transferOwnership(_protocolOwner);
@@ -126,7 +129,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         // Minting the boost as an ERC721 and storing the config data
         _safeMint(_owner, boostId);
         _setTokenURI(boostId, _strategyURI);
-        boosts[boostId] = BoostConfig({ token: _token, balance: balance, guard: _guard, start: _start, end: _end });
+        boosts[boostId] = BoostConfig({token: _token, balance: balance, guard: _guard, start: _start, end: _end});
 
         // Transferring the deposit amount of the ERC20 token to the contract
         _token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -187,7 +190,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
     /// @inheritdoc IBoost
     function claimMultiple(ClaimConfig[] calldata _claimConfigs, bytes[] calldata _signatures) external override {
-        for (uint i = 0; i < _signatures.length; i++) {
+        for (uint256 i = 0; i < _signatures.length; i++) {
             _claim(_claimConfigs[i], _signatures[i]);
         }
     }
@@ -198,9 +201,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     function _claim(ClaimConfig memory _claimConfig, bytes memory _signature) internal {
         BoostConfig storage boost = boosts[_claimConfig.boostId];
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
-        if (boost.balance < _claimConfig.amount) revert InsufficientBoostBalance();
+        if (boost.balance < _claimConfig.amount) {
+            revert InsufficientBoostBalance();
+        }
         if (boost.end <= block.timestamp) revert BoostEnded();
-        if (claimed[_claimConfig.boostId][_claimConfig.recipient]) revert RecipientAlreadyClaimed();
+        if (claimed[_claimConfig.boostId][_claimConfig.recipient]) {
+            revert RecipientAlreadyClaimed();
+        }
         if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(

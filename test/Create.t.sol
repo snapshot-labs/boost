@@ -109,13 +109,7 @@ contract BoostCreateTest is BoostTest {
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
         // Deposit of zero
         boost.mint(
-            strategyURI,
-            IERC20(address(token)),
-            0,
-            owner,
-            guard,
-            uint48(block.timestamp),
-            uint48(block.timestamp + 60)
+            strategyURI, IERC20(address(token)), 0, owner, guard, uint48(block.timestamp), uint48(block.timestamp + 60)
         );
     }
 
