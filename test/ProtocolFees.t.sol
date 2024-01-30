@@ -150,7 +150,7 @@ contract ProtocolFeesTest is BoostTest {
     function testDepositWithProtocolFees() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
         uint256 boostId = _createBoost(
-            strategyURI, address(token), depositAmount, owner, guard, block.timestamp, block.timestamp + 60, ethFee
+            strategyURI, address(token), depositAmount, owner, guard, block.timestamp + 1, block.timestamp + 60, ethFee
         );
 
         uint256 tokenFeeAmount = depositAmount / tokenFee;

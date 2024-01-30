@@ -34,8 +34,7 @@ contract Deployer is Script {
         address deployed = ICREATE3Factory(0x93FEC2C00BfE902F733B57c5a6CeeD7CD1384AE1).deploy(
             bytes32(uint256(0)),
             abi.encodePacked(
-                type(Boost).creationCode,
-                abi.encode(owner, boostName, boostSymbol, boostVersion, ethFee, tokenFee)
+                type(Boost).creationCode, abi.encode(owner, boostName, boostSymbol, boostVersion, ethFee, tokenFee)
             )
         );
 

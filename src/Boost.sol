@@ -143,6 +143,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (_amount == 0) revert BoostDepositRequired();
         if (!_exists(_boostId)) revert BoostDoesNotExist();
         if (boost.end <= block.timestamp) revert BoostEnded();
+        if (block.timestamp >= boost.start) revert ClaimingPeriodStarted();
 
         uint256 balanceIncrease = 0;
         if (tokenFee > 0) {
