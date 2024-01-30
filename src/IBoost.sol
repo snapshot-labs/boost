@@ -67,11 +67,11 @@ interface IBoost {
 
     /// @notice Emitted when the ETH fee is set
     /// @param ethFee The ETH fee
-    event EthFeeSet(uint128 ethFee);
+    event EthFeeSet(uint256 ethFee);
 
     /// @notice Emitted when the token fee is set
     /// @param tokenFee The token fee
-    event TokenFeeSet(uint16 tokenFee);
+    event TokenFeeSet(uint256 tokenFee);
 
     /// @notice Emitted when ETH fees are collected
     /// @param recipient The recipient of the ETH fees
@@ -84,11 +84,11 @@ interface IBoost {
 
     /// @notice Updates the eth protocol fee
     /// @param ethFee The new eth fee in wei
-    function setEthFee(uint128 ethFee) external;
+    function setEthFee(uint256 ethFee) external;
 
     /// @notice Updates the token protocol fee
     /// @param tokenFee The new token fee, represented as an integer denominator (100/x)%
-    function setTokenFee(uint16 tokenFee) external;
+    function setTokenFee(uint256 tokenFee) external;
 
     /// @notice Collects the accumulated Eth protocol fees
     /// @param recipient The address to send the fees to

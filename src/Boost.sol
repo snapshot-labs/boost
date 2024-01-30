@@ -39,14 +39,14 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Mapping of token address to the total amount of fees collected in that token
     mapping(address => uint256) public tokenFeeBalances;
 
-    // Constant eth protocol fee (in wei) that must be paid by all boost creators
-    uint128 public ethFee;
-
     // The id of the next boost to be minted
     uint256 public nextBoostId;
 
+    // Constant eth protocol fee (in wei) that must be paid by all boost creators
+    uint256 public ethFee;
+
     // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee
-    uint16 public tokenFee;
+    uint256 public tokenFee;
 
     /// @notice Initializes the boost contract
     /// @param _protocolOwner The address of the owner of the protocol
@@ -57,8 +57,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         string memory name,
         string memory symbol,
         string memory version,
-        uint128 _ethFee,
-        uint16 _tokenFee
+        uint256 _ethFee,
+        uint256 _tokenFee
     ) ERC721(name, symbol) EIP712(name, version) {
         setEthFee(_ethFee);
         setTokenFee(_tokenFee);
@@ -66,13 +66,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function setEthFee(uint128 _ethFee) public override onlyOwner {
+    function setEthFee(uint256 _ethFee) public override onlyOwner {
         ethFee = _ethFee;
         emit EthFeeSet(_ethFee);
     }
 
     /// @inheritdoc IBoost
-    function setTokenFee(uint16 _tokenFee) public override onlyOwner {
+    function setTokenFee(uint256 _tokenFee) public override onlyOwner {
         if (_tokenFee > 10000) revert InvalidTokenFee();
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);
