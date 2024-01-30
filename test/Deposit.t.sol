@@ -8,7 +8,10 @@ contract BoostDepositTest is BoostTest {
 
     function testDepositToExistingBoost() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+
+        vm.warp(block.timestamp + 1); // Increase here so we can decrease later
         uint256 boostId = _createBoost();
+        vm.warp(block.timestamp - 1); // Decrease here so claim period hasn't started
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
@@ -18,9 +21,20 @@ contract BoostDepositTest is BoostTest {
         snapEnd();
 
         // Checking state after deposit
-        (, uint256 _balance, , , ) = boost.boosts(boostId);
+        (, uint256 _balance,,,) = boost.boosts(boostId);
         assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
         assertEq(_balance, 2 * depositAmount);
+    }
+
+    function testDepositClaimingPeriodStarted() public {
+        _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
+        uint256 boostId = _createBoost();
+
+        (IERC20 token, uint256 balance, address guard, uint48 start, uint48 end) = boost.boosts(boostId);
+        vm.warp(start);
+        vm.prank(owner);
+        vm.expectRevert(IBoost.ClaimingPeriodStarted.selector);
+        boost.deposit(boostId, depositAmount);
     }
 
     function testDepositFromDifferentAccount() public {
@@ -28,7 +42,9 @@ contract BoostDepositTest is BoostTest {
         _mintAndApprove(depositee, 50, 50);
 
         vm.prank(owner);
+        vm.warp(block.timestamp + 1); // Increase here so we can decrease later
         uint256 boostId = _createBoost();
+        vm.warp(block.timestamp - 1); // Decrease here so claim period hasn't started
 
         // Depositing from a different account
         vm.prank(depositee);
@@ -57,7 +73,9 @@ contract BoostDepositTest is BoostTest {
 
     function testDepositExceedsAllowance() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount);
+        vm.warp(block.timestamp + 1); // Increase here so we can decrease later
         uint256 boostId = _createBoost();
+        vm.warp(block.timestamp - 1); // Decrease here so claim period hasn't started
 
         vm.prank(owner);
         vm.expectRevert("ERC20: insufficient allowance");
@@ -67,7 +85,9 @@ contract BoostDepositTest is BoostTest {
 
     function testDepositExceedsBalance() public {
         _mintAndApprove(owner, depositAmount, 200);
+        vm.warp(block.timestamp + 1); // Increase here so we can decrease later
         uint256 boostId = _createBoost();
+        vm.warp(block.timestamp - 1); // Decrease here so claim period hasn't started
 
         vm.prank(owner);
         vm.expectRevert("ERC20: transfer amount exceeds balance");

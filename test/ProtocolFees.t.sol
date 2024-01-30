@@ -9,12 +9,12 @@ contract ProtocolFeesTest is BoostTest {
 
     function setUp() public override {
         token = new MockERC20("Test Token", "TEST");
-        boost = new Boost(protocolOwner, ethFee, tokenFee);
+        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, ethFee, tokenFee);
     }
 
     function testCreateBoostInvalidTokenFees() public {
         vm.expectRevert(IBoost.InvalidTokenFee.selector);
-        boost = new Boost(protocolOwner, 0, 10001);
+        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, 0, 10001);
     }
 
     function testCreateBoostWithProtocolFees() public {
@@ -39,7 +39,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.deal(owner, ethFee);
         vm.prank(owner);
         snapStart("CreateBoostWithProtocolFee");
-        boost.mint{ value: ethFee }(
+        boost.mint{value: ethFee}(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -73,7 +73,7 @@ contract ProtocolFeesTest is BoostTest {
         uint256 boostId1 = boost.nextBoostId();
         vm.deal(owner, 2 * ethFee);
         vm.prank(owner);
-        boost.mint{ value: ethFee }(
+        boost.mint{value: ethFee}(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -84,7 +84,7 @@ contract ProtocolFeesTest is BoostTest {
         );
         uint256 boostId2 = boost.nextBoostId();
         vm.prank(owner);
-        boost.mint{ value: ethFee }(
+        boost.mint{value: ethFee}(
             strategyURI,
             IERC20(address(token)),
             depositAmount,
@@ -94,8 +94,8 @@ contract ProtocolFeesTest is BoostTest {
             uint48(block.timestamp + 60)
         );
 
-        (, uint256 _balance1, , , ) = boost.boosts(boostId1);
-        (, uint256 _balance2, , , ) = boost.boosts(boostId2);
+        (, uint256 _balance1,,,) = boost.boosts(boostId1);
+        (, uint256 _balance2,,,) = boost.boosts(boostId2);
 
         assertEq(boostId1, 0);
         assertEq(boostId2, 1);
@@ -128,14 +128,7 @@ contract ProtocolFeesTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = (depositAmount * newTokenFee) / 10000;
         _createBoost(
-            strategyURI,
-            address(token),
-            depositAmount,
-            owner,
-            guard,
-            block.timestamp,
-            block.timestamp + 60,
-            newEthFee
+            strategyURI, address(token), depositAmount, owner, guard, block.timestamp, block.timestamp + 60, newEthFee
         );
 
         // Checking balances of eth and the token are correct
@@ -168,14 +161,7 @@ contract ProtocolFeesTest is BoostTest {
     function testDepositWithProtocolFees() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
         uint256 boostId = _createBoost(
-            strategyURI,
-            address(token),
-            depositAmount,
-            owner,
-            guard,
-            block.timestamp,
-            block.timestamp + 60,
-            ethFee
+            strategyURI, address(token), depositAmount, owner, guard, block.timestamp + 1, block.timestamp + 60, ethFee
         );
 
         uint256 tokenFeeAmount = (depositAmount * tokenFee) / 10000;
@@ -199,14 +185,7 @@ contract ProtocolFeesTest is BoostTest {
         _mintAndApprove(owner, depositAmount, depositAmount);
         uint256 tokenFeeAmount = (depositAmount * tokenFee) / 10000;
         _createBoost(
-            strategyURI,
-            address(token),
-            depositAmount,
-            owner,
-            guard,
-            block.timestamp,
-            block.timestamp + 60,
-            ethFee
+            strategyURI, address(token), depositAmount, owner, guard, block.timestamp, block.timestamp + 60, ethFee
         );
 
         assertEq(address(boost).balance, ethFee);
@@ -236,7 +215,7 @@ contract ProtocolFeesTest is BoostTest {
         vm.expectRevert(IBoost.InsufficientEthFee.selector);
         vm.prank(owner);
         vm.deal(owner, ethFee - 1);
-        boost.mint{ value: ethFee - 1 }(
+        boost.mint{value: ethFee - 1}(
             strategyURI,
             IERC20(token),
             depositAmount,
