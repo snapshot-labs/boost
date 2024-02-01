@@ -19,6 +19,8 @@ import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./IBoost.sol";
 
+uint256 constant MYRIAD = 10000;
+
 /**
  * @title Boost
  * @author @SnapshotLabs - admin@snapshot.org
@@ -30,9 +32,6 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // The EIP712 typehash for the claim struct
     bytes32 private constant CLAIM_TYPE_HASH = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
-    // The id of the next boost to be minted
-    uint256 public nextBoostId;
-
     // Mapping of boost id to boost config
     mapping(uint256 => BoostConfig) public boosts;
 
@@ -42,11 +41,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Mapping of token address to the total amount of fees collected in that token
     mapping(address => uint256) public tokenFeeBalances;
 
+    // The id of the next boost to be minted
+    uint256 public nextBoostId;
+
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
     uint256 public ethFee;
 
-    // The fraction of the total boost deposit that is taken as a protocol fee
-    // represented as an integer denominator (100/x)%
+    // Per-myriad (parts per ten-thousand, in the range [0, 9999]) of the total boost deposit that is taken as a protocol fee
     uint256 public tokenFee;
 
     /// @notice Initializes the boost contract
@@ -74,6 +75,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
     /// @inheritdoc IBoost
     function setTokenFee(uint256 _tokenFee) public override onlyOwner {
+        if (_tokenFee > MYRIAD) revert InvalidTokenFee();
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);
     }
@@ -109,20 +111,19 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (msg.value < ethFee) revert InsufficientEthFee();
 
         uint256 balance = 0;
-        if (tokenFee > 0) {
+        if (tokenFee > MYRIAD) {
+            revert InvalidTokenFee();
+        } else {
             // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
-            uint256 tokenFeeAmount = _amount / tokenFee; // TODO: fix
+            uint256 tokenFeeAmount = (_amount * tokenFee) / MYRIAD;
             // Since tokenFeeAmount < _amount, therefore balance will never underflow
             balance = _amount - tokenFeeAmount;
             tokenFeeBalances[address(_token)] += tokenFeeAmount;
-        } else {
-            // When there is no token fee, the boost balance is full deposit amount
-            balance = _amount;
         }
 
         uint256 boostId = nextBoostId;
         unchecked {
-            // Overflows if 2**256 boosts are minted
+            // Overflows if 2**128 boosts are minted
             nextBoostId++;
         }
 
@@ -146,14 +147,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (block.timestamp >= boost.start) revert ClaimingPeriodStarted();
 
         uint256 balanceIncrease = 0;
-        if (tokenFee > 0) {
+        if (tokenFee > MYRIAD) {
+            revert InvalidTokenFee();
+        } else {
             // The token fee is calculated and subtracted from the deposit amount to get the boost balance increase
-            uint256 tokenFeeAmount = _amount / tokenFee; // TODO: fix
+            uint256 tokenFeeAmount = (_amount * tokenFee) / MYRIAD;
             balanceIncrease = _amount - tokenFeeAmount;
             tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
-        } else {
-            // When there is no token fee, the boost balance increase is the full deposit amount
-            balanceIncrease = _amount;
         }
 
         boost.balance += balanceIncrease;

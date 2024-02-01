@@ -38,6 +38,7 @@ interface IBoost {
     error OnlyBoostOwner();
     error InvalidRecipient();
     error InvalidGuard();
+    error InvalidTokenFee();
     error RecipientAlreadyClaimed();
     error InvalidSignature();
     error InsufficientBoostBalance();
