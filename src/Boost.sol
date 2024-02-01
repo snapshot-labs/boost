@@ -19,6 +19,8 @@ import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./IBoost.sol";
 
+uint256 constant MYRIAD = 10000;
+
 /**
  * @title Boost
  * @author @SnapshotLabs - admin@snapshot.org
@@ -73,7 +75,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
     /// @inheritdoc IBoost
     function setTokenFee(uint256 _tokenFee) public override onlyOwner {
-        if (_tokenFee > 10000) revert InvalidTokenFee();
+        if (_tokenFee > MYRIAD) revert InvalidTokenFee();
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);
     }
@@ -109,11 +111,11 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (msg.value < ethFee) revert InsufficientEthFee();
 
         uint256 balance = 0;
-        if (tokenFee > 10000) {
+        if (tokenFee > MYRIAD) {
             revert InvalidTokenFee();
         } else {
             // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
-            uint256 tokenFeeAmount = (_amount * tokenFee) / 10000;
+            uint256 tokenFeeAmount = (_amount * tokenFee) / MYRIAD;
             // Since tokenFeeAmount < _amount, therefore balance will never underflow
             balance = _amount - tokenFeeAmount;
             tokenFeeBalances[address(_token)] += tokenFeeAmount;
@@ -145,11 +147,11 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (block.timestamp >= boost.start) revert ClaimingPeriodStarted();
 
         uint256 balanceIncrease = 0;
-        if (tokenFee > 10000) {
+        if (tokenFee > MYRIAD) {
             revert InvalidTokenFee();
         } else {
             // The token fee is calculated and subtracted from the deposit amount to get the boost balance increase
-            uint256 tokenFeeAmount = (_amount * tokenFee) / 10000;
+            uint256 tokenFeeAmount = (_amount * tokenFee) / MYRIAD;
             balanceIncrease = _amount - tokenFeeAmount;
             tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
         }
