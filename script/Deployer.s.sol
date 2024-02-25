@@ -20,6 +20,7 @@ contract Deployer is Script {
     string constant boostVersion = "0.1.0";
     uint256 constant ethFee = 10000000000000000; //  0.01 ETH
     uint256 constant tokenFee = 0;
+    uint256 constant nonce = 0;
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
@@ -32,7 +33,7 @@ contract Deployer is Script {
 
         // Using the CREATE3 factory maintained by lififinance: https://github.com/lifinance/create3-factory
         address deployed = ICREATE3Factory(0x93FEC2C00BfE902F733B57c5a6CeeD7CD1384AE1).deploy(
-            bytes32(uint256(0)),
+            bytes32(nonce),
             abi.encodePacked(
                 type(Boost).creationCode, abi.encode(owner, boostName, boostSymbol, boostVersion, ethFee, tokenFee)
             )
