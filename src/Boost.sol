@@ -109,6 +109,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (_guard == address(0)) revert InvalidGuard();
         if (msg.value < ethFee) revert InsufficientEthFee();
 
+        // Using this non-intuitive computation to make it easier for the depositor to calculate the fee.
+        // This way, depositing 110 tokens with a tokenFee of 10% will result in a balance increase of 100 tokens.
         uint256 balanceIncrease = _amount * MYRIAD / (MYRIAD + tokenFee);
         uint256 tokenFeeAmount = _amount - balanceIncrease;
 
@@ -140,6 +142,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (boost.end <= block.timestamp) revert BoostEnded();
         if (block.timestamp >= boost.start) revert ClaimingPeriodStarted();
 
+        // Using this non-intuitive computation to make it easier for the depositor to calculate the fee.
+        // This way, depositing 110 tokens with a tokenFee of 10% will result in a balance increase of 100 tokens.
         uint256 balanceIncrease = _amount * MYRIAD / (MYRIAD + tokenFee);
         uint256 tokenFeeAmount = _amount - balanceIncrease;
 
