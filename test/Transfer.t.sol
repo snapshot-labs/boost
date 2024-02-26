@@ -2,7 +2,6 @@
 pragma solidity ^0.8.15;
 
 import "./Boost.t.sol";
-import "forge-std/console2.sol";
 
 contract BoostERC721Test is BoostTest {
     address public constant exchange = address(0x1111);
