@@ -47,7 +47,9 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
     uint256 public ethFee;
 
-    // Per-myriad (parts per ten-thousand, in the range [0, 9999]) of the total boost deposit that is taken as a protocol fee
+    // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee.
+    // The fee is "additive", meaning if the `tokenFee` is set to 1000, and the deposit amount is 1100 $TOKEN,
+    // then the fee will be 100 $TOKEN, and not 110 $TOKEN.
     uint256 public tokenFee;
 
     /// @notice Initializes the boost contract
