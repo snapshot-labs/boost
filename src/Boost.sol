@@ -47,7 +47,9 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     // Constant eth protocol fee (in wei) that must be paid by all boost creators
     uint256 public ethFee;
 
-    // Per-myriad (parts per ten-thousand, in the range [0, 9999]) of the total boost deposit that is taken as a protocol fee
+    // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee.
+    // The fee is "additive", meaning if the `tokenFee` is set to 1000, and the deposit amount is 1100 $TOKEN,
+    // then the fee will be 100 $TOKEN, and not 110 $TOKEN.
     uint256 public tokenFee;
 
     /// @notice Initializes the boost contract
@@ -75,7 +77,6 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
     /// @inheritdoc IBoost
     function setTokenFee(uint256 _tokenFee) public override onlyOwner {
-        if (_tokenFee > MYRIAD) revert InvalidTokenFee();
         tokenFee = _tokenFee;
         emit TokenFeeSet(_tokenFee);
     }
@@ -110,16 +111,12 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (_guard == address(0)) revert InvalidGuard();
         if (msg.value < ethFee) revert InsufficientEthFee();
 
-        uint256 balance = 0;
-        if (tokenFee > MYRIAD) {
-            revert InvalidTokenFee();
-        } else {
-            // The token fee is calculated and subtracted from the deposit amount to get the initial boost balance
-            uint256 tokenFeeAmount = (_amount * tokenFee) / MYRIAD;
-            // Since tokenFeeAmount < _amount, therefore balance will never underflow
-            balance = _amount - tokenFeeAmount;
-            tokenFeeBalances[address(_token)] += tokenFeeAmount;
-        }
+        // Using this non-intuitive computation to make it easier for the depositor to calculate the fee.
+        // This way, depositing 110 tokens with a tokenFee of 10% will result in a balance increase of 100 tokens.
+        uint256 balanceIncrease = _amount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 tokenFeeAmount = _amount - balanceIncrease;
+
+        tokenFeeBalances[address(_token)] += tokenFeeAmount;
 
         uint256 boostId = nextBoostId;
         unchecked {
@@ -130,7 +127,8 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         // Minting the boost as an ERC721 and storing the config data
         _safeMint(_owner, boostId);
         _setTokenURI(boostId, _strategyURI);
-        boosts[boostId] = BoostConfig({token: _token, balance: balance, guard: _guard, start: _start, end: _end});
+        boosts[boostId] =
+            BoostConfig({token: _token, balance: balanceIncrease, guard: _guard, start: _start, end: _end});
 
         // Transferring the deposit amount of the ERC20 token to the contract
         _token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -146,15 +144,12 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (boost.end <= block.timestamp) revert BoostEnded();
         if (block.timestamp >= boost.start) revert ClaimingPeriodStarted();
 
-        uint256 balanceIncrease = 0;
-        if (tokenFee > MYRIAD) {
-            revert InvalidTokenFee();
-        } else {
-            // The token fee is calculated and subtracted from the deposit amount to get the boost balance increase
-            uint256 tokenFeeAmount = (_amount * tokenFee) / MYRIAD;
-            balanceIncrease = _amount - tokenFeeAmount;
-            tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
-        }
+        // Using this non-intuitive computation to make it easier for the depositor to calculate the fee.
+        // This way, depositing 110 tokens with a tokenFee of 10% will result in a balance increase of 100 tokens.
+        uint256 balanceIncrease = _amount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 tokenFeeAmount = _amount - balanceIncrease;
+
+        tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
 
         boost.balance += balanceIncrease;
         boost.token.safeTransferFrom(msg.sender, address(this), _amount);

@@ -15,7 +15,7 @@ contract BoostDepositTest is BoostTest {
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
-        emit Deposit(boostId, owner, 100);
+        emit Deposit(boostId, owner, depositAmount);
         snapStart("Deposit");
         boost.deposit(boostId, depositAmount);
         snapEnd();
@@ -84,7 +84,7 @@ contract BoostDepositTest is BoostTest {
     }
 
     function testDepositExceedsBalance() public {
-        _mintAndApprove(owner, depositAmount, 200);
+        _mintAndApprove(owner, depositAmount, 2 * depositAmount);
         vm.warp(block.timestamp + 1); // Increase here so we can decrease later
         uint256 boostId = _createBoost();
         vm.warp(block.timestamp - 1); // Decrease here so claim period hasn't started

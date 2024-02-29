@@ -47,7 +47,7 @@ abstract contract BoostTest is Test, GasSnapshot {
     address public owner = vm.addr(ownerKey);
     address public guard = vm.addr(guardKey);
 
-    uint256 public constant depositAmount = 100;
+    uint256 public constant depositAmount = 10200;
     string public constant strategyURI = "abc123";
 
     function setUp() public virtual {

@@ -5,22 +5,17 @@ import "./Boost.t.sol";
 
 contract ProtocolFeesTest is BoostTest {
     uint256 ethFee = 1000;
-    uint256 tokenFee = 10;
+    uint256 tokenFee = 100; // 1%
 
     function setUp() public override {
         token = new MockERC20("Test Token", "TEST");
         boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, ethFee, tokenFee);
     }
 
-    function testCreateBoostInvalidTokenFees() public {
-        vm.expectRevert(IBoost.InvalidTokenFee.selector);
-        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, 0, 10001);
-    }
-
     function testCreateBoostWithProtocolFees() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 tokenFeeAmount = (depositAmount * tokenFee) / MYRIAD;
-        uint256 boostBalance = depositAmount - tokenFeeAmount;
+        uint256 boostBalance = depositAmount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 tokenFeeAmount = depositAmount - boostBalance;
         uint256 boostId = boost.nextBoostId();
         vm.expectEmit(true, true, false, true);
         emit Mint(
@@ -66,8 +61,8 @@ contract ProtocolFeesTest is BoostTest {
 
     function testCreateMultipleBoostsWithProtocolFee() public {
         _mintAndApprove(owner, 2 * depositAmount, 2 * depositAmount);
-        uint256 tokenFeeAmount = (depositAmount * tokenFee) / MYRIAD;
-        uint256 boostBalance = depositAmount - tokenFeeAmount;
+        uint256 boostBalanceIncrease = depositAmount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 tokenFeeAmount = depositAmount - boostBalanceIncrease;
 
         uint256 boostId1 = boost.nextBoostId();
         vm.deal(owner, 2 * ethFee);
@@ -104,8 +99,8 @@ contract ProtocolFeesTest is BoostTest {
         // After creating 2 boosts, the owner's balance should be 2
         assertEq(boost.balanceOf(owner), 2);
 
-        assertEq(_balance1, boostBalance);
-        assertEq(_balance2, boostBalance);
+        assertEq(_balance1, boostBalanceIncrease);
+        assertEq(_balance2, boostBalanceIncrease);
 
         assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
         assertEq(boost.tokenFeeBalances(address(token)), 2 * tokenFeeAmount);
@@ -114,7 +109,7 @@ contract ProtocolFeesTest is BoostTest {
 
     function testUpdateProtocolFees() public {
         uint256 newEthFee = 2000;
-        uint256 newTokenFee = 20;
+        uint256 newTokenFee = 20; // 0.2%
 
         vm.expectEmit(true, true, false, true);
         emit EthFeeSet(newEthFee);
@@ -127,7 +122,9 @@ contract ProtocolFeesTest is BoostTest {
         boost.setTokenFee(newTokenFee);
 
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 tokenFeeAmount = (depositAmount * newTokenFee) / MYRIAD;
+        uint256 boostBalanceIncrease = depositAmount * MYRIAD / (MYRIAD + newTokenFee);
+        uint256 tokenFeeAmount = depositAmount - boostBalanceIncrease;
+
         _createBoost(
             strategyURI, address(token), depositAmount, owner, guard, block.timestamp, block.timestamp + 60, newEthFee
         );
@@ -151,22 +148,14 @@ contract ProtocolFeesTest is BoostTest {
         boost.setTokenFee(newTokenFee);
     }
 
-    function testSetInvalidTokenFee() public {
-        uint256 newTokenFee = 10001;
-
-        vm.expectRevert(IBoost.InvalidTokenFee.selector);
-        vm.prank(protocolOwner);
-        boost.setTokenFee(newTokenFee);
-    }
-
     function testDepositWithProtocolFees() public {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
         uint256 boostId = _createBoost(
             strategyURI, address(token), depositAmount, owner, guard, block.timestamp + 1, block.timestamp + 60, ethFee
         );
 
-        uint256 tokenFeeAmount = (depositAmount * tokenFee) / MYRIAD;
-        uint256 boostBalanceIncrease = depositAmount - tokenFeeAmount;
+        uint256 boostBalanceIncrease = depositAmount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 tokenFeeAmount = depositAmount - boostBalanceIncrease;
 
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
@@ -184,7 +173,9 @@ contract ProtocolFeesTest is BoostTest {
 
     function testCollectFees() public {
         _mintAndApprove(owner, depositAmount, depositAmount);
-        uint256 tokenFeeAmount = (depositAmount * tokenFee) / MYRIAD;
+        uint256 boostBalanceIncrease = depositAmount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 tokenFeeAmount = depositAmount - boostBalanceIncrease;
+
         _createBoost(
             strategyURI, address(token), depositAmount, owner, guard, block.timestamp, block.timestamp + 60, ethFee
         );
@@ -229,7 +220,7 @@ contract ProtocolFeesTest is BoostTest {
 
     function testMaxTokenFee() public {
         uint256 newEthFee = 0;
-        uint256 newTokenFee = MYRIAD;
+        uint256 newTokenFee = MYRIAD * MYRIAD * MYRIAD; // This will round up the tokenFee to 0
 
         vm.prank(protocolOwner);
         boost.setEthFee(newEthFee);
