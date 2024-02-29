@@ -9,7 +9,7 @@
  *  |____/  \___/  \___/ |___/ \__|
  */
 
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.23;
 
 import "openzeppelin-contracts/access/Ownable.sol";
 import "openzeppelin-contracts/utils/cryptography/SignatureChecker.sol";

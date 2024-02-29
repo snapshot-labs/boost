@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.23;
 
 import "./Boost.t.sol";
 
@@ -37,7 +37,13 @@ contract BoostCreateTest is BoostTest {
         );
 
         // Checking BoostConfig object and other data that we store separately to obey the ERC721 standard
-        (IERC20 _token, uint256 _balance, address _guard, uint48 _start, uint48 _end) = boost.boosts(boostId);
+        (
+            IERC20 _token,
+            uint256 _balance,
+            address _guard,
+            uint48 _start,
+            uint48 _end
+        ) = boost.boosts(boostId);
         assertEq(address(token), address(_token));
         assertEq(depositAmount, _balance);
         assertEq(guard, _guard);
@@ -109,7 +115,13 @@ contract BoostCreateTest is BoostTest {
         vm.expectRevert(IBoost.BoostDepositRequired.selector);
         // Deposit of zero
         boost.mint(
-            strategyURI, IERC20(address(token)), 0, owner, guard, uint48(block.timestamp), uint48(block.timestamp + 60)
+            strategyURI,
+            IERC20(address(token)),
+            0,
+            owner,
+            guard,
+            uint48(block.timestamp),
+            uint48(block.timestamp + 60)
         );
     }
 

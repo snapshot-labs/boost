@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.23;
 
 import "./Boost.t.sol";
 
@@ -21,7 +21,7 @@ contract BoostDepositTest is BoostTest {
         snapEnd();
 
         // Checking state after deposit
-        (, uint256 _balance,,,) = boost.boosts(boostId);
+        (, uint256 _balance, , , ) = boost.boosts(boostId);
         assertEq(token.balanceOf(address(boost)), 2 * depositAmount);
         assertEq(_balance, 2 * depositAmount);
     }
@@ -30,7 +30,13 @@ contract BoostDepositTest is BoostTest {
         _mintAndApprove(owner, depositAmount * 2, depositAmount * 2);
         uint256 boostId = _createBoost();
 
-        (IERC20 token, uint256 balance, address guard, uint48 start, uint48 end) = boost.boosts(boostId);
+        (
+            IERC20 token,
+            uint256 balance,
+            address guard,
+            uint48 start,
+            uint48 end
+        ) = boost.boosts(boostId);
         vm.warp(start);
         vm.prank(owner);
         vm.expectRevert(IBoost.ClaimingPeriodStarted.selector);
