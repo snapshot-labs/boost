@@ -49,7 +49,12 @@ interface IBoost {
     /// @param owner The boost owner
     /// @param boost The boost config
     /// @param strategyURI The URI of the boost strategy
-    event Mint(uint256 boostId, address owner, BoostConfig boost, string strategyURI);
+    event Mint(
+        uint256 boostId,
+        address owner,
+        BoostConfig boost,
+        string strategyURI
+    );
 
     /// @notice Emitted when a claim is made
     /// @param claim The claim config
@@ -81,6 +86,44 @@ interface IBoost {
     /// @param token The token of the fees
     /// @param recipient The recipient of the token fees
     event TokenFeesCollected(IERC20 token, address recipient);
+
+    /// @notice Returns the boost config for a given boost id
+    /// @param boostId The boost id
+    function boosts(
+        uint256 boostId
+    )
+        external
+        view
+        returns (
+            IERC20 token,
+            uint256 balance,
+            address guard,
+            uint48 start,
+            uint48 end
+        );
+
+    /// @notice Returns whether a recipient has claimed a boost
+    /// @param boostId The boost id
+    /// @param recipient The recipient address
+    function claimed(
+        uint256 boostId,
+        address recipient
+    ) external view returns (bool);
+
+    /// @notice Returns the accumulated protocol fees for a given token
+    /// @param token The token to get the fee balance for
+    function tokenFeeBalances(address token) external view returns (uint256);
+
+    /// @notice Returns the id of the next boost to be minted
+    function nextBoostId() external view returns (uint256);
+
+    /// @notice Returns the constant eth protocol fee (in wei) that must be paid by all boost creators
+    function ethFee() external view returns (uint256);
+
+    /// @notice Returns the per-myriad (parts per ten-thousand) proportion of the boost size that is taken as a fee.
+    /// Eg with a token fee of 200, 2% of the boost size is taken as a fee. So a 102 token deposit would result in a
+    /// 100 token boost and 2 token fee.
+    function tokenFee() external view returns (uint256);
 
     /// @notice Updates the eth protocol fee
     /// @param ethFee The new eth fee in wei
@@ -130,10 +173,16 @@ interface IBoost {
     /// @notice Claims a boost
     /// @param claimConfig The claim
     /// @param signature The signature of the claim, signed by the boost guard
-    function claim(ClaimConfig calldata claimConfig, bytes calldata signature) external;
+    function claim(
+        ClaimConfig calldata claimConfig,
+        bytes calldata signature
+    ) external;
 
     /// @notice Wrapper function to claim multiple boosts in a single transaction
     /// @param claimConfigs Array of claims
     /// @param signatures Array of signatures, that correspond to the claims array
-    function claimMultiple(ClaimConfig[] calldata claimConfigs, bytes[] calldata signatures) external;
+    function claimMultiple(
+        ClaimConfig[] calldata claimConfigs,
+        bytes[] calldata signatures
+    ) external;
 }

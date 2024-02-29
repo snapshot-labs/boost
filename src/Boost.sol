@@ -19,8 +19,6 @@ import "openzeppelin-contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./IBoost.sol";
 
-uint256 constant MYRIAD = 10000;
-
 /**
  * @title Boost
  * @author @SnapshotLabs - admin@snapshot.org
@@ -29,28 +27,30 @@ uint256 constant MYRIAD = 10000;
 contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     using SafeERC20 for IERC20;
 
-    // The EIP712 typehash for the claim struct
-    bytes32 private constant CLAIM_TYPE_HASH = keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
+    /// @dev The divisor used to calculate the per-myriad fee
+    uint256 private constant MYRIAD = 10000;
 
-    // Mapping of boost id to boost config
-    mapping(uint256 => BoostConfig) public boosts;
+    /// @dev The EIP712 typehash for the claim struct
+    bytes32 private constant CLAIM_TYPE_HASH =
+        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)");
 
-    // Mapping of boost id and recipient to claimed status, to prevent double claims
-    mapping(uint256 => mapping(address => bool)) public claimed;
+    /// @inheritdoc IBoost
+    mapping(uint256 => BoostConfig) public override boosts;
 
-    // Mapping of token address to the total amount of fees collected in that token
-    mapping(address => uint256) public tokenFeeBalances;
+    /// @inheritdoc IBoost
+    mapping(uint256 => mapping(address => bool)) public override claimed;
 
-    // The id of the next boost to be minted
-    uint256 public nextBoostId;
+    /// @inheritdoc IBoost
+    mapping(address => uint256) public override tokenFeeBalances;
 
-    // Constant eth protocol fee (in wei) that must be paid by all boost creators
-    uint256 public ethFee;
+    /// @inheritdoc IBoost
+    uint256 public override nextBoostId;
 
-    // Per-myriad (parts per ten-thousand) of the total boost deposit that is taken as a protocol fee.
-    // The fee is "additive", meaning if the `tokenFee` is set to 1000, and the deposit amount is 1100 $TOKEN,
-    // then the fee will be 100 $TOKEN, and not 110 $TOKEN.
-    uint256 public tokenFee;
+    /// @inheritdoc IBoost
+    uint256 public override ethFee;
+
+    /// @inheritdoc IBoost
+    uint256 public override tokenFee;
 
     /// @notice Initializes the boost contract
     /// @param _protocolOwner The address of the owner of the protocol
@@ -88,7 +88,10 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function collectTokenFees(IERC20 _token, address _recipient) external override onlyOwner {
+    function collectTokenFees(
+        IERC20 _token,
+        address _recipient
+    ) external override onlyOwner {
         uint256 fees = tokenFeeBalances[address(_token)];
         tokenFeeBalances[address(_token)] = 0;
         _token.safeTransfer(_recipient, fees);
@@ -113,7 +116,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
         // Using this non-intuitive computation to make it easier for the depositor to calculate the fee.
         // This way, depositing 110 tokens with a tokenFee of 10% will result in a balance increase of 100 tokens.
-        uint256 balanceIncrease = _amount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 balanceIncrease = (_amount * MYRIAD) / (MYRIAD + tokenFee);
         uint256 tokenFeeAmount = _amount - balanceIncrease;
 
         tokenFeeBalances[address(_token)] += tokenFeeAmount;
@@ -127,8 +130,13 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         // Minting the boost as an ERC721 and storing the config data
         _safeMint(_owner, boostId);
         _setTokenURI(boostId, _strategyURI);
-        boosts[boostId] =
-            BoostConfig({token: _token, balance: balanceIncrease, guard: _guard, start: _start, end: _end});
+        boosts[boostId] = BoostConfig({
+            token: _token,
+            balance: balanceIncrease,
+            guard: _guard,
+            start: _start,
+            end: _end
+        });
 
         // Transferring the deposit amount of the ERC20 token to the contract
         _token.safeTransferFrom(msg.sender, address(this), _amount);
@@ -146,7 +154,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
 
         // Using this non-intuitive computation to make it easier for the depositor to calculate the fee.
         // This way, depositing 110 tokens with a tokenFee of 10% will result in a balance increase of 100 tokens.
-        uint256 balanceIncrease = _amount * MYRIAD / (MYRIAD + tokenFee);
+        uint256 balanceIncrease = (_amount * MYRIAD) / (MYRIAD + tokenFee);
         uint256 tokenFeeAmount = _amount - balanceIncrease;
 
         tokenFeeBalances[address(boost.token)] += tokenFeeAmount;
@@ -179,12 +187,18 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function claim(ClaimConfig calldata _claimConfig, bytes calldata _signature) external override {
+    function claim(
+        ClaimConfig calldata _claimConfig,
+        bytes calldata _signature
+    ) external override {
         _claim(_claimConfig, _signature);
     }
 
     /// @inheritdoc IBoost
-    function claimMultiple(ClaimConfig[] calldata _claimConfigs, bytes[] calldata _signatures) external override {
+    function claimMultiple(
+        ClaimConfig[] calldata _claimConfigs,
+        bytes[] calldata _signatures
+    ) external override {
         for (uint256 i = 0; i < _signatures.length; i++) {
             _claim(_claimConfigs[i], _signatures[i]);
         }
@@ -193,7 +207,10 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     /// @notice Claims a boost
     /// @param _claimConfig The claim
     /// @param _signature The signature of the claim, signed by the boost guard
-    function _claim(ClaimConfig memory _claimConfig, bytes memory _signature) internal {
+    function _claim(
+        ClaimConfig memory _claimConfig,
+        bytes memory _signature
+    ) internal {
         BoostConfig storage boost = boosts[_claimConfig.boostId];
         if (boost.start > block.timestamp) revert BoostNotStarted(boost.start);
         if (boost.balance < _claimConfig.amount) {
@@ -206,10 +223,23 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
         if (_claimConfig.recipient == address(0)) revert InvalidRecipient();
 
         bytes32 digest = _hashTypedDataV4(
-            keccak256(abi.encode(CLAIM_TYPE_HASH, _claimConfig.boostId, _claimConfig.recipient, _claimConfig.amount))
+            keccak256(
+                abi.encode(
+                    CLAIM_TYPE_HASH,
+                    _claimConfig.boostId,
+                    _claimConfig.recipient,
+                    _claimConfig.amount
+                )
+            )
         );
 
-        if (!SignatureChecker.isValidSignatureNow(boost.guard, digest, _signature)) revert InvalidSignature();
+        if (
+            !SignatureChecker.isValidSignatureNow(
+                boost.guard,
+                digest,
+                _signature
+            )
+        ) revert InvalidSignature();
 
         // Storing recipients that claimed to prevent reusing signatures
         claimed[_claimConfig.boostId][_claimConfig.recipient] = true;

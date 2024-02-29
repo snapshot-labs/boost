@@ -7,7 +7,13 @@ import "../src/Boost.sol";
 import {GasSnapshot} from "forge-gas-snapshot/GasSnapshot.sol";
 
 abstract contract BoostTest is Test, GasSnapshot {
-    event Mint(uint256 boostId, address owner, IBoost.BoostConfig boost, string strategyURI);
+    uint256 constant MYRIAD = 10000;
+    event Mint(
+        uint256 boostId,
+        address owner,
+        IBoost.BoostConfig boost,
+        string strategyURI
+    );
     event Claim(IBoost.ClaimConfig claim);
     event Deposit(uint256 boostId, address sender, uint256 amount);
     event Burn(uint256 boostId);
@@ -16,7 +22,10 @@ abstract contract BoostTest is Test, GasSnapshot {
     event EthFeesCollected(address recipient);
     event TokenFeesCollected(IERC20 token, address recipient);
 
-    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
 
     error BoostDoesNotExist();
     error BoostDepositRequired();
@@ -51,7 +60,14 @@ abstract contract BoostTest is Test, GasSnapshot {
     string public constant strategyURI = "abc123";
 
     function setUp() public virtual {
-        boost = new Boost(protocolOwner, boostName, boostSymbol, boostVersion, 0, 0);
+        boost = new Boost(
+            protocolOwner,
+            boostName,
+            boostSymbol,
+            boostVersion,
+            0,
+            0
+        );
         token = new MockERC20("Test Token", "TEST");
     }
 
@@ -85,25 +101,41 @@ abstract contract BoostTest is Test, GasSnapshot {
         uint256 boostID = boost.nextBoostId();
         vm.prank(_owner);
         vm.deal(_owner, _ethFee);
-        boost.mint{value: _ethFee}(_strategyURI, IERC20(_token), _amount, _owner, _guard, uint48(_start), uint48(_end));
+        boost.mint{value: _ethFee}(
+            _strategyURI,
+            IERC20(_token),
+            _amount,
+            _owner,
+            _guard,
+            uint48(_start),
+            uint48(_end)
+        );
         return boostID;
     }
 
     /// @notice Mint and approve token utility function
-    function _mintAndApprove(address user, uint256 mintAmount, uint256 approveAmount) internal {
+    function _mintAndApprove(
+        address user,
+        uint256 mintAmount,
+        uint256 approveAmount
+    ) internal {
         token.mint(user, mintAmount);
         vm.prank(user);
         token.approve(address(boost), approveAmount);
     }
 
     /// @notice Generate claim eip712 signature
-    function _generateClaimSignature(IBoost.ClaimConfig memory claim) internal view returns (bytes memory) {
+    function _generateClaimSignature(
+        IBoost.ClaimConfig memory claim
+    ) internal view returns (bytes memory) {
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
                 keccak256(
                     abi.encode(
-                        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                        keccak256(
+                            "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                        ),
                         keccak256(bytes(boostName)),
                         keccak256(bytes(boostVersion)),
                         block.chainid,
@@ -112,7 +144,9 @@ abstract contract BoostTest is Test, GasSnapshot {
                 ),
                 keccak256(
                     abi.encode(
-                        keccak256("Claim(uint256 boostId,address recipient,uint256 amount)"),
+                        keccak256(
+                            "Claim(uint256 boostId,address recipient,uint256 amount)"
+                        ),
                         claim.boostId,
                         claim.recipient,
                         claim.amount
