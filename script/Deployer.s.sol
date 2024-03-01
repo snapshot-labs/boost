@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.15;
+pragma solidity ^0.8.23;
 
 import "forge-std/Script.sol";
 import "../src/Boost.sol";
 
 interface ICREATE3Factory {
-    function deploy(bytes32 salt, bytes memory bytecode) external returns (address deployedAddress);
+    function deploy(
+        bytes32 salt,
+        bytes memory bytecode
+    ) external returns (address deployedAddress);
 }
 
 contract Deployer is Script {
@@ -27,17 +30,30 @@ contract Deployer is Script {
         string memory network = vm.envString("NETWORK");
         address owner = vm.envAddress("PROTOCOL_OWNER");
 
-        deploymentsPath = string.concat(string.concat("./deployments/", network), ".json");
+        deploymentsPath = string.concat(
+            string.concat("./deployments/", network),
+            ".json"
+        );
 
         vm.startBroadcast(deployerPrivateKey);
 
         // Using the CREATE3 factory maintained by lififinance: https://github.com/lifinance/create3-factory
-        address deployed = ICREATE3Factory(0x93FEC2C00BfE902F733B57c5a6CeeD7CD1384AE1).deploy(
-            bytes32(nonce),
-            abi.encodePacked(
-                type(Boost).creationCode, abi.encode(owner, boostName, boostSymbol, boostVersion, ethFee, tokenFee)
-            )
-        );
+        address deployed = ICREATE3Factory(
+            0x93FEC2C00BfE902F733B57c5a6CeeD7CD1384AE1
+        ).deploy(
+                bytes32(nonce),
+                abi.encodePacked(
+                    type(Boost).creationCode,
+                    abi.encode(
+                        owner,
+                        boostName,
+                        boostSymbol,
+                        boostVersion,
+                        ethFee,
+                        tokenFee
+                    )
+                )
+            );
 
         deployments = deployments.serialize("Boost", deployed);
 
