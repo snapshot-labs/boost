@@ -165,10 +165,10 @@ interface IBoost {
     /// @param amount The amount of the token to deposit
     function deposit(uint256 boostId, uint256 amount) external;
 
-    /// @notice Burns a boost
+    /// @notice Withdraws the remaining funds and burns the boost
     /// @param boostId The boost id
     /// @param to The address to send the remaining boost balance to
-    function burn(uint256 boostId, address to) external;
+    function withdrawAndBurn(uint256 boostId, address to) external;
 
     /// @notice Claims a boost
     /// @param claimConfig The claim

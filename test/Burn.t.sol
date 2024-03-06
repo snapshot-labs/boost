@@ -17,7 +17,7 @@ contract BoostWithdrawTest is BoostTest {
         vm.warp(block.timestamp + 60);
         vm.prank(owner);
         snapStart("Withdraw");
-        boost.burn(boostId, owner);
+        boost.withdrawAndBurn(boostId, owner);
         snapEnd();
 
         // Checking balances after withdrawal
@@ -34,7 +34,7 @@ contract BoostWithdrawTest is BoostTest {
         // Not boost owner
         vm.prank(claimer);
         vm.expectRevert(IBoost.OnlyBoostOwner.selector);
-        boost.burn(boostId, claimer);
+        boost.withdrawAndBurn(boostId, claimer);
     }
 
     function testWithdrawBoostNotExpired() public {
@@ -49,7 +49,7 @@ contract BoostWithdrawTest is BoostTest {
             )
         );
         // Boost still active
-        boost.burn(boostId, owner);
+        boost.withdrawAndBurn(boostId, owner);
     }
 
     function testWithdrawZeroBalance() public {

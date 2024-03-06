@@ -164,7 +164,7 @@ contract Boost is IBoost, EIP712, Ownable, ERC721URIStorage {
     }
 
     /// @inheritdoc IBoost
-    function burn(uint256 _boostId, address _to) external override {
+    function withdrawAndBurn(uint256 _boostId, address _to) external override {
         BoostConfig storage boost = boosts[_boostId];
         if (!_exists(_boostId)) revert BoostDoesNotExist();
         if (boost.balance == 0) revert InsufficientBoostBalance();
