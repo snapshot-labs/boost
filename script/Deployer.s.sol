@@ -21,9 +21,9 @@ contract Deployer is Script {
     string constant boostName = "boost";
     string constant boostSymbol = "BOOST";
     string constant boostVersion = "0.1.0";
-    uint256 constant ethFee = 10000000000000000; //  0.01 ETH
+    uint256 constant ethFee = 0; //  0.00 ETH
     uint256 constant tokenFee = 0;
-    uint256 constant nonce = 0;
+    uint256 constant nonce = 10;
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
